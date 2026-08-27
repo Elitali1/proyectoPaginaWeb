@@ -2,8 +2,13 @@ const { Arca } = require('@arcasdk/core');
 const fs = require('fs');
 const path = require('path');
 
-const cert = fs.readFileSync(path.join(__dirname, '..', '..', 'certificados-arca', 'arca.crt'), 'utf8');
-const key = fs.readFileSync(path.join(__dirname, '..', '..', 'certificados-arca', 'arca.key'), 'utf8');
+const cert = process.env.ARCA_CERT
+  ? process.env.ARCA_CERT
+  : fs.readFileSync(path.join(__dirname, '..', '..', 'certificados-arca', 'arca.crt'), 'utf8');
+
+const key = process.env.ARCA_KEY
+  ? process.env.ARCA_KEY
+  : fs.readFileSync(path.join(__dirname, '..', '..', 'certificados-arca', 'arca.key'), 'utf8');
 
 const arca = new Arca({
   cert,
