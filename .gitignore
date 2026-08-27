@@ -1,0 +1,8 @@
+# Dependencias de Node - no hace falta subirlas, se reinstalan con npm install
+node_modules/
+
+# Credenciales y configuración sensible
+.env
+
+# Certificados de ARCA
+certificados-arca/

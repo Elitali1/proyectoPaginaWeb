@@ -1,0 +1,431 @@
+/* ============================================
+   Landing pública Donchichopizza
+   Reutiliza variables de estilos.css (colores, fuentes)
+   ============================================ */
+
+body.landing {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.landing-header .marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-header .logo {
+  width: 44px;
+  height: 44px;
+}
+
+.landing-header .marca span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-primary);
+}
+
+.link-ingresar {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.15s ease;
+}
+
+.link-ingresar:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ---- Sello / estampa (elemento distintivo) ---- */
+.sello {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 108px;
+  height: 108px;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  transform: rotate(-8deg);
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+/* ---- Hero ---- */
+.hero {
+  background: linear-gradient(180deg, var(--color-bg) 0%, #EEDFC0 100%);
+  padding: 56px 24px 64px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 40px;
+  align-items: center;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.hero-texto h1 {
+  font-size: 2.6rem;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.hero-texto p {
+  font-size: 1.05rem;
+  color: var(--color-text);
+  max-width: 46ch;
+  margin-bottom: 22px;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-hero {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.btn-hero.primario {
+  background: var(--color-success);
+  color: white;
+}
+
+.btn-hero.primario:hover {
+  background: #3D6440;
+}
+
+.btn-hero.secundario {
+  background: transparent;
+  color: var(--color-primary-dark);
+  border: 1.5px solid var(--color-primary);
+}
+
+.btn-hero.secundario:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+.hero-foto {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: var(--color-border);
+  position: relative;
+}
+
+.hero-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-foto .sello {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+
+/* ---- Secciones generales ---- */
+.seccion {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 24px;
+}
+
+.seccion-titulo {
+  font-size: 1.7rem;
+  margin-bottom: 8px;
+}
+
+.seccion-intro {
+  color: var(--color-text-muted);
+  max-width: 60ch;
+  margin-bottom: 32px;
+}
+
+/* ---- Historia ---- */
+.historia {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.historia-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-border);
+}
+
+.historia-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.historia-texto p {
+  margin-bottom: 14px;
+  line-height: 1.65;
+}
+
+/* ---- Grilla de productos (piedra/molde/empanadas) ---- */
+.grilla-productos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.tarjeta-producto {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.tarjeta-producto .foto {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--color-border);
+}
+
+.tarjeta-producto .foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tarjeta-producto .info {
+  padding: 16px;
+}
+
+.tarjeta-producto h3 {
+  margin-bottom: 6px;
+}
+
+.tarjeta-producto p {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ---- Menú tipo comanda ---- */
+.menu-comanda {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 32px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.menu-comanda-header {
+  text-align: center;
+  border-bottom: 2px dashed var(--color-border);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.menu-comanda-header p {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 0 0;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item .nombre {
+  font-weight: 600;
+}
+
+.menu-item .precio {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  white-space: nowrap;
+  padding-left: 12px;
+}
+
+.menu-loading,
+.menu-error {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 24px 0;
+}
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.galeria-item {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.galeria-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.galeria-item:hover img {
+  transform: scale(1.05);
+}
+
+.galeria-item .etiqueta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(43, 33, 28, 0.75));
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 20px 10px 8px;
+}
+
+/* ---- Visitanos ---- */
+.visitanos {
+  background: var(--color-primary);
+  color: #F3E8D3;
+}
+
+.visitanos .seccion-titulo,
+.visitanos .seccion-intro {
+  color: #F3E8D3;
+}
+
+.visitanos-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.visitanos-datos p {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.visitanos-botones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.btn-hero.claro {
+  background: #F3E8D3;
+  color: var(--color-primary-dark);
+}
+
+.btn-hero.claro:hover {
+  background: white;
+}
+
+.visitanos-foto {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(243, 232, 211, 0.15);
+}
+
+.visitanos-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Footer ---- */
+.landing-footer {
+  background: var(--color-primary-dark);
+  color: #E3D3B4;
+  text-align: center;
+  padding: 28px 24px;
+  font-size: 0.85rem;
+}
+
+.landing-footer a {
+  color: #F3E8D3;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 800px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 40px 20px 48px;
+  }
+
+  .hero-texto h1 {
+    font-size: 2rem;
+  }
+
+  .historia,
+  .visitanos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grilla-productos {
+    grid-template-columns: 1fr;
+  }
+
+  .seccion {
+    padding: 40px 20px;
+  }
+}

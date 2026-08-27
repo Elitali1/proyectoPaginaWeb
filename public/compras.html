@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Compras</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="marca">
+  <img src="img/Logo.png" alt="Don Chicho" class="logo">
+  <h1>Compras</h1>
+  </div>
+  <div class="barra-superior">
+    
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html">Productos</a>
+      <a href="compras.html">Compras</a>
+      <a href="caja.html">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2>Cargar factura de compra</h2>
+    <form id="formulario-compra">
+      <label>Proveedor: <input type="text" id="proveedor" required></label>
+      <label>Concepto: <input type="text" id="concepto" placeholder="Ej: Muzzarella x 20kg"></label>
+      <label>Monto: <input type="number" id="monto" required></label>
+      <label>Fecha: <input type="date" id="fecha" required></label>
+      <button type="submit">Guardar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Historial de compras</h2>
+
+    <label>Filtrar desde: <input type="date" id="filtro-desde"></label>
+    <label>hasta: <input type="date" id="filtro-hasta"></label>
+    <button type="button" id="btn-filtrar">Filtrar</button>
+    <button type="button" id="btn-limpiar-filtro">Ver todas</button>
+
+    <p id="total-filtrado"></p>
+    <div id="contenedor-compras"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="compras.js"></script>
+  <!-- Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="animaciones.js"></script>
+</body>
+</html>

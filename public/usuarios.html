@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Usuarios</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+   <div class="marca">
+  <img src="img/Logo.png" alt="Don Chicho" class="logo">
+  <h1>Usuarios</h1>
+  </div>
+  <div class="barra-superior">
+    
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2 id="titulo-formulario">Crear nuevo usuario</h2>
+    <form id="formulario-usuario" autocomplete="off">
+      <label>Nombre: <input type="text" id="nombre" required></label>
+      <label>Email: <input type="email" id="email" required autocomplete="new-email"></label>
+      <label>Contraseña<span id="etiqueta-password-opcional"></span>: <input type="password" id="password" autocomplete="new-password"></label>
+      <label>Rol:
+        <select id="rol">
+          <option value="cajero">Cajero</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </label>
+      <button type="submit" id="btn-guardar">Crear usuario</button>
+      <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Usuarios del sistema</h2>
+    <div id="contenedor-usuarios"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="usuarios.js"></script>
+  <!-- Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="animaciones.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Cierre de Caja</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="marca">
+  <img src="img/Logo.png" alt="Don Chicho" class="logo">
+  <h1>Cierre de Caja</h1>
+</div>
+  <div class="barra-superior">
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html">Productos</a>
+      <a href="compras.html">Compras</a>
+      <a href="caja.html">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2>Cerrar caja del día</h2>
+    <form id="formulario-cierre">
+      <label>Fecha: <input type="date" id="fecha-cierre" required></label>
+      <button type="submit">Cerrar caja</button>
+    </form>
+    <p id="mensaje-cierre" class="oculto"></p>
+  </section>
+
+  <section>
+    <h2>Historial de cierres</h2>
+    <div id="contenedor-cierres"></div>
+  </section>
+  
+  <section>
+  <h2>Cargar gasto</h2>
+  <form id="formulario-gasto">
+    <label>Concepto: <input type="text" id="gasto-concepto" placeholder="Ej: Sueldo Juan, Alquiler agosto" required></label>
+    <label>Categoría (opcional): <input type="text" id="gasto-categoria" placeholder="Ej: sueldo, alquiler, servicios"></label>
+    <label>Monto: <input type="number" id="gasto-monto" required></label>
+    <label>Fecha: <input type="date" id="gasto-fecha" required></label>
+    <button type="submit">Guardar gasto</button>
+  </form>
+
+  <h3>Gastos cargados</h3>
+  <div id="contenedor-gastos"></div>
+</section>
+
+  <section>
+    <h2>Balance del período</h2>
+    <form id="formulario-balance">
+    <label>Desde: <input type="date" id="balance-desde" required></label>
+    <label>Hasta: <input type="date" id="balance-hasta" required></label>
+    <button type="submit">Calcular balance</button>
+    </form>
+    <div id="resultado-balance"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="caja.js"></script>
+  <!-- Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="animaciones.js"></script>
+</body>
+</html>

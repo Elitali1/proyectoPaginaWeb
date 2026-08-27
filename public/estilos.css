@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root {
+  --color-bg: #F3E8D3;
+  --color-surface: #FFFFFF;
+  --color-primary: #7A2E28;
+  --color-primary-dark: #5C221D;
+  --color-secondary: #E8A33D;
+  --color-success: #4C7A51;
+  --color-warning: #C97A1A;
+  --color-danger: #B03A2E;
+  --color-text: #2B211C;
+  --color-text-muted: #8A7A66;
+  --color-border: #E3D3B4;
+  --radius: 10px;
+  --shadow: 0 2px 10px rgba(122, 46, 40, 0.10);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-body);
+}
+
+body {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  margin: 0 0 8px 0;
+}
+
+h1 {
+  font-size: 3.1rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-bg);
+  padding-bottom: 6px;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+section {
+  background: var(--color-surface);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ---- Barra superior + marca ---- */
+.barra-superior {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.marca h1 {
+  margin: 0;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+nav a {
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: background-color 0.15s ease;
+}
+
+nav a:hover {
+  background-color: var(--color-bg);
+  text-decoration: none;
+}
+
+/* Link de recuperar contraseña en login */
+.forgot-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  font-size: 0.95rem;
+}
+.forgot-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+}
+
+#info-usuario {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  
+}
+.barra-superior > div:last-child {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ---- Tarjetas de pedidos/productos/compras/cierres (clase .pedido) ---- */
+.pedido {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: #FFFDF9;
+}
+
+.pedido strong {
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+}
+
+/* ---- Formularios ---- */
+form label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 500;
+  font-size: 0.92rem;
+  color: var(--color-text);
+}
+
+form input,
+form select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+form input:focus,
+form select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(122, 46, 40, 0.12);
+}
+
+/* ---- Botones ---- */
+button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+button:disabled {
+  background-color: #D9CFC2;
+  color: #8A7A66;
+  cursor: not-allowed;
+}
+
+/* Botones secundarios (cancelar edición, ver comanda, cambiar estado) via convención de nombre */
+.btn-cancelar,
+#btn-cancelar-edicion,
+#btn-cancelar-edicion-pedido {
+  background-color: transparent;
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-border);
+}
+
+.btn-cancelar:hover,
+#btn-cancelar-edicion:hover,
+#btn-cancelar-edicion-pedido:hover {
+  background-color: var(--color-bg);
+}
+
+.btn-comanda,
+.btn-modificar,
+.btn-editar,
+.btn-toggle {
+  background-color: var(--color-secondary);
+  color: var(--color-primary-dark);
+}
+
+.btn-comanda:hover,
+.btn-modificar:hover,
+.btn-editar:hover,
+.btn-toggle:hover {
+  background-color: #D68F27;
+}
+
+#btn-logout {
+  background-color: transparent;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+#btn-logout:hover {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+/* ---- Precios y totales: monoespaciada ---- */
+#total-pedido,
+#total-filtrado {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-primary-dark);
+}
+
+/* ---- Utilidades ---- */
+.oculto {
+  display: none;
+}
+
+.input-cantidad {
+  width: 60px;
+}
+
+.buscador-contenedor {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.resultados-lista {
+  display: none;
+  position: absolute;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  width: 100%;
+  z-index: 10;
+  box-shadow: var(--shadow);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.resultados-lista.mostrar {
+  display: block;
+}
+
+.resultados-lista li {
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.resultados-lista li:hover {
+  background-color: var(--color-bg);
+}
+.balance-positivo {
+  color: var(--color-success);
+}
+
+.balance-negativo {
+  color: var(--color-danger);
+}
+
+
+/* ---- Small helpers for animations and toasts ---- */
+.toast {
+  margin-bottom: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  font-weight: 600;
+}
+.toast-info { background: #2b6cb0; }
+.toast-success { background: #2f855a; }
+.toast-error { background: #c53030; }
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Responsive: celular ---- */
+@media (max-width: 600px) {
+  body {
+    padding: 12px;
+    font-size: 17px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .barra-superior {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .barra-superior > div:last-child {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  nav a {
+    padding: 8px 10px;
+  }
+
+  section {
+    padding: 14px;
+  }
+
+  .pedido button,
+  .pedido select {
+    width: 100%;
+    margin: 6px 0 0 0;
+  }
+
+  form input,
+  form select {
+    font-size: 16px;
+  }
+}

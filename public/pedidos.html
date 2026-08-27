@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Gestión de Pedidos</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  
+  <div class="barra-superior">
+  <div class="marca">
+  <img src="img/Logo.png" alt="Don Chicho" class="logo">
+  <h1>Donchichopizza</h1>
+</div>
+  <nav>
+  <a href="pedidos.html">Pedidos</a>
+  <a href="productos.html" id="link-productos">Productos</a>
+  <a href="compras.html" id="link-compras">Compras</a>
+  <a href="caja.html" id="link-caja">Cierre de caja</a>
+  <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+  <a href="historial.html">Historial</a>
+  
+</nav>
+  <div>
+    <p id="info-usuario"></p>
+    <button id="btn-logout">Cerrar sesión</button>
+  </div>
+</div>
+
+  <section id="lista-pedidos">
+    <h2>Pedidos</h2>
+    <div id="contenedor-pedidos"></div>
+  </section>
+
+  <section id="nuevo-pedido">
+    <h2>Nuevo pedido</h2>
+    <form id="formulario-pedido">
+      <label>Cliente: <input type="text" id="cliente" required></label>
+      <label>Canal:
+        <select id="canal">
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="presencial">Presencial</option>
+        </select>
+      </label>
+      <label>Medio de pago:
+        <select id="medio_pago">
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </label>
+
+      <label>Entrega:
+        <select id="tipo_entrega">
+          <option value="retiro">Retiro en el local</option>
+          <option value="envio">Envío a domicilio</option>
+        </select>
+      </label>
+
+      <label id="label-direccion" class="oculto">
+        Dirección: <input type="text" id="direccion_entrega">
+      </label>
+      <label id="label-cuit" class="oculto">
+  CUIT (para factura ): <input type="text" id="cuit_receptor" placeholder="20123456789">
+</label>
+
+<label>
+  <input type="checkbox" id="check-facturar-cuit">
+  Cliente pide factura con CUIT
+</label>
+
+      <h3>Productos</h3>
+
+      <label>
+        <input type="checkbox" id="check-combinar">
+        Combinar dos gustos (mitad y mitad, +$1000)
+      </label>
+
+      <div class="buscador-contenedor">
+        <input type="text" id="buscador-producto" placeholder="Buscar producto..." autocomplete="off">
+        <ul id="resultados-busqueda" class="resultados-lista"></ul>
+        <input type="hidden" id="producto-seleccionado-id">
+        <input type="hidden" id="producto-seleccionado-precio">
+        <input type="hidden" id="producto-seleccionado-nombre">
+      </div>
+
+      <select id="select-producto-2" class="oculto"></select>
+
+      <label>Masa:
+        <select id="tipo-masa">
+          <option value="piedra">A la piedra</option>
+          <option value="molde">Al molde</option>
+        </select>
+      </label>
+
+      <label>Aclaraciones (opcional):
+        <input type="text" id="aclaraciones-producto" placeholder="Ej: bien cocida, sin orégano...">
+      </label>
+
+      <input type="number" id="cantidad-nueva" min="1" value="1" class="input-cantidad">
+      <button type="button" id="btn-agregar-producto">Agregar</button>
+
+      <ul id="lista-productos-agregados"></ul>
+      <p id="total-pedido">Total: $0</p>
+
+      <button type="submit" id="btn-guardar-pedido">Crear pedido</button>
+      <button type="button" id="btn-cancelar-edicion-pedido" class="oculto">Cancelar edición</button>
+    </form>
+  </section>
+  
+  <script src="auth-helpers.js"></script>
+  <script src="app.js"></script>
+  <!-- Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <script src="animaciones.js"></script>
+</body>
+</html>
