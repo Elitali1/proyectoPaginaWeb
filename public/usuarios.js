@@ -1,6 +1,6 @@
 requiereAdmin();
 
-const API_URL = 'http://localhost:3000';
+const API_URL = window.location.origin;
 const token = localStorage.getItem('token');
 
 if (!token) {

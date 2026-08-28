@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = window.location.origin;
 
 document.getElementById('formulario-login').addEventListener('submit', async (event) => {
   event.preventDefault();
