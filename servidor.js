@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const app = express();
+app.set('trust proxy', 1);
+
 
 
 const pedidosRoutes = require('./src/routes/pedidos.routes.js');
