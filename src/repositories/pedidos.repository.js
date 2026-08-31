@@ -88,7 +88,7 @@ async function crear(datos) {
     await pool.query(
       `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || 'piedra', item.aclaraciones || null]
+      [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || 'null', item.aclaraciones || null]
     );
   }
 
@@ -139,7 +139,7 @@ async function actualizarProductos(id, productos) {
     await pool.query(
       `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || 'piedra', item.aclaraciones || null]
+      [id, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || 'null', item.aclaraciones || null]
     );
   }
 
