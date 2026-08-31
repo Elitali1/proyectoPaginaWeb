@@ -3,6 +3,8 @@ const router = express.Router();
 const pedidosController = require('../controllers/pedidos.controller.js');
 const verificarToken = require('../middlewares/auth.js');
 
+router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
+
 router.get('/', verificarToken, pedidosController.listar);
 router.get('/:id', verificarToken, pedidosController.obtenerUno);
 router.post('/', verificarToken, pedidosController.crear);
@@ -13,7 +15,6 @@ router.get('/:id/pdf', verificarToken, pedidosController.generarPdf);
 router.get('/:id/comanda', verificarToken, pedidosController.verComanda);
 router.post('/:id/imprimir-comanda', verificarToken, pedidosController.imprimirComandaFisica);
 router.put('/:id/productos', verificarToken, pedidosController.modificarProductos);
-router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
 router.post('/:id/confirmar-impresion', verificarToken, pedidosController.confirmarImpresion);
 
 module.exports = router;
