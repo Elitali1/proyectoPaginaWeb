@@ -13,5 +13,7 @@ router.get('/:id/pdf', verificarToken, pedidosController.generarPdf);
 router.get('/:id/comanda', verificarToken, pedidosController.verComanda);
 router.post('/:id/imprimir-comanda', verificarToken, pedidosController.imprimirComandaFisica);
 router.put('/:id/productos', verificarToken, pedidosController.modificarProductos);
+router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
+router.post('/:id/confirmar-impresion', verificarToken, pedidosController.confirmarImpresion);
 
 module.exports = router;

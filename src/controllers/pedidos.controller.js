@@ -235,11 +235,11 @@ async function imprimirComandaFisica(req, res) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    await comandaService.imprimirComanda(pedido);
-    res.json({ mensaje: 'Comanda enviada a imprimir' });
+    await pedidosRepository.marcarPendienteImpresion(id);
+    res.json({ mensaje: 'Comanda enviada a la cola de impresión' });
   } catch (error) {
-    console.error('Error al imprimir:', error);
-    res.status(500).json({ error: 'Error al imprimir la comanda' });
+    console.error('Error al encolar impresión:', error);
+    res.status(500).json({ error: 'Error al encolar la comanda para imprimir' });
   }
 }
 async function modificarProductos(req, res) {
@@ -263,5 +263,25 @@ async function modificarProductos(req, res) {
     res.status(400).json({ error: error.message || 'Error al modificar el pedido' });
   }
 }
+async function obtenerPendientesImpresion(req, res) {
+  try {
+    const pedidos = await pedidosRepository.obtenerPendientesImpresion();
+    res.json(pedidos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener pendientes de impresión' });
+  }
+}
 
-module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica };
+async function confirmarImpresion(req, res) {
+  try {
+    const { id } = req.params;
+    await pedidosRepository.marcarImpresionCompleta(id);
+    res.json({ mensaje: 'Impresión confirmada' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al confirmar impresión' });
+  }
+}
+
+module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion };

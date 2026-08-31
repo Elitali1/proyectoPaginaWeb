@@ -146,4 +146,32 @@ async function actualizarProductos(id, productos) {
   return obtenerConDetalle(id);
 }
 
-module.exports = { obtenerTodos, obtenerConDetalle, crear, actualizarEstado, eliminar, actualizarProductos };
+async function marcarPendienteImpresion(id) {
+  const resultado = await pool.query(
+    'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 RETURNING *',
+    [id]
+  );
+  return resultado.rows[0];
+}
+
+async function obtenerPendientesImpresion() {
+  const pedidos = await pool.query(
+    'SELECT id FROM pedidos WHERE pendiente_impresion = true ORDER BY id ASC'
+  );
+
+  const resultados = [];
+  for (const fila of pedidos.rows) {
+    const pedidoCompleto = await obtenerConDetalle(fila.id);
+    resultados.push(pedidoCompleto);
+  }
+  return resultados;
+}
+
+async function marcarImpresionCompleta(id) {
+  const resultado = await pool.query(
+    'UPDATE pedidos SET pendiente_impresion = false WHERE id = $1 RETURNING *',
+    [id]
+  );
+  return resultado.rows[0];
+}
+module.exports = { obtenerTodos, obtenerConDetalle, crear, actualizarEstado, eliminar, actualizarProductos, marcarPendienteImpresion, obtenerPendientesImpresion, marcarImpresionCompleta };
