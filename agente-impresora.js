@@ -1,7 +1,7 @@
 require('dotenv').config();
 const comandaService = require('./src/services/comanda.service.js');
 
-const API_URL = process.env.API_URL_PRODUCCION || 'https://www.donchichopizza.com.ar';
+const API_URL = process.env.API_URL_PRODUCCION || 'https://proyectopaginaweb-production.up.railway.app/';
 const TOKEN = process.env.AGENTE_TOKEN;
 
 async function revisarPendientes() {
