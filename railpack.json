@@ -13,7 +13,14 @@
       "libxfixes3",
       "libxrandr2",
       "libgbm1",
-      "libasound2"
+      "libasound2",
+      "libcairo2",
+      "libpango-1.0-0",
+      "libpangocairo-1.0-0",
+      "libgtk-3-0",
+      "fonts-liberation",
+      "libx11-xcb1",
+      "libxss1"
     ]
   }
 }
