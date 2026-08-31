@@ -28,8 +28,8 @@ async function obtenerUno(req, res) {
 
 async function crear(req, res) {
   try {
-    const { nombre, precio, disponible, imagen } = req.body;
-    const nuevoProducto = await productosRepository.crear({ nombre, precio, disponible, imagen });
+    const { nombre, precio, disponible, imagen, categoria_id } = req.body;
+    const nuevoProducto = await productosRepository.crear({ nombre, precio, disponible, imagen, categoria_id });
     res.status(201).json(nuevoProducto);
   } catch (error) {
     console.error(error);
@@ -40,9 +40,9 @@ async function crear(req, res) {
 async function actualizar(req, res) {
   try {
     const { id } = req.params;
-    const { nombre, precio, disponible, imagen } = req.body;
+    const { nombre, precio, disponible, imagen, categoria_id } = req.body;
 
-    const productoActualizado = await productosRepository.actualizar(id, { nombre, precio, disponible, imagen });
+    const productoActualizado = await productosRepository.actualizar(id, { nombre, precio, disponible, imagen, categoria_id });
 
     if (!productoActualizado) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -76,7 +76,7 @@ async function listarPublico(req, res) {
     const productos = await productosRepository.obtenerTodos();
     const disponibles = productos
       .filter(p => p.disponible)
-      .map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, imagen: p.imagen }));
+      .map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, imagen: p.imagen, categoria_nombre: p.categoria_nombre }));
     res.json(disponibles);
   } catch (error) {
     console.error(error);

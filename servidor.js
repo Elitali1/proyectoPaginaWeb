@@ -16,6 +16,7 @@ const cierreCajaRoutes = require('./src/routes/cierreCaja.routes.js');
 const facturasCompraRoutes = require('./src/routes/facturasCompra.routes.js');
 const facturasVentaRoutes = require('./src/routes/facturasVenta.routes.js');
 const gastosRoutes = require('./src/routes/gastos.routes.js');
+const categoriasRoutes = require('./src/routes/categorias.routes.js');
 
 app.use(express.json());
 
@@ -54,6 +55,7 @@ app.use('/cierre-caja', cierreCajaRoutes);
 app.use('/facturas-compra', facturasCompraRoutes);
 app.use('/facturas-venta', facturasVentaRoutes);
 app.use('/gastos', gastosRoutes);
+app.use('/categorias', categoriasRoutes);
 
 
 const PUERTO = process.env.PORT || 3000;

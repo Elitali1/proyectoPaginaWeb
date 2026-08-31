@@ -17,9 +17,26 @@ document.getElementById('btn-logout').addEventListener('click', () => {
 });
 
 let editandoId = null;
+let categorias = [];
 
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
+}
+
+async function cargarCategorias() {
+  const respuesta = await fetch(`${API_URL}/categorias`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  categorias = await respuesta.json();
+
+  const select = document.getElementById('categoria');
+  select.innerHTML = '';
+  categorias.forEach(categoria => {
+    const option = document.createElement('option');
+    option.value = categoria.id;
+    option.textContent = categoria.nombre;
+    select.appendChild(option);
+  });
 }
 
 async function cargarProductos() {
@@ -36,9 +53,10 @@ async function cargarProductos() {
     div.className = 'pedido';
     div.innerHTML = `
       <strong>${producto.nombre}</strong> - $${formatearPrecio(producto.precio)}
+      ${producto.categoria_nombre ? ` (${producto.categoria_nombre})` : ''}
       ${producto.disponible ? '' : ' (no disponible)'}
       ${producto.imagen ? `<br><small>Imagen: ${producto.imagen}</small>` : ''}
-      <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio}" data-disponible="${producto.disponible}" data-imagen="${producto.imagen || ''}">Editar</button>
+      <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio}" data-disponible="${producto.disponible}" data-imagen="${producto.imagen || ''}" data-categoria="${producto.categoria_id || ''}">Editar</button>
       <button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
         ${producto.disponible ? 'Marcar no disponible' : 'Reactivar'}
       </button>
@@ -63,7 +81,8 @@ async function cargarProductos() {
           nombre: producto.nombre,
           precio: producto.precio,
           disponible: !disponibleActual,
-          imagen: producto.imagen
+          imagen: producto.imagen,
+          categoria_id: producto.categoria_id
         })
       });
 
@@ -77,6 +96,7 @@ async function cargarProductos() {
       document.getElementById('nombre').value = boton.dataset.nombre;
       document.getElementById('precio').value = boton.dataset.precio;
       document.getElementById('imagen').value = boton.dataset.imagen;
+      document.getElementById('categoria').value = boton.dataset.categoria;
       document.getElementById('disponible').checked = boton.dataset.disponible === 'true';
       document.getElementById('titulo-formulario').textContent = 'Editar producto';
       document.getElementById('btn-guardar').textContent = 'Guardar cambios';
@@ -102,7 +122,8 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
     nombre: document.getElementById('nombre').value,
     precio: Number(document.getElementById('precio').value),
     disponible: document.getElementById('disponible').checked,
-    imagen: document.getElementById('imagen').value || null
+    imagen: document.getElementById('imagen').value || null,
+    categoria_id: Number(document.getElementById('categoria').value)
   };
 
   if (editandoId) {
@@ -180,4 +201,5 @@ document.getElementById('btn-subir-foto').addEventListener('click', async () => 
   cargarProductos();
 });
 
+cargarCategorias();
 cargarProductos();

@@ -31,6 +31,11 @@
   <form id="formulario-producto">
     <label>Nombre: <input type="text" id="nombre" required></label>
     <label>Precio: <input type="number" id="precio" required></label>
+    <label>Categoría:
+      <select id="categoria" required>
+        <option value="">Cargando categorías...</option>
+      </select>
+    </label>
     <label>Nombre de archivo de imagen (opcional): <input type="text" id="imagen" placeholder="ej: napolitana.jpg"></label>
     <label>
       <input type="checkbox" id="disponible" checked>
@@ -56,10 +61,5 @@
 
   <script src="auth-helpers.js"></script>
   <script src="productos.js"></script>
-  <!-- Animations -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-  <script src="animaciones.js"></script>
 </body>
 </html>
