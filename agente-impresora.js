@@ -1,7 +1,9 @@
 require('dotenv').config();
 const comandaService = require('./src/services/comanda.service.js');
 
-const API_URL = process.env.API_URL_PRODUCCION || 'https://proyectopaginaweb-production.up.railway.app/';
+console.log('Variable leída:', process.env.API_URL_PRODUCCION);
+
+const API_URL = process.env.API_URL_PRODUCCION || 'https://www.donchichopizza.com.ar';
 const TOKEN = process.env.AGENTE_TOKEN;
 
 async function revisarPendientes() {
@@ -11,7 +13,8 @@ async function revisarPendientes() {
     });
 
     if (!respuesta.ok) {
-      console.error('Error al consultar pendientes:', respuesta.status);
+      const textoError = await respuesta.text();
+      console.error('Error al consultar pendientes:', respuesta.status, textoError);
       return;
     }
 
