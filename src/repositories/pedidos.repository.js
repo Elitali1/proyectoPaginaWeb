@@ -1,37 +1,42 @@
 const pool = require('../config/db.js');
 
 async function obtenerTodos() {
-  const pedidos = await pool.query(`
-    SELECT p.*,
+  const resultado = await pool.query(`
+    SELECT
+      p.*,
       COALESCE(SUM(pd.cantidad * pd.precio_unitario), 0) AS total,
       fv.numero_comprobante,
       fv.cae,
       fv.vencimiento_cae,
-      fv.estado AS estado_factura
+      fv.estado AS estado_factura,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'producto_id', pd.producto_id,
+            'nombre_producto', p1.nombre,
+            'producto_id_2', pd.producto_id_2,
+            'nombre_producto_2', p2.nombre,
+            'cantidad', pd.cantidad,
+            'precio_unitario', pd.precio_unitario,
+            'tipo_masa', pd.tipo_masa,
+            'aclaraciones', pd.aclaraciones
+          )
+        ) FILTER (WHERE pd.id IS NOT NULL),
+        '[]'
+      ) AS productos
     FROM pedidos p
     LEFT JOIN pedido_detalle pd ON pd.pedido_id = p.id
+    LEFT JOIN productos p1 ON p1.id = pd.producto_id
+    LEFT JOIN productos p2 ON p2.id = pd.producto_id_2
     LEFT JOIN facturas_venta fv ON fv.pedido_id = p.id
     GROUP BY p.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
     ORDER BY p.id DESC
   `);
 
-  for (const pedido of pedidos.rows) {
-    pedido.ya_facturado = pedido.estado_factura === 'emitida';
-
-    const detalle = await pool.query(
-      `SELECT pd.producto_id, p1.nombre AS nombre_producto,
-              pd.producto_id_2, p2.nombre AS nombre_producto_2,
-              pd.cantidad, pd.precio_unitario, pd.tipo_masa, pd.aclaraciones
-       FROM pedido_detalle pd
-       JOIN productos p1 ON p1.id = pd.producto_id
-       LEFT JOIN productos p2 ON p2.id = pd.producto_id_2
-       WHERE pd.pedido_id = $1`,
-      [pedido.id]
-    );
-    pedido.productos = detalle.rows;
-  }
-
-  return pedidos.rows;
+  return resultado.rows.map(pedido => ({
+    ...pedido,
+    ya_facturado: pedido.estado_factura === 'emitida'
+  }));
 }
 
 async function obtenerConDetalle(id) {
