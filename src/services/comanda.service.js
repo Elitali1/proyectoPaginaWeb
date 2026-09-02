@@ -41,11 +41,11 @@ function armarComanda(pedido) {
     const nombre = item.nombre_producto_2
       ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
       : item.nombre_producto;
-    const masaTexto = item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra';
+    const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
     const subtotal = item.cantidad * Number(item.precio_unitario);
     total += subtotal;
 
-    lineas.push(`${item.cantidad}x ${nombre} - ${masaTexto}`);
+    lineas.push(`${item.cantidad}x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}`);
     if (item.aclaraciones) {
       lineas.push(`   (${item.aclaraciones})`);
     }
@@ -90,11 +90,11 @@ function imprimirTicketUnico(printer, pedido) {
       const nombre = item.nombre_producto_2
         ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
         : item.nombre_producto;
-      const masaTexto = item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra';
+      const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
       const subtotal = item.cantidad * Number(item.precio_unitario);
       total += subtotal;
 
-      printer.text(`${item.cantidad}x ${nombre} - ${masaTexto}`);
+      printer.text(`${item.cantidad}x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}`);
       if (item.aclaraciones) {
         printer.text(`   (${item.aclaraciones})`);
       }
