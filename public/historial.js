@@ -30,14 +30,27 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
 
-async function cargarHistorial() {
-  const respuesta = await fetch(`${API_URL}/pedidos`, {
+// Calcula la fecha de "hoy" en el día comercial (ajustado 6 horas, igual que el backend)
+function obtenerFechaComercial(offsetDias = 0) {
+  const ahora = new Date();
+  ahora.setHours(ahora.getHours() - 6);
+  ahora.setDate(ahora.getDate() + offsetDias);
+  return ahora.toISOString().split('T')[0];
+}
+
+async function cargarHistorial(fecha) {
+  const respuesta = await fetch(`${API_URL}/pedidos/por-fecha?fecha=${fecha}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   const pedidos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-historial');
   contenedor.innerHTML = '';
+
+  if (pedidos.length === 0) {
+    contenedor.innerHTML = '<p>No hay pedidos para esta fecha.</p>';
+    return;
+  }
 
   pedidos.forEach(pedido => {
     const div = document.createElement('div');
@@ -91,4 +104,23 @@ async function verPdf(pedidoId) {
   window.open(url, '_blank');
 }
 
-cargarHistorial();
+document.getElementById('filtro-fecha').addEventListener('change', (event) => {
+  cargarHistorial(event.target.value);
+});
+
+document.getElementById('btn-hoy').addEventListener('click', () => {
+  const fecha = obtenerFechaComercial(0);
+  document.getElementById('filtro-fecha').value = fecha;
+  cargarHistorial(fecha);
+});
+
+document.getElementById('btn-ayer').addEventListener('click', () => {
+  const fecha = obtenerFechaComercial(-1);
+  document.getElementById('filtro-fecha').value = fecha;
+  cargarHistorial(fecha);
+});
+
+// ---- Al cargar la página: mostrar hoy por defecto ----
+const fechaInicial = obtenerFechaComercial(0);
+document.getElementById('filtro-fecha').value = fechaInicial;
+cargarHistorial(fechaInicial);

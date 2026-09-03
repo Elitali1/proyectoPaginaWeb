@@ -285,5 +285,19 @@ async function confirmarImpresion(req, res) {
     res.status(500).json({ error: 'Error al confirmar impresión' });
   }
 }
+async function listarPorFecha(req, res) {
+  try {
+    const { fecha } = req.query;
 
-module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion };
+    if (!fecha) {
+      return res.status(400).json({ error: 'Falta indicar la fecha' });
+    }
+
+    const pedidos = await pedidosRepository.obtenerPorFecha(fecha);
+    res.json(pedidos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener pedidos por fecha' });
+  }
+}
+module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha };

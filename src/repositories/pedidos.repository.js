@@ -191,4 +191,43 @@ async function marcarImpresionCompleta(id) {
   );
   return resultado.rows[0];
 }
-module.exports = { obtenerTodos, obtenerConDetalle, crear, actualizarEstado, eliminar, actualizarProductos, marcarPendienteImpresion, obtenerPendientesImpresion, marcarImpresionCompleta };
+async function obtenerPorFecha(fecha) {
+  const resultado = await pool.query(`
+    SELECT
+      p.*,
+      COALESCE(SUM(pd.cantidad * pd.precio_unitario), 0) AS total,
+      fv.numero_comprobante,
+      fv.cae,
+      fv.vencimiento_cae,
+      fv.estado AS estado_factura,
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'producto_id', pd.producto_id,
+            'nombre_producto', p1.nombre,
+            'producto_id_2', pd.producto_id_2,
+            'nombre_producto_2', p2.nombre,
+            'cantidad', pd.cantidad,
+            'precio_unitario', pd.precio_unitario,
+            'tipo_masa', pd.tipo_masa,
+            'aclaraciones', pd.aclaraciones
+          )
+        ) FILTER (WHERE pd.id IS NOT NULL),
+        '[]'
+      ) AS productos
+    FROM pedidos p
+    LEFT JOIN pedido_detalle pd ON pd.pedido_id = p.id
+    LEFT JOIN productos p1 ON p1.id = pd.producto_id
+    LEFT JOIN productos p2 ON p2.id = pd.producto_id_2
+    LEFT JOIN facturas_venta fv ON fv.pedido_id = p.id
+    WHERE DATE((p.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') = $1
+    GROUP BY p.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
+    ORDER BY p.id DESC
+  `, [fecha]);
+
+  return resultado.rows.map(pedido => ({
+    ...pedido,
+    ya_facturado: pedido.estado_factura === 'emitida'
+  }));
+}
+module.exports = { obtenerTodos, obtenerConDetalle, crear, actualizarEstado, eliminar, actualizarProductos, marcarPendienteImpresion, obtenerPendientesImpresion, marcarImpresionCompleta, obtenerPorFecha };

@@ -4,6 +4,7 @@ const pedidosController = require('../controllers/pedidos.controller.js');
 const verificarToken = require('../middlewares/auth.js');
 
 router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
+router.get('/por-fecha', verificarToken, pedidosController.listarPorFecha);
 
 router.get('/', verificarToken, pedidosController.listar);
 router.get('/:id', verificarToken, pedidosController.obtenerUno);
