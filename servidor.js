@@ -19,6 +19,10 @@ const gastosRoutes = require('./src/routes/gastos.routes.js');
 const categoriasRoutes = require('./src/routes/categorias.routes.js');
 
 app.use(express.json());
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 // Security headers
 app.use(helmet({
