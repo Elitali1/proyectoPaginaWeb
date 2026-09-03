@@ -116,7 +116,19 @@ async function eliminar(id) {
   return resultado.rows[0];
 }
 
-async function actualizarProductos(id, productos) {
+async function actualizarProductos(id, datos) {
+  const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos } = datos;
+
+  const requiere_factura = medio_pago === 'transferencia';
+
+  await pool.query(
+    `UPDATE pedidos
+     SET cliente = $1, canal = $2, medio_pago = $3, requiere_factura = $4,
+         tipo_entrega = $5, direccion_entrega = $6, cuit_receptor = $7
+     WHERE id = $8`,
+    [cliente, canal, medio_pago, requiere_factura, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, id]
+  );
+
   await pool.query('DELETE FROM pedido_detalle WHERE pedido_id = $1', [id]);
 
   for (const item of productos) {

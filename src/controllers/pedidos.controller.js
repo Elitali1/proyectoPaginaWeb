@@ -245,7 +245,7 @@ async function imprimirComandaFisica(req, res) {
 async function modificarProductos(req, res) {
   try {
     const { id } = req.params;
-    const { productos } = req.body;
+    const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos } = req.body;
 
     const pedidoExistente = await pedidosRepository.obtenerConDetalle(id);
     if (!pedidoExistente) {
@@ -256,7 +256,9 @@ async function modificarProductos(req, res) {
       return res.status(400).json({ error: 'El pedido debe tener al menos un producto' });
     }
 
-    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, productos);
+    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, {
+      cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos
+    });
     res.json(pedidoActualizado);
   } catch (error) {
     console.error(error);
