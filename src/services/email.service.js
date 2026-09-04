@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.donchichopizza.com.ar';
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'no-reply@example.com';
 const SENDER_NAME = process.env.SENDER_NAME || 'Mi App';
 
