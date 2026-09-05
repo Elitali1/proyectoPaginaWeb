@@ -173,7 +173,7 @@ async function generarPdf(req, res) {
     const pdfBuffer = await generator.generate({
       emisor: {
         razonSocial: 'Donchichopizza',
-        domicilioComercial: 'Lanús, Buenos Aires',
+        domicilioComercial: 'General Villegas 4446,Lanús Buenos Aires',
         condicionIva: 'Responsable Monotributo',
         cuit: String(process.env.ARCA_CUIT),
         iibb: String(process.env.ARCA_CUIT),
