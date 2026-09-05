@@ -20,6 +20,5 @@ router.put('/:id/productos', verificarToken, pedidosController.modificarProducto
 router.post('/:id/confirmar-impresion', verificarToken, pedidosController.confirmarImpresion);
 router.post('/:id/anular-factura', verificarToken, verificarRol('admin'), pedidosController.anularFactura);
 router.get('/:id/pdf-nota-credito', verificarToken, pedidosController.generarPdfNotaCredito);
-router.get('/consultar-cuit/:cuit', verificarToken, pedidosController.probarConsultaCuit);
 
 module.exports = router;
