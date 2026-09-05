@@ -349,4 +349,81 @@ async function anularFactura(req, res) {
     res.status(500).json({ error: 'Error al emitir la nota de crédito' });
   }
 }
-module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha, anularFactura };
+async function generarPdfNotaCredito(req, res) {
+  try {
+    const { id } = req.params;
+
+    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    const factura = await facturasVentaRepository.obtenerPorPedido(id);
+    if (!factura) {
+      return res.status(400).json({ error: 'Este pedido no tiene factura asociada' });
+    }
+
+    const notasCredito = await notasCreditoRepository.obtenerPorFactura(factura.id);
+    if (notasCredito.length === 0) {
+      return res.status(400).json({ error: 'Este pedido no tiene ninguna nota de crédito emitida' });
+    }
+
+    const notaCredito = notasCredito[notasCredito.length - 1]; // la más reciente
+
+    const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
+    const nombreReceptor = pedido.cliente || 'Consumidor Final';
+
+    const importeTotal = Number(notaCredito.monto);
+    const fechaComprobante = new Date(notaCredito.creado_en).toISOString().split('T')[0];
+    const fechaVtoCae = notaCredito.vencimiento_cae
+      ? new Date(notaCredito.vencimiento_cae).toISOString().split('T')[0]
+      : '';
+
+    const generator = new InvoicePdfGenerator();
+    const pdfBuffer = await generator.generate({
+      emisor: {
+        razonSocial: 'Donchichopizza',
+        domicilioComercial: 'Lanús, Buenos Aires',
+        condicionIva: 'Responsable Monotributo',
+        cuit: String(process.env.ARCA_CUIT),
+        iibb: String(process.env.ARCA_CUIT),
+        fechaInicioActividades: '2023-07-02'
+      },
+      receptor: {
+        razonSocial: nombreReceptor,
+        condicionIva: cuitReceptor ? 'Responsable Inscripto' : 'Consumidor Final',
+        documentoTipo: cuitReceptor ? 'CUIT' : 'DNI',
+        documentoNro: cuitReceptor ? String(cuitReceptor) : '0'
+      },
+      cbteTipo: 13,
+      cbteLetra: 'C',
+      puntoVenta: Number(process.env.ARCA_PTO_VTA),
+      cbteDesde: Number(notaCredito.numero_comprobante),
+      cbteHasta: Number(notaCredito.numero_comprobante),
+      cbteFecha: fechaComprobante,
+      concepto: 1,
+      items: [
+        {
+          descripcion: notaCredito.motivo || 'Ajuste sobre factura emitida',
+          cantidad: 1,
+          unidadMedida: 'unidad',
+          precioUnitario: importeTotal,
+          subtotal: importeTotal
+        }
+      ],
+      importeNetoGravado: importeTotal,
+      importeIva: 0,
+      importeTotal,
+      cae: notaCredito.cae,
+      caeFechaVencimiento: fechaVtoCae
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=nota-credito-${notaCredito.numero_comprobante}.pdf`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error al generar PDF de nota de crédito:', error);
+    res.status(500).json({ error: 'Error al generar el PDF de la nota de crédito' });
+  }
+}
+module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha, anularFactura, generarPdfNotaCredito };

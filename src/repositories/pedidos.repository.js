@@ -200,6 +200,9 @@ async function obtenerPorFecha(fecha) {
       fv.cae,
       fv.vencimiento_cae,
       fv.estado AS estado_factura,
+      EXISTS (
+        SELECT 1 FROM notas_credito nc WHERE nc.factura_id = fv.id
+      ) AS tiene_nota_credito,
       COALESCE(
         json_agg(
           json_build_object(
@@ -221,7 +224,7 @@ async function obtenerPorFecha(fecha) {
     LEFT JOIN productos p2 ON p2.id = pd.producto_id_2
     LEFT JOIN facturas_venta fv ON fv.pedido_id = p.id
     WHERE DATE((p.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') = $1
-    GROUP BY p.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
+    GROUP BY p.id, fv.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
     ORDER BY p.id DESC
   `, [fecha]);
 
