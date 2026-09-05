@@ -17,5 +17,6 @@ router.get('/:id/comanda', verificarToken, pedidosController.verComanda);
 router.post('/:id/imprimir-comanda', verificarToken, pedidosController.imprimirComandaFisica);
 router.put('/:id/productos', verificarToken, pedidosController.modificarProductos);
 router.post('/:id/confirmar-impresion', verificarToken, pedidosController.confirmarImpresion);
+router.post('/:id/anular-factura', verificarToken, verificarRol('admin'), pedidosController.anularFactura);
 
 module.exports = router;

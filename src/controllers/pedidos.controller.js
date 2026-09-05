@@ -4,6 +4,7 @@ const facturasVentaRepository = require('../repositories/facturasVenta.repositor
 const clientesRepository = require('../repositories/clientes.repository.js');
 const { InvoicePdfGenerator } = require('@arcasdk/pdf');
 const comandaService = require('../services/comanda.service.js');
+const notasCreditoRepository = require('../repositories/notasCredito.repository.js');
 
 async function listar(req, res) {
   try {
@@ -300,4 +301,52 @@ async function listarPorFecha(req, res) {
     res.status(500).json({ error: 'Error al obtener pedidos por fecha' });
   }
 }
-module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha };
+async function anularFactura(req, res) {
+  try {
+    const { id } = req.params;
+    const { monto, motivo } = req.body;
+
+    const factura = await facturasVentaRepository.obtenerPorPedido(id);
+
+    if (!factura || factura.estado !== 'emitida') {
+      return res.status(400).json({ error: 'Este pedido no tiene una factura emitida para anular' });
+    }
+
+    const notasExistentes = await notasCreditoRepository.obtenerPorFactura(factura.id);
+    const totalYaAcreditado = notasExistentes.reduce((suma, nc) => suma + Number(nc.monto), 0);
+
+    if (totalYaAcreditado + Number(monto) > Number(factura.monto)) {
+      return res.status(400).json({ error: 'El monto a acreditar supera el total de la factura' });
+    }
+
+    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
+
+    const fechaFactura = new Date(factura.creado_en).toISOString().split('T')[0].replace(/-/g, '');
+
+    const resultadoArca = await arcaService.emitirNotaCredito({
+      monto: Number(monto),
+      cuitReceptor,
+      facturaAsociada: {
+        tipoComprobante: 11,
+        numeroComprobante: factura.numero_comprobante,
+        fecha: fechaFactura
+      }
+    });
+
+    const notaCredito = await notasCreditoRepository.crear({
+      factura_id: factura.id,
+      numero_comprobante: resultadoArca.numeroComprobante,
+      cae: resultadoArca.cae,
+      vencimiento_cae: resultadoArca.caeFchVto,
+      monto: Number(monto),
+      motivo
+    });
+
+    res.json(notaCredito);
+  } catch (error) {
+    console.error('Error al anular factura:', error);
+    res.status(500).json({ error: 'Error al emitir la nota de crédito' });
+  }
+}
+module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha, anularFactura };

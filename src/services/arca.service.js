@@ -57,5 +57,56 @@ async function emitirFactura({ monto, cuitReceptor }) {
     caeFchVto: resultado.caeFchVto
   };
 }
+async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada }) {
+  const ptoVta = Number(process.env.ARCA_PTO_VTA);
+  const cbteTipoNC = 13; // Nota de Crédito C (contraparte de Factura C = 11)
 
-module.exports = { emitirFactura };
+  const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipoNC);
+  const nuevoNumero = ultimoComprobante.cbteNro + 1;
+
+  const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+
+  const docTipo = cuitReceptor ? 80 : 99;
+  const docNro = cuitReceptor || 0;
+  const condicionIva = cuitReceptor ? 1 : 5;
+
+  const resultado = await arca.electronicBillingService.createVoucher({
+    CantReg: 1,
+    PtoVta: ptoVta,
+    CbteTipo: cbteTipoNC,
+    Concepto: 1,
+    DocTipo: docTipo,
+    DocNro: docNro,
+    CondicionIVAReceptorId: condicionIva,
+    CbteDesde: nuevoNumero,
+    CbteHasta: nuevoNumero,
+    CbteFch: fecha,
+    ImpTotal: monto,
+    ImpTotConc: 0,
+    ImpNeto: monto,
+    ImpOpEx: 0,
+    ImpTrib: 0,
+    ImpIVA: 0,
+    MonId: 'PES',
+    MonCotiz: 1,
+    CbtesAsoc: [
+      {
+        Tipo: facturaAsociada.tipoComprobante,
+        PtoVta: ptoVta,
+        Nro: facturaAsociada.numeroComprobante,
+        Cuit: Number(process.env.ARCA_CUIT),
+        CbteFch: facturaAsociada.fecha
+      }
+    ]
+  });
+
+  return {
+    numeroComprobante: nuevoNumero,
+    cae: resultado.cae,
+    caeFchVto: resultado.caeFchVto
+  };
+}
+
+
+
+module.exports = { emitirFactura, emitirNotaCredito };
