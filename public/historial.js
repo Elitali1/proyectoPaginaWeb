@@ -70,7 +70,9 @@ async function cargarHistorial(fecha) {
     let infoFactura = '';
     if (pedido.requiere_factura) {
       infoFactura = pedido.ya_facturado
-        ? `Factura N° ${pedido.numero_comprobante} - CAE: ${pedido.cae} (vto: ${pedido.vencimiento_cae ? pedido.vencimiento_cae.split('T')[0] : ''}) <button type="button" class="btn-ver-pdf" data-id="${pedido.id}">Ver PDF</button>`
+        ? `Factura N° ${pedido.numero_comprobante} - CAE: ${pedido.cae} (vto: ${pedido.vencimiento_cae ? pedido.vencimiento_cae.split('T')[0] : ''})
+           <button type="button" class="btn-ver-pdf" data-id="${pedido.id}">Ver PDF</button>
+           <button type="button" class="btn-anular-factura" data-id="${pedido.id}" data-total="${pedido.total}">Anular factura</button>`
         : 'Requiere factura - sin emitir';
     }
 
@@ -82,9 +84,15 @@ async function cargarHistorial(fecha) {
       ${infoFactura ? `${infoFactura}<br>` : ''}
     `;
     contenedor.appendChild(div);
+
     const botonPdf = div.querySelector('.btn-ver-pdf');
     if (botonPdf) {
       botonPdf.addEventListener('click', () => verPdf(botonPdf.dataset.id));
+    }
+
+    const botonAnular = div.querySelector('.btn-anular-factura');
+    if (botonAnular) {
+      botonAnular.addEventListener('click', () => anularFactura(botonAnular.dataset.id, Number(botonAnular.dataset.total), fecha));
     }
   });
 }
@@ -102,6 +110,43 @@ async function verPdf(pedidoId) {
   const blob = await respuesta.blob();
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
+}
+
+async function anularFactura(pedidoId, totalFactura, fechaActual) {
+  const montoTexto = prompt(`¿Qué monto querés acreditar? (Total facturado: $${formatearPrecio(totalFactura)})`, totalFactura);
+
+  if (montoTexto === null) return; // canceló el prompt
+
+  const monto = Number(montoTexto);
+
+  if (!monto || monto <= 0 || monto > totalFactura) {
+    alert('Monto inválido. Tiene que ser mayor a $0 y no superar el total de la factura.');
+    return;
+  }
+
+  const motivo = prompt('Motivo de la anulación (opcional):', '') || null;
+
+  const confirmar = confirm(`¿Confirmás emitir una Nota de Crédito por $${formatearPrecio(monto)}? Esta acción queda registrada ante ARCA y no se puede deshacer.`);
+  if (!confirmar) return;
+
+  const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}/anular-factura`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ monto, motivo })
+  });
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    alert(datos.error || 'Error al emitir la nota de crédito');
+    return;
+  }
+
+  alert(`Nota de crédito emitida. CAE: ${datos.cae}`);
+  cargarHistorial(fechaActual);
 }
 
 document.getElementById('filtro-fecha').addEventListener('change', (event) => {
