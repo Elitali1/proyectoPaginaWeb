@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pedidosController = require('../controllers/pedidos.controller.js');
 const verificarToken = require('../middlewares/auth.js');
+const verificarRol = require('../middlewares/verificarRol.js');
 
 router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
 router.get('/por-fecha', verificarToken, pedidosController.listarPorFecha);
