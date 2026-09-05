@@ -106,7 +106,31 @@ async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada }) {
     caeFchVto: resultado.caeFchVto
   };
 }
+async function consultarContribuyente(cuit) {
+  const datos = await arca.registerScopeTenService.getTaxpayerDetails(Number(cuit));
+
+  if (!datos || datos.errorConstancia) {
+    return null;
+  }
+
+  let condicionIva = 'Consumidor Final';
+  if (datos.datosMonotributo) {
+    condicionIva = 'Responsable Monotributo';
+  } else if (datos.datosRegimenGeneral) {
+    condicionIva = 'Responsable Inscripto';
+  }
+
+  const razonSocial = datos.datosGenerales?.dataFiscal?.razonSocial
+    || `${datos.datosGenerales?.nombre || ''} ${datos.datosGenerales?.apellido || ''}`.trim()
+    || null;
+
+  return {
+    cuit: datos.idPersona,
+    razonSocial,
+    condicionIva
+  };
+}
 
 
 
-module.exports = { emitirFactura, emitirNotaCredito };
+module.exports = { emitirFactura, emitirNotaCredito, consultarContribuyente };

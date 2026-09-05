@@ -426,4 +426,14 @@ async function generarPdfNotaCredito(req, res) {
     res.status(500).json({ error: 'Error al generar el PDF de la nota de crédito' });
   }
 }
-module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha, anularFactura, generarPdfNotaCredito };
+async function probarConsultaCuit(req, res) {
+  try {
+    const { cuit } = req.params;
+    const datos = await arcaService.consultarContribuyente(cuit);
+    res.json(datos);
+  } catch (error) {
+    console.error('Error al consultar CUIT:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+module.exports = { listar, obtenerUno, crear, actualizarEstado, eliminar, facturar, generarPdf, verComanda, modificarProductos, imprimirComandaFisica, obtenerPendientesImpresion, confirmarImpresion, listarPorFecha, anularFactura, generarPdfNotaCredito, probarConsultaCuit };
