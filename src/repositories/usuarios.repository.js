@@ -11,7 +11,7 @@ async function obtenerPorId(id) {
 }
 
 async function obtenerPorEmail(email) {
-  const resultado = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+  const resultado = await pool.query('SELECT * FROM usuarios WHERE LOWER(email) = LOWER($1)', [email]);
   return resultado.rows[0];
 }
 
@@ -39,11 +39,12 @@ async function setLockUntil(email, until) {
   return resultado.rows[0];
 }
 
+
 async function crear(datos) {
   const { nombre, email, password_hash, rol } = datos;
   const resultado = await pool.query(
     `INSERT INTO usuarios (nombre, email, password_hash, rol)
-     VALUES ($1, $2, $3, $4)
+     VALUES ($1, LOWER($2), $3, $4)
      RETURNING id, nombre, email, rol, creado_en`,
     [nombre, email, password_hash, rol ?? 'cajero']
   );
