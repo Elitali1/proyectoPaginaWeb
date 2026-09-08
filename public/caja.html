@@ -36,6 +36,9 @@
 
   <section>
     <h2>Historial de cierres</h2>
+    <label>Desde: <input type="date" id="cierres-desde"></label>
+    <label>Hasta: <input type="date" id="cierres-hasta"></label>
+    <button type="button" id="btn-filtrar-cierres">Filtrar</button>
     <div id="contenedor-cierres"></div>
   </section>
   
@@ -50,6 +53,9 @@
   </form>
 
   <h3>Gastos cargados</h3>
+  <label>Desde: <input type="date" id="gastos-desde"></label>
+  <label>Hasta: <input type="date" id="gastos-hasta"></label>
+  <button type="button" id="btn-filtrar-gastos">Filtrar</button>
   <div id="contenedor-gastos"></div>
 </section>
 
@@ -65,10 +71,5 @@
 
   <script src="auth-helpers.js"></script>
   <script src="caja.js"></script>
-  <!-- Animations -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-  <script src="animaciones.js"></script>
 </body>
 </html>

@@ -4,7 +4,11 @@ const gastosRepository = require('../repositories/gastos.repository.js');
 
 async function listar(req, res) {
   try {
-    const cierres = await cierreCajaRepository.obtenerTodos();
+    const { desde, hasta } = req.query;
+
+    const cierres = desde && hasta
+      ? await cierreCajaRepository.obtenerPorRangoFechas(desde, hasta)
+      : await cierreCajaRepository.obtenerTodos();
 
     const cierresConDetalle = await Promise.all(
       cierres.map(async (cierre) => {

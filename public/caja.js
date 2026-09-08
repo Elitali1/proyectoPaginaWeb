@@ -19,14 +19,31 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
 
-async function cargarCierres() {
-  const respuesta = await fetch(`${API_URL}/cierre-caja`, {
+// Devuelve { desde, hasta } cubriendo el último mes (hoy y 30 días atrás)
+function obtenerRangoUltimoMes() {
+  const hoy = new Date();
+  const haceUnMes = new Date();
+  haceUnMes.setDate(hoy.getDate() - 30);
+
+  return {
+    desde: haceUnMes.toISOString().split('T')[0],
+    hasta: hoy.toISOString().split('T')[0]
+  };
+}
+
+async function cargarCierres(desde, hasta) {
+  const respuesta = await fetch(`${API_URL}/cierre-caja?desde=${desde}&hasta=${hasta}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   const cierres = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-cierres');
   contenedor.innerHTML = '';
+
+  if (cierres.length === 0) {
+    contenedor.innerHTML = '<p>No hay cierres en este rango de fechas.</p>';
+    return;
+  }
 
   cierres.forEach(cierre => {
     const div = document.createElement('div');
@@ -60,14 +77,19 @@ async function cargarCierres() {
   });
 }
 
-async function cargarGastos() {
-  const respuesta = await fetch(`${API_URL}/gastos`, {
+async function cargarGastos(desde, hasta) {
+  const respuesta = await fetch(`${API_URL}/gastos?desde=${desde}&hasta=${hasta}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   const gastos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-gastos');
   contenedor.innerHTML = '';
+
+  if (gastos.length === 0) {
+    contenedor.innerHTML = '<p>No hay gastos en este rango de fechas.</p>';
+    return;
+  }
 
   gastos.forEach(gasto => {
     const div = document.createElement('div');
@@ -87,7 +109,9 @@ async function cargarGastos() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      cargarGastos();
+      const desdeActual = document.getElementById('gastos-desde').value;
+      const hastaActual = document.getElementById('gastos-hasta').value;
+      cargarGastos(desdeActual, hastaActual);
     });
   });
 }
@@ -112,7 +136,9 @@ document.getElementById('formulario-gasto').addEventListener('submit', async (ev
   });
 
   document.getElementById('formulario-gasto').reset();
-  cargarGastos();
+  const desdeActual = document.getElementById('gastos-desde').value;
+  const hastaActual = document.getElementById('gastos-hasta').value;
+  cargarGastos(desdeActual, hastaActual);
 });
 
 document.getElementById('formulario-balance').addEventListener('submit', async (event) => {
@@ -173,8 +199,38 @@ document.getElementById('formulario-cierre').addEventListener('submit', async (e
   }
 
   document.getElementById('formulario-cierre').reset();
-  cargarCierres();
+  const desdeActual = document.getElementById('cierres-desde').value;
+  const hastaActual = document.getElementById('cierres-hasta').value;
+  cargarCierres(desdeActual, hastaActual);
 });
 
-cargarCierres();
-cargarGastos();
+document.getElementById('btn-filtrar-cierres').addEventListener('click', () => {
+  const desde = document.getElementById('cierres-desde').value;
+  const hasta = document.getElementById('cierres-hasta').value;
+  if (!desde || !hasta) {
+    alert('Elegí ambas fechas para filtrar');
+    return;
+  }
+  cargarCierres(desde, hasta);
+});
+
+document.getElementById('btn-filtrar-gastos').addEventListener('click', () => {
+  const desde = document.getElementById('gastos-desde').value;
+  const hasta = document.getElementById('gastos-hasta').value;
+  if (!desde || !hasta) {
+    alert('Elegí ambas fechas para filtrar');
+    return;
+  }
+  cargarGastos(desde, hasta);
+});
+
+// ---- Al cargar la página: mostrar el último mes por defecto ----
+const rangoInicial = obtenerRangoUltimoMes();
+
+document.getElementById('cierres-desde').value = rangoInicial.desde;
+document.getElementById('cierres-hasta').value = rangoInicial.hasta;
+cargarCierres(rangoInicial.desde, rangoInicial.hasta);
+
+document.getElementById('gastos-desde').value = rangoInicial.desde;
+document.getElementById('gastos-hasta').value = rangoInicial.hasta;
+cargarGastos(rangoInicial.desde, rangoInicial.hasta);

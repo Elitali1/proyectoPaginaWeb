@@ -72,5 +72,11 @@ async function actualizar(fecha, cerrado_por) {
   );
   return resultado.rows[0];
 }
-
-module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, crear, obtenerTodos, obtenerPorFecha, actualizar };
+async function obtenerPorRangoFechas(desde, hasta) {
+  const resultado = await pool.query(
+    'SELECT * FROM cierre_caja WHERE fecha BETWEEN $1 AND $2 ORDER BY fecha DESC',
+    [desde, hasta]
+  );
+  return resultado.rows;
+}
+module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, crear, obtenerTodos, obtenerPorFecha, actualizar, obtenerPorRangoFechas };
