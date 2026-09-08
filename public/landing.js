@@ -105,6 +105,25 @@ async function cargarGaleria() {
     contenedor.innerHTML = '';
   }
 }
+function inicializarLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('.galeria-item')) {
+      const item = event.target.closest('.galeria-item');
+      const img = item.querySelector('img');
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.remove('oculto');
+    }
+  });
+
+  lightbox.addEventListener('click', () => {
+    lightbox.classList.add('oculto');
+  });
+}
 
 cargarMenuPublico();
 cargarGaleria();
+inicializarLightbox();

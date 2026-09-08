@@ -438,7 +438,46 @@ body.landing {
 .landing-footer a {
   color: #F3E8D3;
 }
+/* ---- Lightbox (foto ampliada al hacer clic) ---- */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(43, 33, 28, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  cursor: zoom-out;
+}
 
+.lightbox.oculto {
+  display: none;
+}
+
+.lightbox img {
+  max-width: 90%;
+  max-height: 85%;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.lightbox-cerrar {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: #F3E8D3;
+  font-size: 2.5rem;
+  font-weight: 300;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.galeria-item {
+  cursor: zoom-in;
+}
 /* ---- Responsive ---- */
 @media (max-width: 800px) {
   .hero {
