@@ -21,7 +21,7 @@ async function calcularVentasPorProducto(fecha) {
   const resultado = await pool.query(
     `SELECT
        c.nombre AS categoria_nombre,
-       p.nombre AS producto_nombre,
+       CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END AS producto_nombre,
        SUM(pd.cantidad) AS cantidad_vendida
      FROM pedido_detalle pd
      JOIN pedidos ped ON ped.id = pd.pedido_id
@@ -29,8 +29,8 @@ async function calcularVentasPorProducto(fecha) {
      LEFT JOIN categorias c ON c.id = p.categoria_id
      WHERE DATE((ped.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') = $1
        AND ped.estado != 'cancelado'
-     GROUP BY c.nombre, p.nombre
-     ORDER BY c.nombre, p.nombre`,
+     GROUP BY c.nombre, CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END
+     ORDER BY c.nombre, producto_nombre`,
     [fecha]
   );
   return resultado.rows;
