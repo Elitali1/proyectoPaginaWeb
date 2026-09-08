@@ -5,7 +5,16 @@ const gastosRepository = require('../repositories/gastos.repository.js');
 async function listar(req, res) {
   try {
     const cierres = await cierreCajaRepository.obtenerTodos();
-    res.json(cierres);
+
+    const cierresConDetalle = await Promise.all(
+      cierres.map(async (cierre) => {
+        const fecha = new Date(cierre.fecha).toISOString().split('T')[0];
+        const ventasPorProducto = await cierreCajaRepository.calcularVentasPorProducto(fecha);
+        return { ...cierre, ventasPorProducto };
+      })
+    );
+
+    res.json(cierresConDetalle);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al obtener cierres de caja' });

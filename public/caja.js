@@ -31,8 +31,28 @@ async function cargarCierres() {
   cierres.forEach(cierre => {
     const div = document.createElement('div');
     div.className = 'pedido';
+
+    // Agrupar el desglose de ventas por categoría
+    const grupos = {};
+    (cierre.ventasPorProducto || []).forEach(item => {
+      const categoria = item.categoria_nombre || 'Otros';
+      if (!grupos[categoria]) {
+        grupos[categoria] = [];
+      }
+      grupos[categoria].push(item);
+    });
+
+    let detalleVentasHtml = '';
+    Object.keys(grupos).forEach(categoria => {
+      detalleVentasHtml += `<strong>${categoria}</strong><br>`;
+      grupos[categoria].forEach(item => {
+        detalleVentasHtml += `${item.producto_nombre}: ${item.cantidad_vendida}<br>`;
+      });
+    });
+
     div.innerHTML = `
       <strong>${cierre.fecha.split('T')[0]}</strong><br>
+      ${detalleVentasHtml}
       Efectivo: $${formatearPrecio(cierre.total_efectivo)} | Transferencia: $${formatearPrecio(cierre.total_transferencia)}<br>
       <strong>Total: $${formatearPrecio(cierre.total_general)}</strong>
     `;

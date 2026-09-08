@@ -17,6 +17,24 @@ async function calcularTotalesDelDia(fecha) {
   );
   return resultado.rows[0];
 }
+async function calcularVentasPorProducto(fecha) {
+  const resultado = await pool.query(
+    `SELECT
+       c.nombre AS categoria_nombre,
+       p.nombre AS producto_nombre,
+       SUM(pd.cantidad) AS cantidad_vendida
+     FROM pedido_detalle pd
+     JOIN pedidos ped ON ped.id = pd.pedido_id
+     JOIN productos p ON p.id = pd.producto_id
+     LEFT JOIN categorias c ON c.id = p.categoria_id
+     WHERE DATE((ped.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') = $1
+       AND ped.estado != 'cancelado'
+     GROUP BY c.nombre, p.nombre
+     ORDER BY c.nombre, p.nombre`,
+    [fecha]
+  );
+  return resultado.rows;
+}
 
 async function crear(fecha, cerrado_por) {
   const totales = await calcularTotalesDelDia(fecha);
@@ -55,4 +73,4 @@ async function actualizar(fecha, cerrado_por) {
   return resultado.rows[0];
 }
 
- module.exports = { calcularTotalesDelDia, crear, obtenerTodos, obtenerPorFecha, actualizar };
+module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, crear, obtenerTodos, obtenerPorFecha, actualizar };
