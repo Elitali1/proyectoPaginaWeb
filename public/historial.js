@@ -87,7 +87,8 @@ async function cargarHistorial(fecha) {
        <button type="button" class="btn-ver-pdf" data-id="${pedido.id}">Ver PDF</button>
        <button type="button" class="btn-anular-factura" data-id="${pedido.id}" data-total="${pedido.total}">Anular factura</button>
        ${botonVerNCHtml}`
-        : "Requiere factura - sin emitir";
+        : `Requiere factura - sin emitir
+       <button type="button" class="btn-facturar-historial" data-id="${pedido.id}">Facturar</button>`;
     }
 
     div.innerHTML = `
@@ -118,6 +119,12 @@ async function cargarHistorial(fecha) {
     if (botonVerNC) {
       botonVerNC.addEventListener("click", () =>
         verNotaCredito(botonVerNC.dataset.id),
+      );
+    }
+    const botonFacturar = div.querySelector(".btn-facturar-historial");
+    if (botonFacturar) {
+      botonFacturar.addEventListener("click", () =>
+        facturarDesdeHistorial(botonFacturar.dataset.id,botonFacturar,fecha),
       );
     }
   });
@@ -204,6 +211,28 @@ async function anularFactura(pedidoId, totalFactura, fechaActual) {
   }
 
   alert(`Nota de crédito emitida. CAE: ${datos.cae}`);
+  cargarHistorial(fechaActual);
+}
+
+async function facturarDesdeHistorial(pedidoId, boton, fechaActual) {
+  boton.disabled = true;
+  boton.textContent = "Facturando...";
+
+  const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}/facturar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    alert(datos.error || "Error al facturar");
+    boton.disabled = false;
+    boton.textContent = "Facturar";
+    return;
+  }
+
+  alert(`Factura emitida. CAE: ${datos.cae}`);
   cargarHistorial(fechaActual);
 }
 
