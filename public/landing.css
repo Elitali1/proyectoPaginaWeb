@@ -272,6 +272,20 @@ body.landing {
   margin: 4px 0 0 0;
 }
 
+/* ---- Título de categoría dentro del menú ---- */
+.menu-categoria-titulo {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  margin: 20px 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.menu-categoria-titulo:first-child {
+  margin-top: 0;
+}
+
 .menu-item {
   display: flex;
   justify-content: space-between;
@@ -302,6 +316,26 @@ body.landing {
   color: var(--color-text-muted);
   padding: 24px 0;
 }
+
+/* ---- Título de categoría dentro de la galería ---- */
+.galeria-categoria-titulo {
+  font-family: var(--font-display);
+  color: var(--color-primary);
+  font-size: 1.3rem;
+  margin: 32px 0 12px 0;
+}
+
+.galeria-categoria-titulo:first-child {
+  margin-top: 0;
+}
+
+.galeria-subgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .galeria-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
