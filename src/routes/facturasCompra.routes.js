@@ -8,5 +8,7 @@ router.get('/', verificarToken, verificarRol('admin'), facturasCompraController.
 router.get('/:id', verificarToken, verificarRol('admin'), facturasCompraController.obtenerUna);
 router.post('/', verificarToken, verificarRol('admin'), facturasCompraController.crear);
 router.delete('/:id', verificarToken, verificarRol('admin'), facturasCompraController.eliminar);
+router.post('/:id/detalle', verificarToken, verificarRol('admin'), facturasCompraController.agregarDetalleFactura);
+router.get('/:id/detalle', verificarToken, verificarRol('admin'), facturasCompraController.obtenerDetalleDeFactura);
 
 module.exports = router;

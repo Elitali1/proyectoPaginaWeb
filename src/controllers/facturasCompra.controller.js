@@ -61,5 +61,52 @@ async function eliminar(req, res) {
     res.status(500).json({ error: 'Error al eliminar factura' });
   }
 }
+async function agregarDetalleFactura(req, res) {
+  try {
+    const { id } = req.params;
+    const { items } = req.body;
 
-module.exports = { listar, obtenerUna, crear, eliminar };
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Necesitás cargar al menos un item' });
+    }
+
+    const alertas = [];
+    for (const item of items) {
+      const ultimoPrecio = await facturasCompraRepository.obtenerUltimoPrecioInsumo(item.insumo_id);
+      if (ultimoPrecio && Number(ultimoPrecio.precio_unitario) > 0) {
+        const precioAnterior = Number(ultimoPrecio.precio_unitario);
+        const precioNuevo = Number(item.precio_unitario);
+        const variacionPorcentual = ((precioNuevo - precioAnterior) / precioAnterior) * 100;
+
+        if (Math.abs(variacionPorcentual) >= 1) {
+          alertas.push({
+            insumo_id: item.insumo_id,
+            precioAnterior,
+            precioNuevo,
+            variacionPorcentual: Number(variacionPorcentual.toFixed(1))
+          });
+        }
+      }
+    }
+
+    const detalle = await facturasCompraRepository.agregarDetalle(id, items);
+
+    res.status(201).json({ detalle, alertas });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message || 'Error al cargar el detalle de la compra' });
+  }
+}
+
+async function obtenerDetalleDeFactura(req, res) {
+  try {
+    const { id } = req.params;
+    const detalle = await facturasCompraRepository.obtenerDetallePorFactura(id);
+    res.json(detalle);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener el detalle' });
+  }
+}
+
+module.exports = { listar, obtenerUna, crear, eliminar, agregarDetalleFactura, obtenerDetalleDeFactura };
