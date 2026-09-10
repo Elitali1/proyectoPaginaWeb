@@ -38,6 +38,25 @@
     </form>
   </section>
 
+  <section id="seccion-detalle-compra" class="oculto">
+    <h2>Itemizar esta compra</h2>
+    <p>Cargá cada insumo comprado, para actualizar el stock y el costo automáticamente.</p>
+
+    <label>Insumo:
+      <select id="detalle-insumo"></select>
+    </label>
+    <label>Cantidad: <input type="number" id="detalle-cantidad" step="0.01" min="0.01"></label>
+    <label>Precio unitario: <input type="number" id="detalle-precio" step="0.01" min="0.01"></label>
+    <button type="button" id="btn-agregar-detalle">Agregar item</button>
+
+    <ul id="lista-detalle-compra"></ul>
+
+    <button type="button" id="btn-guardar-detalle">Guardar detalle de la compra</button>
+    <button type="button" id="btn-omitir-detalle">Omitir (no itemizar esta compra)</button>
+
+    <div id="alertas-precio"></div>
+  </section>
+
   <section>
     <h2>Historial de compras</h2>
 
@@ -52,10 +71,5 @@
 
   <script src="auth-helpers.js"></script>
   <script src="compras.js"></script>
-  <!-- Animations -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-  <script src="animaciones.js"></script>
 </body>
 </html>
