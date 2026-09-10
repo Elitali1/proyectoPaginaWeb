@@ -1,0 +1,46 @@
+const pool = require('../config/db.js');
+
+async function obtenerTodos() {
+  const resultado = await pool.query('SELECT * FROM insumos ORDER BY nombre');
+  return resultado.rows;
+}
+
+async function obtenerPorId(id) {
+  const resultado = await pool.query('SELECT * FROM insumos WHERE id = $1', [id]);
+  return resultado.rows[0];
+}
+
+async function crear(datos) {
+  const { nombre, unidad_medida } = datos;
+  const resultado = await pool.query(
+    `INSERT INTO insumos (nombre, unidad_medida)
+     VALUES ($1, $2)
+     RETURNING *`,
+    [nombre, unidad_medida]
+  );
+  return resultado.rows[0];
+}
+
+async function actualizarStockYCosto(id, cantidadAgregada, nuevoCostoUnitario) {
+  const resultado = await pool.query(
+    `UPDATE insumos
+     SET stock_actual = stock_actual + $1, costo_unitario = $2
+     WHERE id = $3
+     RETURNING *`,
+    [cantidadAgregada, nuevoCostoUnitario, id]
+  );
+  return resultado.rows[0];
+}
+
+async function ajustarStock(id, cantidadDelta) {
+  const resultado = await pool.query(
+    `UPDATE insumos
+     SET stock_actual = stock_actual + $1
+     WHERE id = $2
+     RETURNING *`,
+    [cantidadDelta, id]
+  );
+  return resultado.rows[0];
+}
+
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock };
