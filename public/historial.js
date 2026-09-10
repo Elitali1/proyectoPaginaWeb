@@ -10,6 +10,7 @@ document.getElementById("info-usuario").textContent =
   `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin([
   "link-productos",
+  "link-insumos",
   "link-compras",
   "link-caja",
   "link-usuarios",
@@ -36,7 +37,6 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString("es-AR");
 }
 
-// Calcula la fecha de "hoy" en el día comercial (ajustado 6 horas, igual que el backend)
 function obtenerFechaComercial(offsetDias = 0) {
   const ahora = new Date();
   ahora.setHours(ahora.getHours() - 6);
@@ -169,7 +169,7 @@ async function anularFactura(pedidoId, totalFactura, fechaActual) {
     totalFactura,
   );
 
-  if (montoTexto === null) return; // canceló el prompt
+  if (montoTexto === null) return;
 
   const monto = Number(montoTexto);
 
@@ -252,7 +252,6 @@ document.getElementById("btn-ayer").addEventListener("click", () => {
   cargarHistorial(fecha);
 });
 
-// ---- Al cargar la página: mostrar hoy por defecto ----
 const fechaInicial = obtenerFechaComercial(0);
 document.getElementById("filtro-fecha").value = fechaInicial;
 cargarHistorial(fechaInicial);

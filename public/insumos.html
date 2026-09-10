@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Insumos</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="barra-superior">
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Insumos</h1>
+    </div>
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
+      <a href="insumos.html" id="link-insumos">Insumos</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2>Agregar insumo</h2>
+    <form id="formulario-insumo">
+      <label>Nombre: <input type="text" id="insumo-nombre" placeholder="Ej: Harina 000" required></label>
+      <label>Unidad de medida:
+        <select id="insumo-unidad">
+          <option value="kg">Kilogramos (kg)</option>
+          <option value="litro">Litros</option>
+          <option value="unidad">Unidad</option>
+          <option value="paquete">Paquete</option>
+        </select>
+      </label>
+      <button type="submit">Guardar insumo</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Insumos y stock actual</h2>
+    <div id="contenedor-insumos"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="insumos.js"></script>
+</body>
+</html>

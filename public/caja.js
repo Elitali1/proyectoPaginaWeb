@@ -7,7 +7,7 @@ if (!token) {
 
 const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-compras', 'link-caja', 'link-usuarios']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios']);
 
 document.getElementById('btn-logout').addEventListener('click', () => {
   localStorage.removeItem('token');
@@ -19,7 +19,6 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
 
-// Devuelve { desde, hasta } cubriendo el último mes (hoy y 30 días atrás)
 function obtenerRangoUltimoMes() {
   const hoy = new Date();
   const haceUnMes = new Date();
@@ -49,7 +48,6 @@ async function cargarCierres(desde, hasta) {
     const div = document.createElement('div');
     div.className = 'pedido';
 
-    // Agrupar el desglose de ventas por categoría
     const grupos = {};
     (cierre.ventasPorProducto || []).forEach(item => {
       const categoria = item.categoria_nombre || 'Otros';
@@ -224,7 +222,6 @@ document.getElementById('btn-filtrar-gastos').addEventListener('click', () => {
   cargarGastos(desde, hasta);
 });
 
-// ---- Al cargar la página: mostrar el último mes por defecto ----
 const rangoInicial = obtenerRangoUltimoMes();
 
 document.getElementById('cierres-desde').value = rangoInicial.desde;
