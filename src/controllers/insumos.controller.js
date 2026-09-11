@@ -44,5 +44,22 @@ async function ajustarStockManual(req, res) {
     res.status(500).json({ error: 'Error al ajustar stock' });
   }
 }
+async function alternarActivo(req, res) {
+  try {
+    const { id } = req.params;
+    const { activo } = req.body;
 
-module.exports = { listar, crear, ajustarStockManual };
+    const insumoActualizado = await insumosRepository.alternarActivo(id, activo);
+
+    if (!insumoActualizado) {
+      return res.status(404).json({ error: 'Insumo no encontrado' });
+    }
+
+    res.json(insumoActualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el insumo' });
+  }
+}
+
+module.exports = { listar, crear, ajustarStockManual, alternarActivo };

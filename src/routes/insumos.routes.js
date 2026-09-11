@@ -7,5 +7,6 @@ const verificarRol = require('../middlewares/verificarRol.js');
 router.get('/', verificarToken, verificarRol('admin'), insumosController.listar);
 router.post('/', verificarToken, verificarRol('admin'), insumosController.crear);
 router.post('/:id/ajustar-stock', verificarToken, verificarRol('admin'), insumosController.ajustarStockManual);
+router.put('/:id/activo', verificarToken, verificarRol('admin'), insumosController.alternarActivo);
 
 module.exports = router;

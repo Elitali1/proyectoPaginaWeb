@@ -92,7 +92,7 @@ async function cargarInsumosEnSelector() {
   const respuesta = await fetch(`${API_URL}/insumos`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  insumos = await respuesta.json();
+  insumos = (await respuesta.json()).filter(i => i.activo);
 
   const select = document.getElementById('detalle-insumo');
   select.innerHTML = '';

@@ -39,11 +39,33 @@ async function cargarInsumos() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${insumo.nombre}</strong> (${insumo.unidad_medida})<br>
+      <strong>${insumo.nombre}</strong> (${insumo.unidad_medida})
+      ${insumo.activo ? '' : ' (inactivo)'}<br>
       Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
       Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
+      <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
+        ${insumo.activo ? 'Desactivar' : 'Reactivar'}
+      </button>
     `;
     contenedor.appendChild(div);
+  });
+
+  document.querySelectorAll('.btn-toggle-activo').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      const id = boton.dataset.id;
+      const activoActual = boton.dataset.activo === 'true';
+
+      await fetch(`${API_URL}/insumos/${id}/activo`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ activo: !activoActual })
+      });
+
+      cargarInsumos();
+    });
   });
 }
 

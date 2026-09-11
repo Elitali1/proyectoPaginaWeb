@@ -53,6 +53,21 @@
     <button type="button" id="btn-subir-foto">Subir foto</button>
     <span id="mensaje-subida"></span>
   </div>
+
+  <div id="seccion-receta" class="oculto">
+    <h3>Receta (insumos que consume)</h3>
+    <label>Insumo:
+      <select id="receta-insumo"></select>
+    </label>
+    <label>Cantidad: <input type="number" id="receta-cantidad" step="0.001" min="0.001"></label>
+    <button type="button" id="btn-agregar-item-receta">Agregar a la receta</button>
+
+    <ul id="lista-receta"></ul>
+
+    <button type="button" id="btn-guardar-receta">Guardar receta</button>
+
+    <div id="resultado-costo"></div>
+  </div>
 </section>
 
   <section>

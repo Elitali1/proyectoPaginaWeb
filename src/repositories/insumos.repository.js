@@ -42,5 +42,12 @@ async function ajustarStock(id, cantidadDelta) {
   );
   return resultado.rows[0];
 }
+async function alternarActivo(id, activo) {
+  const resultado = await pool.query(
+    'UPDATE insumos SET activo = $1 WHERE id = $2 RETURNING *',
+    [activo, id]
+  );
+  return resultado.rows[0];
+}
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock };
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo };
