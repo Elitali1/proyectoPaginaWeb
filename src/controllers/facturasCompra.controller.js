@@ -49,13 +49,16 @@ async function crear(req, res) {
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
+
+    await facturasCompraRepository.revertirStockPorFactura(id);
+
     const facturaEliminada = await facturasCompraRepository.eliminar(id);
 
     if (!facturaEliminada) {
       return res.status(404).json({ error: 'Factura no encontrada' });
     }
 
-    res.json({ mensaje: 'Factura eliminada', factura: facturaEliminada });
+    res.json({ mensaje: 'Factura eliminada y stock revertido', factura: facturaEliminada });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al eliminar factura' });

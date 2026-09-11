@@ -80,4 +80,16 @@ async function obtenerUltimoPrecioInsumo(insumoId) {
   );
   return resultado.rows[0];
 }
-module.exports = { obtenerTodas, obtenerPorId, obtenerPorRangoFechas, crear, eliminar, agregarDetalle, obtenerDetallePorFactura, obtenerUltimoPrecioInsumo };
+async function revertirStockPorFactura(facturaCompraId) {
+  const insumosRepository = require('./insumos.repository.js');
+
+  const detalle = await pool.query(
+    'SELECT insumo_id, cantidad FROM compra_detalle WHERE factura_compra_id = $1',
+    [facturaCompraId]
+  );
+
+  for (const linea of detalle.rows) {
+    await insumosRepository.ajustarStock(linea.insumo_id, -Number(linea.cantidad));
+  }
+}
+module.exports = { obtenerTodas, obtenerPorId, obtenerPorRangoFechas, crear, eliminar, agregarDetalle, obtenerDetallePorFactura, obtenerUltimoPrecioInsumo, revertirStockPorFactura };
