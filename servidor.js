@@ -18,6 +18,7 @@ const facturasVentaRoutes = require('./src/routes/facturasVenta.routes.js');
 const gastosRoutes = require('./src/routes/gastos.routes.js');
 const categoriasRoutes = require('./src/routes/categorias.routes.js');
 const insumosRoutes = require('./src/routes/insumos.routes.js');
+const recetasRoutes = require('./src/routes/recetas.routes.js');
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -62,6 +63,7 @@ app.use('/facturas-venta', facturasVentaRoutes);
 app.use('/gastos', gastosRoutes);
 app.use('/categorias', categoriasRoutes);
 app.use('/insumos', insumosRoutes);
+app.use('/recetas', recetasRoutes);
 
 const PUERTO = process.env.PORT || 3000;
 app.listen(PUERTO, () => {
