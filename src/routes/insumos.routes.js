@@ -9,5 +9,6 @@ router.post('/', verificarToken, verificarRol('admin'), insumosController.crear)
 router.post('/:id/ajustar-stock', verificarToken, verificarRol('admin'), insumosController.ajustarStockManual);
 router.put('/:id/activo', verificarToken, verificarRol('admin'), insumosController.alternarActivo);
 router.put('/:id/stock-minimo', verificarToken, verificarRol('admin'), insumosController.actualizarStockMinimo);
+router.put('/:id', verificarToken, verificarRol('admin'), insumosController.actualizar);
 
 module.exports = router;

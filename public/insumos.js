@@ -17,6 +17,8 @@ document.getElementById('btn-logout').addEventListener('click', () => {
   window.location.href = 'login.html';
 });
 
+let editandoId = null;
+
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
@@ -52,8 +54,8 @@ async function cargarInsumos() {
       Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
       Stock mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida}<br>
       Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
+      <button type="button" class="btn-editar-insumo" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}" data-minimo="${insumo.stock_minimo}">Editar</button>
       <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}">Ajustar stock</button>
-      <button type="button" class="btn-editar-minimo" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-minimo="${insumo.stock_minimo}">Editar stock mínimo</button>
       <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
         ${insumo.activo ? 'Desactivar' : 'Reactivar'}
       </button>
@@ -119,36 +121,16 @@ async function cargarInsumos() {
     });
   });
 
-  document.querySelectorAll('.btn-editar-minimo').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      const id = boton.dataset.id;
-      const nombre = boton.dataset.nombre;
-      const minimoActual = boton.dataset.minimo;
-
-      const nuevoMinimoTexto = prompt(
-        `Stock mínimo para "${nombre}" (por debajo de este número se muestra la alerta):`,
-        minimoActual
-      );
-
-      if (nuevoMinimoTexto === null) return;
-
-      const nuevoMinimo = Number(nuevoMinimoTexto);
-
-      if (nuevoMinimo < 0) {
-        alert('El stock mínimo no puede ser negativo');
-        return;
-      }
-
-      await fetch(`${API_URL}/insumos/${id}/stock-minimo`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ stock_minimo: nuevoMinimo })
-      });
-
-      cargarInsumos();
+  document.querySelectorAll('.btn-editar-insumo').forEach(boton => {
+    boton.addEventListener('click', () => {
+      editandoId = boton.dataset.id;
+      document.getElementById('insumo-nombre').value = boton.dataset.nombre;
+      document.getElementById('insumo-unidad').value = boton.dataset.unidad;
+      document.getElementById('insumo-stock-minimo').value = boton.dataset.minimo;
+      document.getElementById('titulo-formulario-insumo').textContent = 'Editar insumo';
+      document.getElementById('btn-guardar-insumo').textContent = 'Guardar cambios';
+      document.getElementById('btn-cancelar-edicion-insumo').classList.remove('oculto');
+      document.getElementById('formulario-insumo').scrollIntoView({ behavior: 'smooth' });
     });
   });
 }
@@ -177,23 +159,56 @@ function mostrarAlertasStock(insumos) {
   });
 }
 
+document.getElementById('btn-cancelar-edicion-insumo').addEventListener('click', () => {
+  editandoId = null;
+  document.getElementById('formulario-insumo').reset();
+  document.getElementById('titulo-formulario-insumo').textContent = 'Agregar insumo';
+  document.getElementById('btn-guardar-insumo').textContent = 'Guardar insumo';
+  document.getElementById('btn-cancelar-edicion-insumo').classList.add('oculto');
+});
+
 document.getElementById('formulario-insumo').addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const nuevoInsumo = {
+  const datosInsumo = {
     nombre: document.getElementById('insumo-nombre').value,
     unidad_medida: document.getElementById('insumo-unidad').value,
     stock_minimo: Number(document.getElementById('insumo-stock-minimo').value) || 0
   };
 
-  await fetch(`${API_URL}/insumos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(nuevoInsumo)
-  });
+  if (editandoId) {
+    await fetch(`${API_URL}/insumos/${editandoId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(datosInsumo)
+    });
+
+    await fetch(`${API_URL}/insumos/${editandoId}/stock-minimo`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ stock_minimo: datosInsumo.stock_minimo })
+    });
+
+    editandoId = null;
+    document.getElementById('titulo-formulario-insumo').textContent = 'Agregar insumo';
+    document.getElementById('btn-guardar-insumo').textContent = 'Guardar insumo';
+    document.getElementById('btn-cancelar-edicion-insumo').classList.add('oculto');
+  } else {
+    await fetch(`${API_URL}/insumos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(datosInsumo)
+    });
+  }
 
   document.getElementById('formulario-insumo').reset();
   cargarInsumos();

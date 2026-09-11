@@ -55,6 +55,14 @@ async function actualizarStockMinimo(id, stockMinimo) {
   return resultado.rows[0];
 }
 
+async function actualizar(id, datos) {
+  const { nombre, unidad_medida } = datos;
+  const resultado = await pool.query(
+    'UPDATE insumos SET nombre = $1, unidad_medida = $2 WHERE id = $3 RETURNING *',
+    [nombre, unidad_medida, id]
+  );
+  return resultado.rows[0];
+}
 
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo , actualizarStockMinimo}; 
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo , actualizarStockMinimo, actualizar}; 

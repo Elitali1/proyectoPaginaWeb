@@ -78,4 +78,23 @@ async function actualizarStockMinimo(req, res) {
     res.status(500).json({ error: 'Error al actualizar el stock mínimo' });
   }
 }
-module.exports = { listar, crear, ajustarStockManual, alternarActivo, actualizarStockMinimo };
+
+async function actualizar(req, res) {
+  try {
+    const { id } = req.params;
+    const { nombre, unidad_medida } = req.body;
+
+    const insumoActualizado = await insumosRepository.actualizar(id, { nombre, unidad_medida });
+
+    if (!insumoActualizado) {
+      return res.status(404).json({ error: 'Insumo no encontrado' });
+    }
+
+    res.json(insumoActualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el insumo' });
+  }
+}
+
+module.exports = { listar, crear, ajustarStockManual, alternarActivo, actualizarStockMinimo, actualizar };
