@@ -9,7 +9,7 @@ if (!token) {
 
 const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
 document.getElementById('btn-logout').addEventListener('click', () => {
   localStorage.removeItem('token');

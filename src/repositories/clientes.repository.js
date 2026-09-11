@@ -52,4 +52,28 @@ async function buscarOCrear(telefono, nombre, direccion) {
 
   return crear({ nombre, telefono, direccion });
 }
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizar, eliminar, obtenerPorTelefono, buscarOCrear };
+async function obtenerMasRecurrentes(desde, hasta, limite = 10) {
+  const resultado = await pool.query(
+    `SELECT
+       c.id,
+       c.nombre,
+       c.telefono,
+       COUNT(p.id) AS cantidad_pedidos,
+       COALESCE(SUM(pd.total_pedido), 0) AS total_gastado
+     FROM clientes c
+     JOIN pedidos p ON p.cliente_id = c.id
+     JOIN (
+       SELECT pedido_id, SUM(cantidad * precio_unitario) AS total_pedido
+       FROM pedido_detalle
+       GROUP BY pedido_id
+     ) pd ON pd.pedido_id = p.id
+     WHERE DATE((p.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') BETWEEN $1 AND $2
+       AND p.estado != 'cancelado'
+     GROUP BY c.id, c.nombre, c.telefono
+     ORDER BY cantidad_pedidos DESC
+     LIMIT $3`,
+    [desde, hasta, limite]
+  );
+  return resultado.rows;
+}
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizar, eliminar, obtenerPorTelefono, buscarOCrear, obtenerMasRecurrentes };

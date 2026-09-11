@@ -329,7 +329,34 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
+/* ---- Dashboard ---- */
+.grid-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
 
+.tarjeta-metrica {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.metrica-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 8px 0;
+}
+
+.metrica-valor {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin: 0;
+}
 /* ---- Responsive: celular ---- */
 @media (max-width: 600px) {
   body {

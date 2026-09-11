@@ -79,4 +79,42 @@ async function obtenerPorRangoFechas(desde, hasta) {
   );
   return resultado.rows;
 }
-module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, crear, obtenerTodos, obtenerPorFecha, actualizar, obtenerPorRangoFechas };
+async function calcularResumenPeriodo(desde, hasta) {
+  const resumen = await pool.query(
+    `SELECT
+       COUNT(DISTINCT p.id) AS cantidad_pedidos,
+       COALESCE(SUM(pd.cantidad * pd.precio_unitario), 0) AS ventas_totales
+     FROM pedidos p
+     JOIN pedido_detalle pd ON pd.pedido_id = p.id
+     WHERE DATE((p.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') BETWEEN $1 AND $2
+       AND p.estado != 'cancelado'`,
+    [desde, hasta]
+  );
+
+  const productos = await pool.query(
+    `SELECT
+       c.nombre AS categoria_nombre,
+       CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END AS producto_nombre,
+       SUM(pd.cantidad) AS cantidad_vendida
+     FROM pedido_detalle pd
+     JOIN pedidos ped ON ped.id = pd.pedido_id
+     JOIN productos p ON p.id = pd.producto_id
+     LEFT JOIN categorias c ON c.id = p.categoria_id
+     WHERE DATE((ped.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') BETWEEN $1 AND $2
+       AND ped.estado != 'cancelado'
+     GROUP BY c.nombre, CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END
+     ORDER BY cantidad_vendida DESC`,
+    [desde, hasta]
+  );
+
+  const cantidadPedidos = Number(resumen.rows[0].cantidad_pedidos);
+  const ventasTotales = Number(resumen.rows[0].ventas_totales);
+
+  return {
+    cantidadPedidos,
+    ventasTotales,
+    ticketPromedio: cantidadPedidos > 0 ? ventasTotales / cantidadPedidos : 0,
+    topProductos: productos.rows
+  };
+}
+module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, crear, obtenerTodos, obtenerPorFecha, actualizar, obtenerPorRangoFechas, calcularResumenPeriodo };

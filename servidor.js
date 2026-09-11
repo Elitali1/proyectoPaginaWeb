@@ -19,6 +19,7 @@ const gastosRoutes = require('./src/routes/gastos.routes.js');
 const categoriasRoutes = require('./src/routes/categorias.routes.js');
 const insumosRoutes = require('./src/routes/insumos.routes.js');
 const recetasRoutes = require('./src/routes/recetas.routes.js');
+const dashboardRoutes = require('./src/routes/dashboard.routes.js');
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -32,7 +33,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"]
     }
@@ -64,6 +65,7 @@ app.use('/gastos', gastosRoutes);
 app.use('/categorias', categoriasRoutes);
 app.use('/insumos', insumosRoutes);
 app.use('/recetas', recetasRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 const PUERTO = process.env.PORT || 3000;
 app.listen(PUERTO, () => {

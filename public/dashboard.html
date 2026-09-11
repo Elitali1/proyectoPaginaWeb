@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Dashboard</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="barra-superior">
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Dashboard</h1>
+    </div>
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
+      <a href="insumos.html" id="link-insumos">Insumos</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="clientes.html" id="link-clientes">Clientes</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+      <a href="dashboard.html" id="link-dashboard">Dashboard</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <label>Desde: <input type="date" id="dashboard-desde"></label>
+    <label>Hasta: <input type="date" id="dashboard-hasta"></label>
+    <button type="button" id="btn-actualizar-dashboard">Actualizar</button>
+  </section>
+
+  <section id="seccion-resumen">
+    <h2>Resumen del período</h2>
+    <div id="tarjetas-resumen" class="grid-resumen"></div>
+  </section>
+
+  <section id="seccion-stock-bajo" class="oculto">
+    <h2>⚠ Insumos con stock bajo</h2>
+    <div id="contenedor-dash-stock-bajo"></div>
+  </section>
+
+  <section>
+    <h2>Productos más vendidos</h2>
+    <canvas id="grafico-top-productos"></canvas>
+  </section>
+
+  <section>
+    <h2>Clientes más recurrentes</h2>
+    <div id="contenedor-dash-clientes"></div>
+  </section>
+
+  <section>
+    <h2>Productos con mejor margen</h2>
+    <div id="contenedor-dash-margenes"></div>
+  </section>
+
+  <section>
+    <h2>Rentabilidad del período</h2>
+    <div id="contenedor-dash-balance"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
