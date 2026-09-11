@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Clientes</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="barra-superior">
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Clientes</h1>
+    </div>
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
+      <a href="insumos.html" id="link-insumos">Insumos</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="clientes.html" id="link-clientes">Clientes</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
+      <a href="historial.html">Historial</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2 id="titulo-formulario-cliente">Agregar cliente</h2>
+    <form id="formulario-cliente">
+      <label>Nombre: <input type="text" id="cliente-nombre" required></label>
+      <label>Teléfono: <input type="tel" id="cliente-telefono" required></label>
+      <label>Dirección (opcional): <input type="text" id="cliente-direccion"></label>
+      <label>CUIT (opcional): <input type="text" id="cliente-cuit" placeholder="20123456789"></label>
+      <button type="submit" id="btn-guardar-cliente">Guardar cliente</button>
+      <button type="button" id="btn-cancelar-edicion-cliente" class="oculto">Cancelar edición</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Clientes</h2>
+    <input type="text" id="buscador-clientes" placeholder="Buscar por nombre o teléfono...">
+    <div id="contenedor-clientes"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="clientes.js"></script>
+</body>
+</html>
