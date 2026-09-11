@@ -7,7 +7,7 @@ if (!token) {
 
 const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-compras', 'link-caja', 'link-usuarios']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios']);
 
 document.getElementById('btn-logout').addEventListener('click', () => {
   localStorage.removeItem('token');
@@ -20,7 +20,6 @@ let catalogoProductos = [];
 let editandoPedidoId = null;
 let productoSeleccionadoRequiereMasa = false;
 
-// El campo de masa arranca oculto hasta que se elija un producto
 document.getElementById('label-masa').classList.add('oculto');
 
 function formatearFecha(fechaISO) {
@@ -37,6 +36,36 @@ function formatearFecha(fechaISO) {
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
+
+// ---- Buscar cliente por teléfono y autocompletar nombre/dirección (como sugerencia editable) ----
+document.getElementById('telefono-cliente').addEventListener('blur', async (event) => {
+  const telefono = event.target.value.trim();
+  const mensaje = document.getElementById('mensaje-cliente-encontrado');
+  mensaje.textContent = '';
+
+  if (!telefono) return;
+
+  const respuesta = await fetch(`${API_URL}/clientes/telefono/${telefono}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  if (!respuesta.ok) {
+    mensaje.textContent = 'Cliente nuevo (se va a guardar con este pedido)';
+    return;
+  }
+
+  const cliente = await respuesta.json();
+
+  document.getElementById('cliente').value = cliente.nombre;
+
+  if (cliente.direccion) {
+    document.getElementById('direccion_entrega').value = cliente.direccion;
+    document.getElementById('tipo_entrega').value = 'envio';
+    document.getElementById('label-direccion').classList.remove('oculto');
+  }
+
+  mensaje.textContent = `Cliente encontrado: ${cliente.nombre}`;
+});
 
 // ---- Cargar y mostrar la lista de pedidos ----
 async function cargarPedidos() {
@@ -165,7 +194,7 @@ async function cargarPedidos() {
 });
 }
 
-// ---- Ver comanda en ventana nueva ----
+// ---- Imprimir comanda (agrega el pedido a la cola de impresión del agente) ----
 async function imprimirComanda(pedidoId, boton) {
   const textoOriginal = boton.textContent;
   boton.disabled = true;
@@ -205,7 +234,6 @@ async function cargarPedidoParaEditar(pedidoId) {
 
   editandoPedidoId = pedidoId;
 
-  // Precargar TODOS los campos generales del pedido, no solo los productos
   document.getElementById('cliente').value = pedido.cliente;
   document.getElementById('canal').value = pedido.canal;
   document.getElementById('medio_pago').value = pedido.medio_pago;
@@ -213,10 +241,8 @@ async function cargarPedidoParaEditar(pedidoId) {
   document.getElementById('direccion_entrega').value = pedido.direccion_entrega || '';
   document.getElementById('cuit_receptor').value = pedido.cuit_receptor || '';
 
-  // Mostrar el campo de dirección si corresponde
   document.getElementById('label-direccion').classList.toggle('oculto', pedido.tipo_entrega !== 'envio');
 
-  // Mostrar el checkbox/campo de CUIT si el pedido ya tenía uno cargado
   if (pedido.cuit_receptor) {
     document.getElementById('check-facturar-cuit').checked = true;
     document.getElementById('label-cuit').classList.remove('oculto');
@@ -255,6 +281,7 @@ document.getElementById('btn-cancelar-edicion-pedido').addEventListener('click',
   document.getElementById('btn-cancelar-edicion-pedido').classList.add('oculto');
   document.getElementById('label-direccion').classList.add('oculto');
   document.getElementById('label-cuit').classList.add('oculto');
+  document.getElementById('mensaje-cliente-encontrado').textContent = '';
 });
 
 // ---- Cargar catálogo de productos (solo disponibles) para el buscador y el select 2 ----
@@ -302,7 +329,6 @@ document.getElementById('buscador-producto').addEventListener('input', (event) =
       document.getElementById('producto-seleccionado-nombre').value = producto.nombre;
       resultados.classList.remove('mostrar');
 
-      // Mostrar el campo de masa solo si la categoría del producto lo requiere
       productoSeleccionadoRequiereMasa = !!producto.requiere_masa;
       document.getElementById('label-masa').classList.toggle('oculto', !productoSeleccionadoRequiereMasa);
     });
@@ -408,9 +434,11 @@ document.getElementById('btn-agregar-producto').addEventListener('click', () => 
   document.getElementById('producto-seleccionado-nombre').value = '';
   document.getElementById('aclaraciones-producto').value = '';
 
-  // Vuelve a ocultar el campo de masa hasta que se elija el próximo producto
   productoSeleccionadoRequiereMasa = false;
   document.getElementById('label-masa').classList.add('oculto');
+
+  document.getElementById('check-combinar').checked = false;
+  document.getElementById('select-producto-2').classList.add('oculto');
 
   renderizarListaProductos();
 });
@@ -428,6 +456,7 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
     cliente: document.getElementById('cliente').value,
     canal: document.getElementById('canal').value,
     medio_pago: document.getElementById('medio_pago').value,
+    telefono: document.getElementById('telefono-cliente').value || null,
     tipo_entrega: document.getElementById('tipo_entrega').value,
     direccion_entrega: document.getElementById('direccion_entrega').value || null,
     cuit_receptor: document.getElementById('cuit_receptor').value || null,
@@ -456,6 +485,7 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
     document.getElementById('formulario-pedido').reset();
     document.getElementById('label-direccion').classList.add('oculto');
     document.getElementById('label-cuit').classList.add('oculto');
+    document.getElementById('mensaje-cliente-encontrado').textContent = '';
     productosDelPedido = [];
     renderizarListaProductos();
     cargarPedidos();
@@ -482,6 +512,7 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
   renderizarListaProductos();
   document.getElementById('label-direccion').classList.add('oculto');
   document.getElementById('label-cuit').classList.add('oculto');
+  document.getElementById('mensaje-cliente-encontrado').textContent = '';
   cargarPedidos();
 });
 

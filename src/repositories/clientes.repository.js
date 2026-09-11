@@ -38,6 +38,18 @@ async function eliminar(id) {
     [id]
   );
   return resultado.rows[0];
+}async function obtenerPorTelefono(telefono) {
+  const resultado = await pool.query('SELECT * FROM clientes WHERE telefono = $1', [telefono]);
+  return resultado.rows[0];
 }
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizar, eliminar };
+async function buscarOCrear(telefono, nombre, direccion) {
+  const existente = await obtenerPorTelefono(telefono);
+
+  if (existente) {
+    return existente;
+  }
+
+  return crear({ nombre, telefono, direccion });
+}
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizar, eliminar, obtenerPorTelefono, buscarOCrear };

@@ -3,6 +3,7 @@ const router = express.Router();
 const clientesController = require('../controllers/clientes.controller.js');
 const verificarToken = require('../middlewares/auth.js');
 
+router.get('/telefono/:telefono', verificarToken, clientesController.buscarPorTelefono);
 router.get('/', verificarToken, clientesController.listar);
 router.get('/:id', verificarToken, clientesController.obtenerUno);
 router.post('/', verificarToken, clientesController.crear);

@@ -34,11 +34,19 @@ async function obtenerUno(req, res) {
 
 async function crear(req, res) {
   try {
-    const { cliente, canal, medio_pago, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor } = req.body;
+    const clientesRepository = require('../repositories/clientes.repository.js');
+
+    const { cliente, canal, medio_pago, telefono, productos, tipo_entrega, direccion_entrega, cuit_receptor } = req.body;
     const requiere_factura = medio_pago === 'transferencia';
 
+    let clienteId = null;
+    if (telefono) {
+      const clienteVinculado = await clientesRepository.buscarOCrear(telefono, cliente, direccion_entrega);
+      clienteId = clienteVinculado.id;
+    }
+
     const nuevoPedido = await pedidosRepository.crear({
-      cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor
+      cliente, canal, medio_pago, requiere_factura, cliente_id: clienteId, productos, tipo_entrega, direccion_entrega, cuit_receptor
     });
 
     res.status(201).json(nuevoPedido);

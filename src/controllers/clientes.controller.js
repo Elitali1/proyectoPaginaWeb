@@ -72,5 +72,20 @@ async function eliminar(req, res) {
     res.status(500).json({ error: 'Error al eliminar cliente' });
   }
 }
+async function buscarPorTelefono(req, res) {
+  try {
+    const { telefono } = req.params;
+    const cliente = await clientesRepository.obtenerPorTelefono(telefono);
 
-module.exports = { listar, obtenerUno, crear, actualizar, eliminar };
+    if (!cliente) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    res.json(cliente);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al buscar cliente' });
+  }
+}
+
+module.exports = { listar, obtenerUno, crear, actualizar, eliminar, buscarPorTelefono };
