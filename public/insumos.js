@@ -43,6 +43,7 @@ async function cargarInsumos() {
       ${insumo.activo ? '' : ' (inactivo)'}<br>
       Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
       Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
+      <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}">Ajustar stock</button>
       <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
         ${insumo.activo ? 'Desactivar' : 'Reactivar'}
       </button>
@@ -63,6 +64,46 @@ async function cargarInsumos() {
         },
         body: JSON.stringify({ activo: !activoActual })
       });
+
+      cargarInsumos();
+    });
+  });
+
+  document.querySelectorAll('.btn-ajustar-stock').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      const id = boton.dataset.id;
+      const nombre = boton.dataset.nombre;
+      const unidad = boton.dataset.unidad;
+
+      const cantidadTexto = prompt(
+        `Ajustar stock de "${nombre}" (${unidad}).\nUsá un número positivo para sumar, negativo para restar (ej: -5 o 10):`
+      );
+
+      if (cantidadTexto === null) return;
+
+      const cantidad = Number(cantidadTexto);
+
+      if (!cantidad || cantidad === 0) {
+        alert('Ingresá un número distinto de cero');
+        return;
+      }
+
+      const motivo = prompt('Motivo del ajuste (opcional):', '') || null;
+
+      const respuesta = await fetch(`${API_URL}/insumos/${id}/ajustar-stock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ cantidad, motivo })
+      });
+
+      if (!respuesta.ok) {
+        const error = await respuesta.json();
+        alert(error.error || 'Error al ajustar el stock');
+        return;
+      }
 
       cargarInsumos();
     });

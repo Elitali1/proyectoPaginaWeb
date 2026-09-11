@@ -58,6 +58,9 @@ async function obtenerConDetalle(id) {
 }
 
 async function crear(datos) {
+  const insumosRepository = require('./insumos.repository.js');
+  const recetasRepository = require('./recetas.repository.js');
+
   const { cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor } = datos;
 
   const cabecera = await pool.query(
@@ -95,9 +98,24 @@ async function crear(datos) {
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
     );
+
+    // Descontar stock de insumos según la receta de cada producto vendido
+    await descontarStockPorVenta(item.producto_id, item.cantidad, recetasRepository, insumosRepository);
+    if (item.producto_id_2) {
+      await descontarStockPorVenta(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository);
+    }
   }
 
   return obtenerConDetalle(pedidoId);
+}
+
+async function descontarStockPorVenta(productoId, cantidadVendida, recetasRepository, insumosRepository) {
+  const receta = await recetasRepository.obtenerPorProducto(productoId);
+
+  for (const linea of receta) {
+    const cantidadADescontar = Number(linea.cantidad) * cantidadVendida;
+    await insumosRepository.ajustarStock(linea.insumo_id, -cantidadADescontar);
+  }
 }
 
 async function actualizarEstado(id, estado) {
