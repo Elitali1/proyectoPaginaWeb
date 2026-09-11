@@ -12,8 +12,8 @@ async function listar(req, res) {
 
 async function crear(req, res) {
   try {
-    const { nombre, unidad_medida } = req.body;
-    const nuevoInsumo = await insumosRepository.crear({ nombre, unidad_medida });
+    const { nombre, unidad_medida, stock_minimo } = req.body;
+    const nuevoInsumo = await insumosRepository.crear({ nombre, unidad_medida, stock_minimo });
     res.status(201).json(nuevoInsumo);
   } catch (error) {
     console.error(error);
@@ -61,5 +61,21 @@ async function alternarActivo(req, res) {
     res.status(500).json({ error: 'Error al actualizar el insumo' });
   }
 }
+async function actualizarStockMinimo(req, res) {
+  try {
+    const { id } = req.params;
+    const { stock_minimo } = req.body;
 
-module.exports = { listar, crear, ajustarStockManual, alternarActivo };
+    const insumoActualizado = await insumosRepository.actualizarStockMinimo(id, stock_minimo);
+
+    if (!insumoActualizado) {
+      return res.status(404).json({ error: 'Insumo no encontrado' });
+    }
+
+    res.json(insumoActualizado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el stock mínimo' });
+  }
+}
+module.exports = { listar, crear, ajustarStockManual, alternarActivo, actualizarStockMinimo };

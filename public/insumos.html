@@ -26,6 +26,11 @@
     </div>
   </div>
 
+  <section id="seccion-alertas-stock" class="oculto">
+    <h2>⚠ Insumos con stock bajo</h2>
+    <div id="contenedor-alertas-stock"></div>
+  </section>
+
   <section>
     <h2>Agregar insumo</h2>
     <form id="formulario-insumo">
@@ -38,6 +43,7 @@
           <option value="paquete">Paquete</option>
         </select>
       </label>
+      <label>Stock mínimo (para avisos): <input type="number" id="insumo-stock-minimo" step="0.01" min="0" value="0"></label>
       <button type="submit">Guardar insumo</button>
     </form>
   </section>

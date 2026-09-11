@@ -11,12 +11,10 @@ async function obtenerPorId(id) {
 }
 
 async function crear(datos) {
-  const { nombre, unidad_medida } = datos;
+  const { nombre, unidad_medida, stock_minimo } = datos;
   const resultado = await pool.query(
-    `INSERT INTO insumos (nombre, unidad_medida)
-     VALUES ($1, $2)
-     RETURNING *`,
-    [nombre, unidad_medida]
+    `INSERT INTO insumos (nombre, unidad_medida, stock_minimo) VALUES ($1, $2, $3) RETURNING *`,
+    [nombre, unidad_medida, stock_minimo || 0]
   );
   return resultado.rows[0];
 }
@@ -49,5 +47,14 @@ async function alternarActivo(id, activo) {
   );
   return resultado.rows[0];
 }
+async function actualizarStockMinimo(id, stockMinimo) {
+  const resultado = await pool.query(
+    'UPDATE insumos SET stock_minimo = $1 WHERE id = $2 RETURNING *',
+    [stockMinimo, id]
+  );
+  return resultado.rows[0];
+}
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo };
+
+
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo , actualizarStockMinimo}; 

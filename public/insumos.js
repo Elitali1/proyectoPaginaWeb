@@ -27,6 +27,8 @@ async function cargarInsumos() {
   });
   const insumos = await respuesta.json();
 
+  mostrarAlertasStock(insumos);
+
   const contenedor = document.getElementById('contenedor-insumos');
   contenedor.innerHTML = '';
 
@@ -36,14 +38,22 @@ async function cargarInsumos() {
   }
 
   insumos.forEach(insumo => {
+    const stockBajo = Number(insumo.stock_minimo) > 0 && Number(insumo.stock_actual) < Number(insumo.stock_minimo);
+
     const div = document.createElement('div');
     div.className = 'pedido';
+    if (stockBajo) {
+      div.style.border = '2px solid #B03A2E';
+    }
     div.innerHTML = `
       <strong>${insumo.nombre}</strong> (${insumo.unidad_medida})
-      ${insumo.activo ? '' : ' (inactivo)'}<br>
+      ${insumo.activo ? '' : ' (inactivo)'}
+      ${stockBajo ? ' <span class="balance-negativo">⚠ STOCK BAJO</span>' : ''}<br>
       Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
+      Stock mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida}<br>
       Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
       <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}">Ajustar stock</button>
+      <button type="button" class="btn-editar-minimo" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-minimo="${insumo.stock_minimo}">Editar stock mínimo</button>
       <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
         ${insumo.activo ? 'Desactivar' : 'Reactivar'}
       </button>
@@ -108,6 +118,63 @@ async function cargarInsumos() {
       cargarInsumos();
     });
   });
+
+  document.querySelectorAll('.btn-editar-minimo').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      const id = boton.dataset.id;
+      const nombre = boton.dataset.nombre;
+      const minimoActual = boton.dataset.minimo;
+
+      const nuevoMinimoTexto = prompt(
+        `Stock mínimo para "${nombre}" (por debajo de este número se muestra la alerta):`,
+        minimoActual
+      );
+
+      if (nuevoMinimoTexto === null) return;
+
+      const nuevoMinimo = Number(nuevoMinimoTexto);
+
+      if (nuevoMinimo < 0) {
+        alert('El stock mínimo no puede ser negativo');
+        return;
+      }
+
+      await fetch(`${API_URL}/insumos/${id}/stock-minimo`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ stock_minimo: nuevoMinimo })
+      });
+
+      cargarInsumos();
+    });
+  });
+}
+
+function mostrarAlertasStock(insumos) {
+  const conStockBajo = insumos.filter(i =>
+    i.activo && Number(i.stock_minimo) > 0 && Number(i.stock_actual) < Number(i.stock_minimo)
+  );
+
+  const seccion = document.getElementById('seccion-alertas-stock');
+  const contenedor = document.getElementById('contenedor-alertas-stock');
+
+  if (conStockBajo.length === 0) {
+    seccion.classList.add('oculto');
+    return;
+  }
+
+  seccion.classList.remove('oculto');
+  contenedor.innerHTML = '';
+
+  conStockBajo.forEach(insumo => {
+    const p = document.createElement('p');
+    p.className = 'balance-negativo';
+    p.innerHTML = `<strong>${insumo.nombre}</strong>: quedan ${insumo.stock_actual} ${insumo.unidad_medida} (mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida})`;
+    contenedor.appendChild(p);
+  });
 }
 
 document.getElementById('formulario-insumo').addEventListener('submit', async (event) => {
@@ -115,7 +182,8 @@ document.getElementById('formulario-insumo').addEventListener('submit', async (e
 
   const nuevoInsumo = {
     nombre: document.getElementById('insumo-nombre').value,
-    unidad_medida: document.getElementById('insumo-unidad').value
+    unidad_medida: document.getElementById('insumo-unidad').value,
+    stock_minimo: Number(document.getElementById('insumo-stock-minimo').value) || 0
   };
 
   await fetch(`${API_URL}/insumos`, {
