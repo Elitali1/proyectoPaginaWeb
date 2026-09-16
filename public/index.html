@@ -19,18 +19,26 @@
 <body class="landing">
 
   <header class="landing-header">
-    <div class="marca">
-      <img src="img/Logo.png" alt="Don Chicho" class="logo">
-      <span>Donchichopizza</span>
-    </div>
+  <div class="marca">
+    <img src="img/Logo.png" alt="Don Chicho" class="logo">
+    <span>Donchichopizza</span>
+  </div>
+
+  <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="menu-movil" id="menu-movil">
     <nav class="nav-landing">
+      <a href="index.html">Inicio</a>
       <a href="quienes-somos.html">Quiénes somos</a>
       <a href="menu.html">Menú</a>
       <a href="procesos.html">Nuestros procesos</a>
       <a href="visitanos.html">Visitanos</a>
     </nav>
     <a href="login.html" class="link-ingresar">Ingresar</a>
-  </header>
+  </div>
+</header>
 
   <section class="hero">
     <div class="hero-texto">
@@ -94,5 +102,6 @@
 
   <script src="animaciones-scroll.js"></script>
   <script src="landing.js"></script>
+  <script src="menu-movil.js"></script>
 </body>
 </html>
