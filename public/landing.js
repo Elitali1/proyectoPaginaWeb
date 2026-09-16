@@ -6,6 +6,7 @@ function formatearPrecio(numero) {
 
 async function cargarMenuPublico() {
   const contenedor = document.getElementById('lista-menu');
+  if (!contenedor) return; // Esta página no tiene sección de menú
 
   try {
     const respuesta = await fetch(`${API_URL}/productos/publico`);
@@ -21,7 +22,6 @@ async function cargarMenuPublico() {
       return;
     }
 
-    // Agrupar los productos por categoría
     const grupos = {};
     productos.forEach(producto => {
       const categoria = producto.categoria_nombre || 'Otros';
@@ -56,6 +56,7 @@ async function cargarMenuPublico() {
 
 async function cargarGaleria() {
   const contenedor = document.getElementById('galeria-grid');
+  if (!contenedor) return; // Esta página no tiene galería
 
   try {
     const respuesta = await fetch(`${API_URL}/productos/publico`);
@@ -68,7 +69,6 @@ async function cargarGaleria() {
       return;
     }
 
-    // Agrupar las fotos por categoría, igual que el menú
     const grupos = {};
     conFoto.forEach(producto => {
       const categoria = producto.categoria_nombre || 'Otros';
@@ -105,8 +105,11 @@ async function cargarGaleria() {
     contenedor.innerHTML = '';
   }
 }
+
 function inicializarLightbox() {
   const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return; // Esta página no tiene lightbox
+
   const lightboxImg = document.getElementById('lightbox-img');
 
   document.addEventListener('click', (event) => {

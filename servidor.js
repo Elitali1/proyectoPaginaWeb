@@ -20,6 +20,7 @@ const categoriasRoutes = require('./src/routes/categorias.routes.js');
 const insumosRoutes = require('./src/routes/insumos.routes.js');
 const recetasRoutes = require('./src/routes/recetas.routes.js');
 const dashboardRoutes = require('./src/routes/dashboard.routes.js');
+const contactoRoutes = require('./src/routes/contacto.routes.js');
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -66,6 +67,7 @@ app.use('/categorias', categoriasRoutes);
 app.use('/insumos', insumosRoutes);
 app.use('/recetas', recetasRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/contacto', contactoRoutes);
 
 const PUERTO = process.env.PORT || 3000;
 app.listen(PUERTO, () => {

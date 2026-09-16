@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitanos - Donchichopizza</title>
+  <meta name="description" content="Encontranos en General Villegas 4446, Lanús Oeste. Pedidos por WhatsApp o contactanos por mail.">
+  <link rel="icon" href="img/Logo.png">
+  <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="landing.css">
+</head>
+<body class="landing">
+
+  <header class="landing-header">
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <span>Donchichopizza</span>
+    </div>
+    <nav class="nav-landing">
+      <a href="index.html">Inicio</a>
+      <a href="quienes-somos.html">Quiénes somos</a>
+      <a href="menu.html">Menú</a>
+      <a href="procesos.html">Nuestros procesos</a>
+      <a href="visitanos.html" class="activo">Visitanos</a>
+    </nav>
+    <a href="login.html" class="link-ingresar">Ingresar</a>
+  </header>
+
+  <section class="seccion visitanos animar-al-scroll" id="visitanos">
+    <div class="visitanos-grid">
+      <div class="visitanos-datos">
+        <h2 class="seccion-titulo">Visitanos</h2>
+        <p class="seccion-intro">General Villegas 4446, Lanús Oeste, Buenos Aires.</p>
+        <p>Comé al paso en nuestro rinconcito, o pedí por WhatsApp y lo llevamos hasta tu casa.</p>
+        <p id="estado-horario" class="estado-horario"></p>
+        <div class="visitanos-botones">
+          <a href="https://www.google.com/maps/place/Don+Chicho+Pizza/@-34.6987625,-58.438199,17z/data=!3m1!4b1!4m6!3m5!1s0x95bccd9c7aecd90d:0x716dd22bc91280a9!8m2!3d-34.6987669!4d-58.4356241!16s%2Fg%2F11krh61r74!17m2!4m1!1e3!18m1!1e1?entry=ttu&g_ep=EgoyMDI2MDgxOS4wIKXMDSoASAFQAw%3D%3D" class="btn-hero claro" target="_blank" rel="noopener">Cómo llegar</a>
+          <a href="https://www.google.com/maps/place/Don+Chicho+Pizza/@-34.6987625,-58.438199,17z/data=!3m1!4b1!4m6!3m5!1s0x95bccd9c7aecd90d:0x716dd22bc91280a9!8m2!3d-34.6987669!4d-58.4356241!16s%2Fg%2F11krh61r74!17m2!4m1!1e3!18m1!1e1?entry=ttu&g_ep=EgoyMDI2MDgxOS4wIKXMDSoASAFQAw%3D%3D" class="btn-hero secundario" target="_blank" rel="noopener" style="border-color:#F3E8D3;color:#F3E8D3;">Ver reseñas en Google</a>
+        </div>
+      </div>
+      <div class="visitanos-foto">
+        <img src="img/fachada.jpg" alt="Donchichopizza desde afuera">
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion animar-al-scroll">
+    <h2 class="seccion-titulo">Contactanos</h2>
+    <p class="seccion-intro">Para consultas, eventos o propuestas — para pedidos, mejor por WhatsApp.</p>
+    <form id="formulario-contacto" class="form-contacto">
+      <label>Nombre: <input type="text" id="contacto-nombre" required></label>
+      <label>Email: <input type="email" id="contacto-email" required></label>
+      <label>Mensaje: <textarea id="contacto-mensaje" rows="4" required></textarea></label>
+      <button type="submit" id="btn-enviar-contacto">Enviar mensaje</button>
+      <p id="mensaje-contacto-estado"></p>
+    </form>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="footer-redes">
+      <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+      <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+    </div>
+    <p>Donchichopizza · Lanús Oeste, Buenos Aires · <a href="https://wa.me/5491165838528" target="_blank" rel="noopener">+54 9 11 6583-8528</a></p>
+    <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
+    <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
+  </footer>
+
+  <script src="animaciones-scroll.js"></script>
+  <script src="visitanos.js"></script>
+</body>
+</html>

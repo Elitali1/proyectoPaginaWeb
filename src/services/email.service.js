@@ -21,7 +21,6 @@ async function sendResetPasswordEmail(toEmail, token) {
   </html>`;
 
   if (!BREVO_API_KEY) {
-    // Para desarrollo: loguear el link en lugar de enviar el email, así podés probar sin clave
     console.warn('BREVO_API_KEY no configurada — no se enviará email. Link de reset (dev):', resetLink);
     return;
   }
@@ -41,8 +40,6 @@ async function sendResetPasswordEmail(toEmail, token) {
       },
       timeout: 10000,
     });
-    // Loguear y devolver la respuesta de Brevo para diagnóstico
-    // Return Brevo response for callers but avoid logging sensitive details in production
     return res.data;
   } catch (error) {
     console.error('Error enviando email de reset:', error?.response?.data || error.message || error);
@@ -50,4 +47,44 @@ async function sendResetPasswordEmail(toEmail, token) {
   }
 }
 
-module.exports = { sendResetPasswordEmail };
+async function sendContactEmail(nombreRemitente, emailRemitente, mensaje) {
+  const htmlContent = `
+  <html>
+    <body>
+      <p>Nuevo mensaje de contacto desde la landing de Donchichopizza:</p>
+      <p><strong>Nombre:</strong> ${nombreRemitente}</p>
+      <p><strong>Email:</strong> ${emailRemitente}</p>
+      <p><strong>Mensaje:</strong></p>
+      <p>${mensaje}</p>
+    </body>
+  </html>`;
+
+  if (!BREVO_API_KEY) {
+    console.warn('BREVO_API_KEY no configurada — no se enviará email de contacto. Mensaje (dev):', { nombreRemitente, emailRemitente, mensaje });
+    return;
+  }
+
+  const payload = {
+    sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+    to: [{ email: SENDER_EMAIL }],
+    replyTo: { email: emailRemitente, name: nombreRemitente },
+    subject: `Contacto desde la web - ${nombreRemitente}`,
+    htmlContent,
+  };
+
+  try {
+    const res = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000,
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error enviando email de contacto:', error?.response?.data || error.message || error);
+    throw error;
+  }
+}
+
+module.exports = { sendResetPasswordEmail, sendContactEmail };
