@@ -14,6 +14,8 @@ ocultarSiNoEsAdmin([
   "link-compras",
   "link-caja",
   "link-usuarios",
+  "link-clientes",
+  "link-dashboard",
 ]);
 
 document.getElementById("btn-logout").addEventListener("click", () => {
