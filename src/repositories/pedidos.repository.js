@@ -61,13 +61,13 @@ async function crear(datos) {
   const insumosRepository = require('./insumos.repository.js');
   const recetasRepository = require('./recetas.repository.js');
 
-  const { cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor } = datos;
+  const { cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = datos;
 
   const cabecera = await pool.query(
-    `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
-    [cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null]
+    [cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, monto_efectivo || null, monto_transferencia || null]
   );
 
   const pedidoId = cabecera.rows[0].id;
@@ -99,7 +99,6 @@ async function crear(datos) {
       [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
     );
 
-    // Descontar stock de insumos según la receta de cada producto vendido
     await descontarStockPorVenta(item.producto_id, item.cantidad, recetasRepository, insumosRepository);
     if (item.producto_id_2) {
       await descontarStockPorVenta(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository);

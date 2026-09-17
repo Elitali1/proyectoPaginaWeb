@@ -50,11 +50,18 @@
         </select>
       </label>
       <label>Medio de pago:
-        <select id="medio_pago">
-          <option value="efectivo">Efectivo</option>
-          <option value="transferencia">Transferencia</option>
-        </select>
-      </label>
+  <select id="medio_pago">
+    <option value="efectivo">Efectivo</option>
+    <option value="transferencia">Transferencia</option>
+    <option value="mixto">Mixto (parte efectivo, parte transferencia)</option>
+  </select>
+</label>
+
+<div id="seccion-pago-mixto" class="oculto">
+  <label>Monto en efectivo: <input type="number" id="monto-efectivo" min="0"></label>
+  <label>Monto en transferencia: <input type="number" id="monto-transferencia" min="0"></label>
+  <p id="mensaje-validacion-mixto"></p>
+</div>
  
       <label>Entrega:
         <select id="tipo_entrega">

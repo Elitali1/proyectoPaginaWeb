@@ -67,6 +67,45 @@ document.getElementById('telefono-cliente').addEventListener('blur', async (even
   mensaje.textContent = `Cliente encontrado: ${cliente.nombre}`;
 });
 
+// ---- Mostrar/ocultar los campos de pago mixto según el medio de pago elegido ----
+document.getElementById('medio_pago').addEventListener('change', (event) => {
+  const esMixto = event.target.value === 'mixto';
+  document.getElementById('seccion-pago-mixto').classList.toggle('oculto', !esMixto);
+
+  if (!esMixto) {
+    document.getElementById('monto-efectivo').value = '';
+    document.getElementById('monto-transferencia').value = '';
+    document.getElementById('mensaje-validacion-mixto').textContent = '';
+  }
+});
+
+// ---- Validar en vivo que la suma del pago mixto coincida con el total ----
+function validarPagoMixto() {
+  const totalPedido = productosDelPedido.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+  const montoEfectivo = Number(document.getElementById('monto-efectivo').value) || 0;
+  const montoTransferencia = Number(document.getElementById('monto-transferencia').value) || 0;
+  const suma = montoEfectivo + montoTransferencia;
+  const mensaje = document.getElementById('mensaje-validacion-mixto');
+
+  if (montoEfectivo === 0 && montoTransferencia === 0) {
+    mensaje.textContent = '';
+    return true;
+  }
+
+  if (suma !== totalPedido) {
+    mensaje.textContent = `La suma ($${formatearPrecio(suma)}) no coincide con el total del pedido ($${formatearPrecio(totalPedido)})`;
+    mensaje.className = 'balance-negativo';
+    return false;
+  }
+
+  mensaje.textContent = `Correcto: suma $${formatearPrecio(suma)}`;
+  mensaje.className = 'balance-positivo';
+  return true;
+}
+
+document.getElementById('monto-efectivo').addEventListener('input', validarPagoMixto);
+document.getElementById('monto-transferencia').addEventListener('input', validarPagoMixto);
+
 // ---- Cargar y mostrar la lista de pedidos ----
 async function cargarPedidos() {
   const respuesta = await fetch(`${API_URL}/pedidos`, {
@@ -96,6 +135,10 @@ async function cargarPedidos() {
       return `${item.cantidad} x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto}`;
     }).join('<br>');
 
+    const infoPago = pedido.medio_pago === 'mixto'
+      ? `Mixto (Efectivo: $${formatearPrecio(pedido.monto_efectivo)} / Transferencia: $${formatearPrecio(pedido.monto_transferencia)})`
+      : pedido.medio_pago;
+
     const botonFactura = pedido.requiere_factura
       ? (pedido.ya_facturado
           ? `<button type="button" disabled>Ya facturado</button>`
@@ -105,7 +148,7 @@ async function cargarPedidos() {
     div.innerHTML = `
 
       <strong>#${pedido.id} - ${pedido.cliente}</strong> - ${formatearFecha(pedido.creado_en)}<br>
-      Canal: ${pedido.canal} | Pago: ${pedido.medio_pago} | ${entrega}<br>
+      Canal: ${pedido.canal} | Pago: ${infoPago} | ${entrega}<br>
       ${detalleProductos}<br>
       Total: $${formatearPrecio(pedido.total)} | Estado: ${pedido.estado}
       ${botonFactura}
@@ -243,6 +286,13 @@ async function cargarPedidoParaEditar(pedidoId) {
 
   document.getElementById('label-direccion').classList.toggle('oculto', pedido.tipo_entrega !== 'envio');
 
+  const esMixto = pedido.medio_pago === 'mixto';
+  document.getElementById('seccion-pago-mixto').classList.toggle('oculto', !esMixto);
+  if (esMixto) {
+    document.getElementById('monto-efectivo').value = pedido.monto_efectivo || '';
+    document.getElementById('monto-transferencia').value = pedido.monto_transferencia || '';
+  }
+
   if (pedido.cuit_receptor) {
     document.getElementById('check-facturar-cuit').checked = true;
     document.getElementById('label-cuit').classList.remove('oculto');
@@ -281,6 +331,7 @@ document.getElementById('btn-cancelar-edicion-pedido').addEventListener('click',
   document.getElementById('btn-cancelar-edicion-pedido').classList.add('oculto');
   document.getElementById('label-direccion').classList.add('oculto');
   document.getElementById('label-cuit').classList.add('oculto');
+  document.getElementById('seccion-pago-mixto').classList.add('oculto');
   document.getElementById('mensaje-cliente-encontrado').textContent = '';
 });
 
@@ -380,6 +431,7 @@ function renderizarListaProductos() {
       const index = Number(boton.dataset.index);
       productosDelPedido.splice(index, 1);
       renderizarListaProductos();
+      validarPagoMixto();
     });
   });
 
@@ -441,6 +493,7 @@ document.getElementById('btn-agregar-producto').addEventListener('click', () => 
   document.getElementById('select-producto-2').classList.add('oculto');
 
   renderizarListaProductos();
+  validarPagoMixto();
 });
 
 // ---- Envío del formulario: crear pedido nuevo, o guardar cambios si se está editando ----
@@ -452,10 +505,25 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
     return;
   }
 
+  const medioPago = document.getElementById('medio_pago').value;
+  let montoEfectivo = null;
+  let montoTransferencia = null;
+
+  if (medioPago === 'mixto') {
+    if (!validarPagoMixto()) {
+      alert('La suma de efectivo y transferencia debe coincidir con el total del pedido');
+      return;
+    }
+    montoEfectivo = Number(document.getElementById('monto-efectivo').value) || 0;
+    montoTransferencia = Number(document.getElementById('monto-transferencia').value) || 0;
+  }
+
   const datosGenerales = {
     cliente: document.getElementById('cliente').value,
     canal: document.getElementById('canal').value,
-    medio_pago: document.getElementById('medio_pago').value,
+    medio_pago: medioPago,
+    monto_efectivo: montoEfectivo,
+    monto_transferencia: montoTransferencia,
     telefono: document.getElementById('telefono-cliente').value || null,
     tipo_entrega: document.getElementById('tipo_entrega').value,
     direccion_entrega: document.getElementById('direccion_entrega').value || null,
@@ -485,6 +553,7 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
     document.getElementById('formulario-pedido').reset();
     document.getElementById('label-direccion').classList.add('oculto');
     document.getElementById('label-cuit').classList.add('oculto');
+    document.getElementById('seccion-pago-mixto').classList.add('oculto');
     document.getElementById('mensaje-cliente-encontrado').textContent = '';
     productosDelPedido = [];
     renderizarListaProductos();
@@ -512,6 +581,7 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
   renderizarListaProductos();
   document.getElementById('label-direccion').classList.add('oculto');
   document.getElementById('label-cuit').classList.add('oculto');
+  document.getElementById('seccion-pago-mixto').classList.add('oculto');
   document.getElementById('mensaje-cliente-encontrado').textContent = '';
   cargarPedidos();
 });

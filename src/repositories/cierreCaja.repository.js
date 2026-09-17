@@ -3,15 +3,28 @@ const pool = require('../config/db.js');
 async function calcularTotalesDelDia(fecha) {
   const resultado = await pool.query(
     `SELECT
-       COALESCE(SUM(CASE WHEN medio_pago = 'efectivo' THEN total ELSE 0 END), 0) AS total_efectivo,
-       COALESCE(SUM(CASE WHEN medio_pago = 'transferencia' THEN total ELSE 0 END), 0) AS total_transferencia
+       COALESCE(SUM(
+         CASE
+           WHEN medio_pago = 'efectivo' THEN total
+           WHEN medio_pago = 'mixto' THEN monto_efectivo
+           ELSE 0
+         END
+       ), 0) AS total_efectivo,
+       COALESCE(SUM(
+         CASE
+           WHEN medio_pago = 'transferencia' THEN total
+           WHEN medio_pago = 'mixto' THEN monto_transferencia
+           ELSE 0
+         END
+       ), 0) AS total_transferencia
      FROM (
-       SELECT p.id, p.medio_pago, SUM(pd.cantidad * pd.precio_unitario) AS total
+       SELECT p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia,
+              SUM(pd.cantidad * pd.precio_unitario) AS total
        FROM pedidos p
        JOIN pedido_detalle pd ON pd.pedido_id = p.id
        WHERE DATE((p.creado_en AT TIME ZONE 'America/Argentina/Buenos_Aires') - INTERVAL '6 hours') = $1
          AND p.estado != 'cancelado'
-       GROUP BY p.id, p.medio_pago
+       GROUP BY p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia
      ) AS totales_por_pedido`,
     [fecha]
   );

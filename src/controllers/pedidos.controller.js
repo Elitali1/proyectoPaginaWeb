@@ -36,8 +36,10 @@ async function crear(req, res) {
   try {
     const clientesRepository = require('../repositories/clientes.repository.js');
 
-    const { cliente, canal, medio_pago, telefono, productos, tipo_entrega, direccion_entrega, cuit_receptor } = req.body;
-    const requiere_factura = medio_pago === 'transferencia';
+    const { cliente, canal, medio_pago, telefono, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = req.body;
+
+    // Requiere factura si es transferencia pura, o si es mixto con parte en transferencia
+    const requiere_factura = medio_pago === 'transferencia' || (medio_pago === 'mixto' && Number(monto_transferencia) > 0);
 
     let clienteId = null;
     if (telefono) {
@@ -46,7 +48,7 @@ async function crear(req, res) {
     }
 
     const nuevoPedido = await pedidosRepository.crear({
-      cliente, canal, medio_pago, requiere_factura, cliente_id: clienteId, productos, tipo_entrega, direccion_entrega, cuit_receptor
+      cliente, canal, medio_pago, requiere_factura, cliente_id: clienteId, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia
     });
 
     res.status(201).json(nuevoPedido);
@@ -109,7 +111,11 @@ async function facturar(req, res) {
       return res.status(400).json({ error: 'Este pedido ya tiene una factura asociada' });
     }
 
-    const total = pedido.productos.reduce((suma, item) => suma + (item.cantidad * Number(item.precio_unitario)), 0);
+    // Si es mixto, se factura solo la parte de transferencia; si no, el total del pedido
+    const esMixto = pedido.medio_pago === 'mixto';
+    const total = esMixto
+      ? Number(pedido.monto_transferencia)
+      : pedido.productos.reduce((suma, item) => suma + (item.cantidad * Number(item.precio_unitario)), 0);
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
 
@@ -157,20 +163,31 @@ async function generarPdf(req, res) {
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
     const nombreReceptor = pedido.cliente || 'Consumidor Final';
+    const esMixto = pedido.medio_pago === 'mixto';
 
-    const items = pedido.productos.map(item => {
-      const subtotal = item.cantidad * Number(item.precio_unitario);
-      const nombre = item.nombre_producto_2
-        ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
-        : item.nombre_producto;
-      return {
-        descripcion: nombre,
-        cantidad: item.cantidad,
-        unidadMedida: 'unidad',
-        precioUnitario: Number(item.precio_unitario),
-        subtotal
-      };
-    });
+    const items = esMixto
+      ? [
+          {
+            descripcion: `Pago parcial - Pedido #${pedido.id}`,
+            cantidad: 1,
+            unidadMedida: 'unidad',
+            precioUnitario: Number(factura.monto),
+            subtotal: Number(factura.monto)
+          }
+        ]
+      : pedido.productos.map(item => {
+          const subtotal = item.cantidad * Number(item.precio_unitario);
+          const nombre = item.nombre_producto_2
+            ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
+            : item.nombre_producto;
+          return {
+            descripcion: nombre,
+            cantidad: item.cantidad,
+            unidadMedida: 'unidad',
+            precioUnitario: Number(item.precio_unitario),
+            subtotal
+          };
+        });
 
     const importeTotal = Number(factura.monto);
     const fechaComprobante = new Date(factura.creado_en).toISOString().split('T')[0];
