@@ -8,15 +8,20 @@ function mostrarEstadoHorario() {
   const ahora = new Date();
   const horaArgentina = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
   const hora = horaArgentina.getHours();
+  const diaSemana = horaArgentina.getDay(); // 0 = domingo, 5 = viernes, 6 = sábado
 
-  // Abierto de 20:00 a 23:59, y de 00:00 a la madrugada (hasta que decida cerrar el local)
-  const abierto = hora >= 20 || hora < 2;
+  // Abierto: viernes/sábado/domingo de 20 a 23:59, y de 00 a 02 (la madrugada sigue siendo "el mismo turno" del día anterior)
+  const esDiaDeApertura = diaSemana === 5 || diaSemana === 6 || diaSemana === 0;
+  const esMadrugadaDeApertura = hora < 2 && (diaSemana === 6 || diaSemana === 0 || diaSemana === 1);
+  // (la madrugada del sábado es "viernes a la noche", la del domingo es "sábado a la noche", la del lunes es "domingo a la noche")
+
+  const abierto = (esDiaDeApertura && hora >= 20) || esMadrugadaDeApertura;
 
   if (abierto) {
     elemento.textContent = '🟢 Abierto ahora';
     elemento.className = 'estado-horario abierto';
   } else {
-    elemento.textContent = '🔴 Cerrado - Abrimos a las 20:00hs';
+    elemento.textContent = '🔴 Cerrado - Abrimos viernes, sábado y domingo a las 20:00hs';
     elemento.className = 'estado-horario cerrado';
   }
 }
