@@ -1,13 +1,18 @@
 const jwt = require('jsonwebtoken');
 
 function verificarToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
+  // Prioriza la cookie httpOnly (más segura); si no existe, acepta el header
+  // Authorization como respaldo, para no romper nada mientras migramos el frontend.
+  const tokenDesdeCookie = req.cookies ? req.cookies.auth_token : null;
 
-  if (!authHeader) {
+  const authHeader = req.headers['authorization'];
+  const tokenDesdeHeader = authHeader ? authHeader.split(' ')[1] : null;
+
+  const token = tokenDesdeCookie || tokenDesdeHeader;
+
+  if (!token) {
     return res.status(401).json({ error: 'No se proporcionó token' });
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const datosUsuario = jwt.verify(token, process.env.JWT_SECRET);
