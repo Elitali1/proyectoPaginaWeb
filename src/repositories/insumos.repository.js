@@ -5,8 +5,8 @@ async function obtenerTodos() {
   return resultado.rows;
 }
 
-async function obtenerPorId(id) {
-  const resultado = await pool.query('SELECT * FROM insumos WHERE id = $1', [id]);
+async function obtenerPorId(id, cliente = pool) {
+  const resultado = await cliente.query('SELECT * FROM insumos WHERE id = $1', [id]);
   return resultado.rows[0];
 }
 

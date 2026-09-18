@@ -127,6 +127,14 @@ async function descontarStockPorVenta(productoId, cantidadVendida, recetasReposi
 
   for (const linea of receta) {
     const cantidadADescontar = Number(linea.cantidad) * cantidadVendida;
+
+    const insumoActual = await insumosRepository.obtenerPorId(linea.insumo_id, cliente);
+    const stockResultante = Number(insumoActual.stock_actual) - cantidadADescontar;
+
+    if (stockResultante < 0) {
+      throw new Error(`No hay stock suficiente de "${insumoActual.nombre}" (quedan ${insumoActual.stock_actual} ${insumoActual.unidad_medida}, se necesitan ${cantidadADescontar})`);
+    }
+
     await insumosRepository.ajustarStock(linea.insumo_id, -cantidadADescontar, cliente);
   }
 }
