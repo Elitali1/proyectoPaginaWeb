@@ -131,20 +131,49 @@ async function descontarStockPorVenta(productoId, cantidadVendida, recetasReposi
   }
 }
 
-async function descontarStockPorVenta(productoId, cantidadVendida, recetasRepository, insumosRepository) {
+async function revertirStockPorCancelacion(pedidoId) {
+  const insumosRepository = require('./insumos.repository.js');
+  const recetasRepository = require('./recetas.repository.js');
+
+  const pedido = await obtenerConDetalle(pedidoId);
+  if (!pedido) return;
+
+  for (const item of pedido.productos) {
+    await revertirStockDeUnProducto(item.producto_id, item.cantidad, recetasRepository, insumosRepository);
+    if (item.producto_id_2) {
+      await revertirStockDeUnProducto(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository);
+    }
+  }
+}
+
+async function revertirStockDeUnProducto(productoId, cantidadVendida, recetasRepository, insumosRepository) {
   const receta = await recetasRepository.obtenerPorProducto(productoId);
 
   for (const linea of receta) {
-    const cantidadADescontar = Number(linea.cantidad) * cantidadVendida;
-    await insumosRepository.ajustarStock(linea.insumo_id, -cantidadADescontar);
+    const cantidadADevolver = Number(linea.cantidad) * cantidadVendida;
+    await insumosRepository.ajustarStock(linea.insumo_id, cantidadADevolver);
   }
 }
 
 async function actualizarEstado(id, estado) {
+  const pedidoActual = await pool.query('SELECT estado FROM pedidos WHERE id = $1', [id]);
+
+  if (pedidoActual.rows.length === 0) {
+    return null;
+  }
+
+  const estadoAnterior = pedidoActual.rows[0].estado;
+
   const resultado = await pool.query(
     'UPDATE pedidos SET estado = $1 WHERE id = $2 RETURNING *',
     [estado, id]
   );
+
+  // Si se está cancelando un pedido que no estaba cancelado antes, devolvemos el stock
+  if (estado === 'cancelado' && estadoAnterior !== 'cancelado') {
+    await revertirStockPorCancelacion(id);
+  }
+
   return resultado.rows[0];
 }
 
