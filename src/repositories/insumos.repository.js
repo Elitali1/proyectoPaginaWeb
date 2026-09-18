@@ -30,8 +30,8 @@ async function actualizarStockYCosto(id, cantidadAgregada, nuevoCostoUnitario) {
   return resultado.rows[0];
 }
 
-async function ajustarStock(id, cantidadDelta) {
-  const resultado = await pool.query(
+async function ajustarStock(id, cantidadDelta, cliente = pool) {
+  const resultado = await cliente.query(
     `UPDATE insumos
      SET stock_actual = stock_actual + $1
      WHERE id = $2

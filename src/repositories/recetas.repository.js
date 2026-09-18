@@ -1,7 +1,7 @@
 const pool = require('../config/db.js');
 
-async function obtenerPorProducto(productoId) {
-  const resultado = await pool.query(
+async function obtenerPorProducto(productoId, cliente = pool) {
+  const resultado = await cliente.query(
     `SELECT rd.*, i.nombre AS insumo_nombre, i.unidad_medida, i.costo_unitario
      FROM receta_detalle rd
      JOIN insumos i ON i.id = rd.insumo_id

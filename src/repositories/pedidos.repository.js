@@ -63,49 +63,72 @@ async function crear(datos) {
 
   const { cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = datos;
 
-  const cabecera = await pool.query(
-    `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-     RETURNING *`,
-    [cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, monto_efectivo || null, monto_transferencia || null]
-  );
+  const clienteDb = await pool.connect();
+  let pedidoId;
 
-  const pedidoId = cabecera.rows[0].id;
+  try {
+    await clienteDb.query('BEGIN');
 
-  for (const item of productos) {
-    let precioFinal;
-    if (item.producto_id_2) {
-      const p1 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
-      const p2 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
-
-      if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
-        throw new Error('Uno de los productos seleccionados ya no está disponible');
-      }
-
-      precioFinal = (Number(p1.rows[0].precio) / 2) + (Number(p2.rows[0].precio) / 2) + 1000;
-    } else {
-      const p1 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
-
-      if (!p1.rows[0].disponible) {
-        throw new Error('El producto seleccionado ya no está disponible');
-      }
-
-      precioFinal = Number(p1.rows[0].precio);
-    }
-
-    await pool.query(
-      `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
+    const cabecera = await clienteDb.query(
+      `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, monto_efectivo || null, monto_transferencia || null]
     );
 
-    await descontarStockPorVenta(item.producto_id, item.cantidad, recetasRepository, insumosRepository);
-    if (item.producto_id_2) {
-      await descontarStockPorVenta(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository);
+    pedidoId = cabecera.rows[0].id;
+
+    for (const item of productos) {
+      let precioFinal;
+      if (item.producto_id_2) {
+        const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
+        const p2 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
+
+        if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
+          throw new Error('Uno de los productos seleccionados ya no está disponible');
+        }
+
+        precioFinal = (Number(p1.rows[0].precio) / 2) + (Number(p2.rows[0].precio) / 2) + 1000;
+      } else {
+        const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
+
+        if (!p1.rows[0].disponible) {
+          throw new Error('El producto seleccionado ya no está disponible');
+        }
+
+        precioFinal = Number(p1.rows[0].precio);
+      }
+
+      await clienteDb.query(
+        `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [pedidoId, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
+      );
+
+      await descontarStockPorVenta(item.producto_id, item.cantidad, recetasRepository, insumosRepository, clienteDb);
+      if (item.producto_id_2) {
+        await descontarStockPorVenta(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository, clienteDb);
+      }
     }
+
+    await clienteDb.query('COMMIT');
+  } catch (error) {
+    await clienteDb.query('ROLLBACK');
+    throw error;
+  } finally {
+    clienteDb.release();
   }
 
   return obtenerConDetalle(pedidoId);
+}
+
+async function descontarStockPorVenta(productoId, cantidadVendida, recetasRepository, insumosRepository, cliente) {
+  const receta = await recetasRepository.obtenerPorProducto(productoId, cliente);
+
+  for (const linea of receta) {
+    const cantidadADescontar = Number(linea.cantidad) * cantidadVendida;
+    await insumosRepository.ajustarStock(linea.insumo_id, -cantidadADescontar, cliente);
+  }
 }
 
 async function descontarStockPorVenta(productoId, cantidadVendida, recetasRepository, insumosRepository) {
