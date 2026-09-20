@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /caja.html
+Disallow: /clientes.html
+Disallow: /compras.html
+Disallow: /dashboard.html
+Disallow: /historial.html
+Disallow: /insumos.html
+Disallow: /login.html
+Disallow: /olvide-password.html
+Disallow: /pedidos.html
+Disallow: /productos.html
+Disallow: /resetear-password.html
+Disallow: /usuarios.html
+
+Sitemap: https://www.donchichopizza.com.ar/sitemap.xml

@@ -71,14 +71,14 @@ async function cargarHistorial(fecha) {
 
     const entrega =
       pedido.tipo_entrega === "envio"
-        ? `Envío - ${pedido.direccion_entrega || "sin dirección"}`
+        ? `Envío - ${escapeHtml(pedido.direccion_entrega) || "sin dirección"}`
         : "Retiro en local";
 
     const detalleProductos = pedido.productos
       .map((item) => {
         const nombre = item.nombre_producto_2
-          ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
-          : item.nombre_producto;
+          ? `Mitad ${escapeHtml(item.nombre_producto)} / Mitad ${escapeHtml(item.nombre_producto_2)}`
+          : escapeHtml(item.nombre_producto);
         return `${item.cantidad} x ${nombre}`;
       })
       .join(", ");
@@ -90,7 +90,7 @@ async function cargarHistorial(fecha) {
         : "";
 
       infoFactura = pedido.ya_facturado
-        ? `Factura N° ${pedido.numero_comprobante} - CAE: ${pedido.cae} (vto: ${pedido.vencimiento_cae ? pedido.vencimiento_cae.split("T")[0] : ""})
+        ? `Factura N° ${escapeHtml(pedido.numero_comprobante)} - CAE: ${escapeHtml(pedido.cae)} (vto: ${pedido.vencimiento_cae ? pedido.vencimiento_cae.split("T")[0] : ""})
        <button type="button" class="btn-ver-pdf" data-id="${pedido.id}">Ver PDF</button>
        <button type="button" class="btn-anular-factura" data-id="${pedido.id}" data-total="${pedido.total}">Anular factura</button>
        ${botonVerNCHtml}`
@@ -99,10 +99,10 @@ async function cargarHistorial(fecha) {
     }
 
     div.innerHTML = `
-      <strong>#${pedido.id} - ${pedido.cliente}</strong> - ${formatearFecha(pedido.creado_en)}<br>
-      Canal: ${pedido.canal} | Pago: ${pedido.medio_pago} | ${entrega}<br>
+      <strong>#${pedido.id} - ${escapeHtml(pedido.cliente)}</strong> - ${formatearFecha(pedido.creado_en)}<br>
+      Canal: ${escapeHtml(pedido.canal)} | Pago: ${escapeHtml(pedido.medio_pago)} | ${entrega}<br>
       Productos: ${detalleProductos}<br>
-      Total: $${formatearPrecio(pedido.total)} | Estado: ${pedido.estado}<br>
+      Total: $${formatearPrecio(pedido.total)} | Estado: ${escapeHtml(pedido.estado)}<br>
       ${infoFactura ? `${infoFactura}<br>` : ""}
     `;
     contenedor.appendChild(div);

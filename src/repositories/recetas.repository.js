@@ -1,4 +1,5 @@
 const pool = require('../config/db.js');
+const { conTransaccion } = require('../config/transaccion.js');
 
 async function obtenerPorProducto(productoId, cliente = pool) {
   const resultado = await cliente.query(
@@ -11,16 +12,20 @@ async function obtenerPorProducto(productoId, cliente = pool) {
   return resultado.rows;
 }
 
+// Borrar e insertar va en una transacción: si algo falla a mitad, la receta anterior queda intacta
+// (antes podía quedar vacía o incompleta y el producto dejaba de descontar stock sin avisar).
 async function reemplazarReceta(productoId, items) {
-  await pool.query('DELETE FROM receta_detalle WHERE producto_id = $1', [productoId]);
+  await conTransaccion(async (db) => {
+    await db.query('DELETE FROM receta_detalle WHERE producto_id = $1', [productoId]);
 
-  for (const item of items) {
-    await pool.query(
-      `INSERT INTO receta_detalle (producto_id, insumo_id, cantidad)
-       VALUES ($1, $2, $3)`,
-      [productoId, item.insumo_id, item.cantidad]
-    );
-  }
+    for (const item of items) {
+      await db.query(
+        `INSERT INTO receta_detalle (producto_id, insumo_id, cantidad)
+         VALUES ($1, $2, $3)`,
+        [productoId, item.insumo_id, item.cantidad]
+      );
+    }
+  });
 
   return obtenerPorProducto(productoId);
 }

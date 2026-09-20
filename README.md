@@ -35,11 +35,39 @@ cd donchichopizza-sistema-web
 npm install
 ```
 
-Crear un `.env` con las variables usadas en `src/config/db.js`, `arca.service.js` y `servidor.js` (conexión a base de datos, JWT, credenciales de ARCA, Cloudinary y Brevo).
+Copiar `.env.example` como `.env` y completar los valores (conexión a base de datos, JWT, credenciales de ARCA, Cloudinary y Brevo).
 
 ```bash
-npm run dev
+npm run dev     # servidor con recarga automática
+npm start       # servidor (producción)
+npm test        # tests automáticos (no necesitan base de datos ni credenciales)
 ```
+
+> **Cuidado con ARCA:** por defecto el sistema factura en **producción**. Para probar sin emitir comprobantes reales usá certificados de homologación y `ARCA_PRODUCTION=false`.
+
+## Estructura
+
+```
+servidor.js              arranque, seguridad (helmet, CORS, rate limit) y rutas
+src/routes/              endpoints y permisos por rol
+src/controllers/         validan la entrada y arman la respuesta HTTP
+src/services/            reglas de negocio (pedidos, ARCA, comanda, email, impresora)
+src/repositories/        consultas SQL
+src/config/              conexión a la base, transacciones y reglas fijas del negocio
+src/utils/               validaciones, errores y fechas
+public/                  frontend (HTML/CSS/JS vanilla)
+agente-impresora.js      corre en la PC del local: imprime las comandas en cola
+migrations/              cambios recomendados de base de datos (revisar antes de aplicar)
+test/                    tests automáticos (node --test)
+```
+
+## Agente de impresión
+
+Corre en la PC del local (no en el servidor). Necesita `AGENTE_TOKEN` y `API_URL_PRODUCCION` en su `.env`. Para instalarlo como servicio de Windows: `npm install node-windows --no-save` y luego `node instalar-servicio-agente.js`.
+
+## Fecha de los comprobantes ARCA
+
+Históricamente los comprobantes se emitían con la fecha UTC, por lo que entre las 21:00 y las 24:00 salían con la fecha del día siguiente. Para corregirlo sin modificar los ya emitidos, definir `ARCA_FECHA_ART_DESDE` con la fecha y hora ISO del momento del deploy (por ejemplo `2026-09-21T12:00:00Z`): los comprobantes posteriores usan la fecha de Argentina y los anteriores conservan la que ya tenían en ARCA.
 
 > Los certificados de ARCA y las credenciales no se incluyen en el repositorio por seguridad.
 

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { escaparHtml } = require('../utils/validaciones.js');
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.donchichopizza.com.ar';
@@ -52,10 +53,10 @@ async function sendContactEmail(nombreRemitente, emailRemitente, mensaje) {
   <html>
     <body>
       <p>Nuevo mensaje de contacto desde la landing de Donchichopizza:</p>
-      <p><strong>Nombre:</strong> ${nombreRemitente}</p>
-      <p><strong>Email:</strong> ${emailRemitente}</p>
+      <p><strong>Nombre:</strong> ${escaparHtml(nombreRemitente)}</p>
+      <p><strong>Email:</strong> ${escaparHtml(emailRemitente)}</p>
       <p><strong>Mensaje:</strong></p>
-      <p>${mensaje}</p>
+      <p>${escaparHtml(mensaje).replace(/\r?\n/g, '<br>')}</p>
     </body>
   </html>`;
 
@@ -68,7 +69,7 @@ async function sendContactEmail(nombreRemitente, emailRemitente, mensaje) {
     sender: { name: SENDER_NAME, email: SENDER_EMAIL },
     to: [{ email: SENDER_EMAIL }],
     replyTo: { email: emailRemitente, name: nombreRemitente },
-    subject: `Contacto desde la web - ${nombreRemitente}`,
+    subject: `Contacto desde la web - ${String(nombreRemitente).replace(/[\r\n]+/g, ' ')}`,
     htmlContent,
   };
 

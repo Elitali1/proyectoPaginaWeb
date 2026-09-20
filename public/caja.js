@@ -64,9 +64,9 @@ async function cargarCierres(desde, hasta) {
 
     let detalleVentasHtml = '';
     Object.keys(grupos).forEach(categoria => {
-      detalleVentasHtml += `<strong>${categoria}</strong><br>`;
+      detalleVentasHtml += `<strong>${escapeHtml(categoria)}</strong><br>`;
       grupos[categoria].forEach(item => {
-        detalleVentasHtml += `${item.producto_nombre}: ${item.cantidad_vendida}<br>`;
+        detalleVentasHtml += `${escapeHtml(item.producto_nombre)}: ${escapeHtml(item.cantidad_vendida)}<br>`;
       });
     });
 
@@ -101,8 +101,8 @@ async function cargarGastos(desde, hasta) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${gasto.concepto}</strong> - $${formatearPrecio(gasto.monto)}
-      ${gasto.categoria ? ` (${gasto.categoria})` : ''} - ${gasto.fecha.split('T')[0]}
+      <strong>${escapeHtml(gasto.concepto)}</strong> - $${formatearPrecio(gasto.monto)}
+      ${gasto.categoria ? ` (${escapeHtml(gasto.categoria)})` : ''} - ${gasto.fecha.split('T')[0]}
       <button type="button" class="btn-eliminar-gasto" data-id="${gasto.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);
@@ -163,7 +163,7 @@ document.getElementById('formulario-balance').addEventListener('submit', async (
 
   if (!respuesta.ok) {
     const error = await respuesta.json();
-    contenedor.innerHTML = `<p>${error.error || 'Error al calcular el balance'}</p>`;
+    contenedor.innerHTML = `<p>${escapeHtml(error.error || 'Error al calcular el balance')}</p>`;
     return;
   }
 
@@ -196,7 +196,7 @@ document.getElementById('formulario-cierre').addEventListener('submit', async (e
       'Content-Type': 'application/json'
     },
     credentials: 'include',
-    body: JSON.stringify({ fecha, cerrado_por: usuario.id })
+    body: JSON.stringify({ fecha })
   });
 
   if (manejarNoAutorizado(respuesta)) return;

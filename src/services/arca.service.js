@@ -1,6 +1,7 @@
 const { Arca } = require('@arcasdk/core');
 const fs = require('fs');
 const path = require('path');
+const { fechaDeEmision } = require('../utils/fechas.js');
 
 const cert = process.env.ARCA_CERT
   ? process.env.ARCA_CERT
@@ -14,7 +15,9 @@ const arca = new Arca({
   cert,
   key,
   cuit: Number(process.env.ARCA_CUIT),
-  production: true
+  // Por defecto es producción (igual que antes). Poné ARCA_PRODUCTION=false para usar homologación
+  // con certificados de prueba y no emitir comprobantes reales desde tu PC.
+  production: process.env.ARCA_PRODUCTION !== 'false'
 });
 
 // Lock simple: encadena todas las emisiones una detrás de otra, para que
@@ -36,7 +39,7 @@ async function emitirFactura({ monto, cuitReceptor }) {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipo);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
-    const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const fecha = fechaDeEmision().replace(/-/g, '');
 
     const docTipo = cuitReceptor ? 80 : 99;
     const docNro = cuitReceptor || 0;
@@ -79,7 +82,7 @@ async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada }) {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipoNC);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
-    const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const fecha = fechaDeEmision().replace(/-/g, '');
 
     const docTipo = cuitReceptor ? 80 : 99;
     const docNro = cuitReceptor || 0;

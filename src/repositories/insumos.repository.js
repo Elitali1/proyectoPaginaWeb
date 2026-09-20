@@ -19,8 +19,8 @@ async function crear(datos) {
   return resultado.rows[0];
 }
 
-async function actualizarStockYCosto(id, cantidadAgregada, nuevoCostoUnitario) {
-  const resultado = await pool.query(
+async function actualizarStockYCosto(id, cantidadAgregada, nuevoCostoUnitario, cliente = pool) {
+  const resultado = await cliente.query(
     `UPDATE insumos
      SET stock_actual = stock_actual + $1, costo_unitario = $2
      WHERE id = $3
@@ -40,6 +40,33 @@ async function ajustarStock(id, cantidadDelta, cliente = pool) {
   );
   return resultado.rows[0];
 }
+
+// Descuenta stock de forma atómica: la condición `stock_actual >= $1` se evalúa dentro del mismo
+// UPDATE, así dos ventas simultáneas no pueden dejar el stock en negativo.
+// Devuelve undefined si no había stock suficiente (o el insumo no existe).
+async function descontarStockSiHay(id, cantidad, cliente = pool) {
+  const resultado = await cliente.query(
+    `UPDATE insumos
+     SET stock_actual = stock_actual - $1
+     WHERE id = $2 AND stock_actual >= $1
+     RETURNING *`,
+    [cantidad, id]
+  );
+  return resultado.rows[0];
+}
+
+// Ajuste manual: los descuentos no pueden dejar el stock por debajo de cero.
+async function ajustarStockManual(id, cantidadDelta) {
+  const resultado = await pool.query(
+    `UPDATE insumos
+     SET stock_actual = stock_actual + $1
+     WHERE id = $2 AND ($1 > 0 OR stock_actual + $1 >= 0)
+     RETURNING *`,
+    [cantidadDelta, id]
+  );
+  return resultado.rows[0];
+}
+
 async function alternarActivo(id, activo) {
   const resultado = await pool.query(
     'UPDATE insumos SET activo = $1 WHERE id = $2 RETURNING *',
@@ -65,4 +92,4 @@ async function actualizar(id, datos) {
 }
 
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, alternarActivo , actualizarStockMinimo, actualizar}; 
+module.exports = { obtenerTodos, obtenerPorId, crear, actualizarStockYCosto, ajustarStock, descontarStockSiHay, ajustarStockManual, alternarActivo, actualizarStockMinimo, actualizar };

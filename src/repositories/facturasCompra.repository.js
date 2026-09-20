@@ -1,4 +1,7 @@
 const pool = require('../config/db.js');
+const { conTransaccion } = require('../config/transaccion.js');
+const insumosRepository = require('./insumos.repository.js');
+const { ErrorNegocio } = require('../utils/errores.js');
 
 async function obtenerTodas() {
   const resultado = await pool.query('SELECT * FROM facturas_compra ORDER BY fecha DESC');
@@ -29,33 +32,56 @@ async function crear(datos) {
   return resultado.rows[0];
 }
 
-async function eliminar(id) {
-  const resultado = await pool.query(
-    'DELETE FROM facturas_compra WHERE id = $1 RETURNING *',
-    [id]
-  );
-  return resultado.rows[0];
-}
-async function agregarDetalle(facturaCompraId, items) {
-  const insumosRepository = require('./insumos.repository.js');
-  const detallesCreados = [];
+// Borra la factura y revierte el stock que había sumado, todo junto: si algo falla no queda a medias.
+// Devuelve undefined si la factura no existe.
+async function eliminarConReversion(id) {
+  return conTransaccion(async (db) => {
+    const existe = await db.query('SELECT id FROM facturas_compra WHERE id = $1 FOR UPDATE', [id]);
+    if (existe.rows.length === 0) return undefined;
 
-  for (const item of items) {
-    const { insumo_id, cantidad, precio_unitario } = item;
-
-    const resultado = await pool.query(
-      `INSERT INTO compra_detalle (factura_compra_id, insumo_id, cantidad, precio_unitario)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [facturaCompraId, insumo_id, cantidad, precio_unitario]
+    const detalle = await db.query(
+      'SELECT insumo_id, cantidad FROM compra_detalle WHERE factura_compra_id = $1',
+      [id]
     );
+    for (const linea of detalle.rows) {
+      await insumosRepository.ajustarStock(linea.insumo_id, -Number(linea.cantidad), db);
+    }
 
-    await insumosRepository.actualizarStockYCosto(insumo_id, cantidad, precio_unitario);
+    const resultado = await db.query('DELETE FROM facturas_compra WHERE id = $1 RETURNING *', [id]);
+    return resultado.rows[0];
+  });
+}
 
-    detallesCreados.push(resultado.rows[0]);
-  }
+// Carga el detalle y suma el stock en una transacción: o entra todo o no entra nada.
+async function agregarDetalle(facturaCompraId, items) {
+  return conTransaccion(async (db) => {
+    const factura = await db.query('SELECT id FROM facturas_compra WHERE id = $1 FOR UPDATE', [facturaCompraId]);
+    if (factura.rows.length === 0) {
+      throw new ErrorNegocio('Factura de compra no encontrada', 404);
+    }
 
-  return detallesCreados;
+    const detallesCreados = [];
+
+    for (const item of items) {
+      const { insumo_id, cantidad, precio_unitario } = item;
+
+      const resultado = await db.query(
+        `INSERT INTO compra_detalle (factura_compra_id, insumo_id, cantidad, precio_unitario)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [facturaCompraId, insumo_id, cantidad, precio_unitario]
+      );
+
+      const insumo = await insumosRepository.actualizarStockYCosto(insumo_id, cantidad, precio_unitario, db);
+      if (!insumo) {
+        throw new ErrorNegocio(`El insumo #${insumo_id} no existe`);
+      }
+
+      detallesCreados.push(resultado.rows[0]);
+    }
+
+    return detallesCreados;
+  });
 }
 
 async function obtenerDetallePorFactura(facturaCompraId) {
@@ -80,16 +106,5 @@ async function obtenerUltimoPrecioInsumo(insumoId) {
   );
   return resultado.rows[0];
 }
-async function revertirStockPorFactura(facturaCompraId) {
-  const insumosRepository = require('./insumos.repository.js');
 
-  const detalle = await pool.query(
-    'SELECT insumo_id, cantidad FROM compra_detalle WHERE factura_compra_id = $1',
-    [facturaCompraId]
-  );
-
-  for (const linea of detalle.rows) {
-    await insumosRepository.ajustarStock(linea.insumo_id, -Number(linea.cantidad));
-  }
-}
-module.exports = { obtenerTodas, obtenerPorId, obtenerPorRangoFechas, crear, eliminar, agregarDetalle, obtenerDetallePorFactura, obtenerUltimoPrecioInsumo, revertirStockPorFactura };
+module.exports = { obtenerTodas, obtenerPorId, obtenerPorRangoFechas, crear, eliminarConReversion, agregarDetalle, obtenerDetallePorFactura, obtenerUltimoPrecioInsumo };

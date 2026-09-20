@@ -1,12 +1,12 @@
 {
   "name": "proyectopaginaweb",
   "version": "1.0.0",
-  "main": "hola.js",
+  "main": "servidor.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node servidor.js",
+    "test": "node --test test/",
     "dev": "nodemon servidor.js",
     "postinstall": "patch-package"
-    
   },
   "keywords": [],
   "author": "",
@@ -29,13 +29,11 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
-    "node-thermal-printer": "^4.6.1",
-    "pdf-to-printer": "^5.8.0",
+    "patch-package": "^8.0.1",
     "pg": "^8.23.0",
     "usb": "^1.9.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
-    "patch-package": "^8.0.1"
+    "nodemon": "^3.1.14"
   }
 }
