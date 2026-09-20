@@ -117,15 +117,15 @@ async function cargarPedidos() {
     div.className = 'pedido';
 
     const entrega = pedido.tipo_entrega === 'envio'
-      ? `Envío - ${escaparHtml(pedido.direccion_entrega || 'sin dirección')}`
+      ? `Envío - ${pedido.direccion_entrega || 'sin dirección'}`
       : 'Retiro en local';
 
     const detalleProductos = pedido.productos.map(item => {
       const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
-      const aclaracionTexto = item.aclaraciones ? ` (${escaparHtml(item.aclaraciones)})` : '';
+      const aclaracionTexto = item.aclaraciones ? ` (${item.aclaraciones})` : '';
       const nombre = item.nombre_producto_2
-        ? `Mitad ${escaparHtml(item.nombre_producto)} / Mitad ${escaparHtml(item.nombre_producto_2)}`
-        : escaparHtml(item.nombre_producto);
+        ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
+        : item.nombre_producto;
       return `${item.cantidad} x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto}`;
     }).join('<br>');
 
@@ -141,10 +141,10 @@ async function cargarPedidos() {
 
     div.innerHTML = `
 
-      <strong>#${pedido.id} - ${escaparHtml(pedido.cliente)}</strong> - ${formatearFecha(pedido.creado_en)}<br>
-      Canal: ${escaparHtml(pedido.canal)} | Pago: ${escaparHtml(infoPago)} | ${entrega}<br>
+      <strong>#${pedido.id} - ${pedido.cliente}</strong> - ${formatearFecha(pedido.creado_en)}<br>
+      Canal: ${pedido.canal} | Pago: ${infoPago} | ${entrega}<br>
       ${detalleProductos}<br>
-      Total: $${formatearPrecio(pedido.total)} | Estado: ${escaparHtml(pedido.estado)}
+      Total: $${formatearPrecio(pedido.total)} | Estado: ${pedido.estado}
       ${botonFactura}
       <button type="button" class="btn-comanda" data-id="${pedido.id}">Imprimir comanda</button>
       <button type="button" class="btn-modificar" data-id="${pedido.id}">Modificar</button>
@@ -394,11 +394,11 @@ function renderizarListaProductos() {
     total += subtotal;
 
     const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
-    const aclaracionTexto = item.aclaraciones ? ` (${escaparHtml(item.aclaraciones)})` : '';
+    const aclaracionTexto = item.aclaraciones ? ` (${item.aclaraciones})` : '';
 
     const li = document.createElement('li');
     li.innerHTML = `
-      ${item.cantidad} x ${escaparHtml(item.nombre)}${masaTexto ? ' - ' + escaparHtml(masaTexto) : ''}${aclaracionTexto} - $${formatearPrecio(subtotal)}
+      ${item.cantidad} x ${item.nombre}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto} - $${formatearPrecio(subtotal)}
       <button type="button" class="btn-quitar" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);

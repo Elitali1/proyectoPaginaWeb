@@ -17,10 +17,7 @@ async function guardar(req, res) {
     const { productoId } = req.params;
     const { items } = req.body;
 
-    if (!Array.isArray(items) || items.length > 100 || items.some(item =>
-      !item || !Number.isInteger(Number(item.insumo_id)) || Number(item.insumo_id) <= 0 ||
-      !Number.isFinite(Number(item.cantidad)) || Number(item.cantidad) <= 0
-    )) {
+    if (!items) {
       return res.status(400).json({ error: 'Faltan los items de la receta' });
     }
 

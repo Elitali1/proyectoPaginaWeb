@@ -71,14 +71,14 @@ async function cargarHistorial(fecha) {
 
     const entrega =
       pedido.tipo_entrega === "envio"
-        ? `Envío - ${escaparHtml(pedido.direccion_entrega || "sin dirección")}`
+        ? `Envío - ${pedido.direccion_entrega || "sin dirección"}`
         : "Retiro en local";
 
     const detalleProductos = pedido.productos
       .map((item) => {
         const nombre = item.nombre_producto_2
-          ? `Mitad ${escaparHtml(item.nombre_producto)} / Mitad ${escaparHtml(item.nombre_producto_2)}`
-          : escaparHtml(item.nombre_producto);
+          ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
+          : item.nombre_producto;
         return `${item.cantidad} x ${nombre}`;
       })
       .join(", ");
@@ -99,10 +99,10 @@ async function cargarHistorial(fecha) {
     }
 
     div.innerHTML = `
-      <strong>#${pedido.id} - ${escaparHtml(pedido.cliente)}</strong> - ${formatearFecha(pedido.creado_en)}<br>
-      Canal: ${escaparHtml(pedido.canal)} | Pago: ${escaparHtml(pedido.medio_pago)} | ${entrega}<br>
+      <strong>#${pedido.id} - ${pedido.cliente}</strong> - ${formatearFecha(pedido.creado_en)}<br>
+      Canal: ${pedido.canal} | Pago: ${pedido.medio_pago} | ${entrega}<br>
       Productos: ${detalleProductos}<br>
-      Total: $${formatearPrecio(pedido.total)} | Estado: ${escaparHtml(pedido.estado)}<br>
+      Total: $${formatearPrecio(pedido.total)} | Estado: ${pedido.estado}<br>
       ${infoFactura ? `${infoFactura}<br>` : ""}
     `;
     contenedor.appendChild(div);

@@ -12,29 +12,17 @@ async function obtenerPorProducto(productoId, cliente = pool) {
 }
 
 async function reemplazarReceta(productoId, items) {
-  const cliente = await pool.connect();
-  try {
-    await cliente.query('BEGIN');
-    const producto = await cliente.query('SELECT id FROM productos WHERE id = $1 FOR UPDATE', [productoId]);
-    if (!producto.rows[0]) throw new Error('Producto no encontrado');
-    await cliente.query('DELETE FROM receta_detalle WHERE producto_id = $1', [productoId]);
-    for (const item of items) {
-      const insumo = await cliente.query('SELECT id FROM insumos WHERE id = $1', [item.insumo_id]);
-      if (!insumo.rows[0]) throw new Error('Insumo no encontrado');
-      await cliente.query(
-        `INSERT INTO receta_detalle (producto_id, insumo_id, cantidad)
-         VALUES ($1, $2, $3)`,
-        [productoId, item.insumo_id, item.cantidad]
-      );
-    }
-    await cliente.query('COMMIT');
-    return obtenerPorProducto(productoId);
-  } catch (error) {
-    await cliente.query('ROLLBACK');
-    throw error;
-  } finally {
-    cliente.release();
+  await pool.query('DELETE FROM receta_detalle WHERE producto_id = $1', [productoId]);
+
+  for (const item of items) {
+    await pool.query(
+      `INSERT INTO receta_detalle (producto_id, insumo_id, cantidad)
+       VALUES ($1, $2, $3)`,
+      [productoId, item.insumo_id, item.cantidad]
+    );
   }
+
+  return obtenerPorProducto(productoId);
 }
 
 async function calcularCostoProducto(productoId) {

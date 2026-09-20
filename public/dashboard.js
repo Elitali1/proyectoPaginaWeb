@@ -93,7 +93,7 @@ function mostrarStockBajo(stockBajo) {
   stockBajo.forEach(insumo => {
     const p = document.createElement('p');
     p.className = 'balance-negativo';
-    p.innerHTML = `<strong>${escaparHtml(insumo.nombre)}</strong>: quedan ${insumo.stock_actual} ${escaparHtml(insumo.unidad_medida)} (mínimo: ${insumo.stock_minimo} ${escaparHtml(insumo.unidad_medida)})`;
+    p.innerHTML = `<strong>${insumo.nombre}</strong>: quedan ${insumo.stock_actual} ${insumo.unidad_medida} (mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida})`;
     contenedor.appendChild(p);
   });
 }
@@ -145,7 +145,7 @@ function mostrarClientesRecurrentes(clientes) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>#${index + 1} - ${escaparHtml(cliente.nombre)}</strong> (${escaparHtml(cliente.telefono)})<br>
+      <strong>#${index + 1} - ${cliente.nombre}</strong> (${cliente.telefono})<br>
       ${cliente.cantidad_pedidos} pedidos | Total gastado: $${formatearPrecio(cliente.total_gastado)}
     `;
     contenedor.appendChild(div);
@@ -166,7 +166,7 @@ function mostrarMejoresMargenes(margenes) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>#${index + 1} - ${escaparHtml(producto.nombre)}</strong><br>
+      <strong>#${index + 1} - ${producto.nombre}</strong><br>
       Precio: $${formatearPrecio(producto.precioVenta)} | Costo: $${formatearPrecio(producto.costo.toFixed(2))}
       | <strong class="balance-positivo">Margen: ${producto.margenPorcentual}%</strong>
     `;
