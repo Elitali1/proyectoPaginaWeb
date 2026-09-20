@@ -42,13 +42,10 @@ async function cargarMenuPublico() {
       grupos[categoria].forEach(producto => {
         const div = document.createElement('div');
         div.className = 'menu-item';
-        const nombre = document.createElement('span');
-        nombre.className = 'nombre';
-        nombre.textContent = producto.nombre;
-        const precio = document.createElement('span');
-        precio.className = 'precio';
-        precio.textContent = `$${formatearPrecio(producto.precio)}`;
-        div.append(nombre, precio);
+        div.innerHTML = `
+          <span class="nombre">${producto.nombre}</span>
+          <span class="precio">$${formatearPrecio(producto.precio)}</span>
+        `;
         contenedor.appendChild(div);
       });
     });
@@ -95,13 +92,10 @@ async function cargarGaleria() {
       grupos[categoria].forEach(producto => {
         const div = document.createElement('div');
         div.className = 'galeria-item';
-        const img = document.createElement('img');
-        img.src = producto.imagen;
-        img.alt = producto.nombre;
-        const etiqueta = document.createElement('span');
-        etiqueta.className = 'etiqueta';
-        etiqueta.textContent = producto.nombre;
-        div.append(img, etiqueta);
+        div.innerHTML = `
+          <img src="${producto.imagen}" alt="${producto.nombre}">
+          <span class="etiqueta">${producto.nombre}</span>
+        `;
         subgrid.appendChild(div);
       });
 

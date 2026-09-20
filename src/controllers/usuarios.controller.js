@@ -13,11 +13,7 @@ function isValidEmail(email) {
 }
 
 function isStrongPassword(pw) {
-  return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128;
-}
-
-function isValidRole(rol) {
-  return rol === undefined || rol === 'admin' || rol === 'cajero';
+  return typeof pw === 'string' && pw.length >= 8; // recommend stronger rules in prod
 }
 
 async function listar(req, res) {
@@ -34,8 +30,7 @@ async function crear(req, res) {
   try {
     const { nombre, email, password, rol } = req.body;
 
-    if (typeof nombre !== 'string' || nombre.trim().length < 2 || nombre.length > 100 ||
-        !isValidEmail(email) || !isStrongPassword(password) || !isValidRole(rol)) {
+    if (!isValidEmail(email) || !isStrongPassword(password)) {
       return res.status(400).json({ error: 'Email o contraseña inválidos / débiles' });
     }
 
@@ -131,11 +126,6 @@ async function actualizar(req, res) {
     const { id } = req.params;
     const { nombre, email, rol, password } = req.body;
 
-    if (typeof nombre !== 'string' || nombre.trim().length < 2 || nombre.length > 100 ||
-        !isValidEmail(email) || !isValidRole(rol)) {
-      return res.status(400).json({ error: 'Datos de usuario inválidos' });
-    }
-
     let password_hash = null;
     if (password) {
       if (!isStrongPassword(password)) return res.status(400).json({ error: 'Contraseña demasiado débil' });
@@ -206,10 +196,7 @@ async function confirmarReset(req, res) {
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    const tokenBuffer = Buffer.from(tokenHash, 'hex');
-    const storedTokenBuffer = Buffer.from(usuario.token_reset, 'hex');
-    if (tokenBuffer.length !== storedTokenBuffer.length ||
-        !crypto.timingSafeEqual(tokenBuffer, storedTokenBuffer)) {
+    if (tokenHash !== usuario.token_reset) {
       return res.status(400).json({ error: 'Token inválido' });
     }
 

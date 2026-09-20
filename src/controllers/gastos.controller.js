@@ -20,13 +20,7 @@ async function listar(req, res) {
 async function crear(req, res) {
   try {
     const { concepto, categoria, monto, fecha } = req.body;
-    if (typeof concepto !== 'string' || concepto.trim().length < 2 ||
-        typeof categoria !== 'string' || categoria.trim().length < 2 ||
-        !Number.isFinite(Number(monto)) || Number(monto) <= 0 ||
-        !fecha || Number.isNaN(new Date(fecha).getTime())) {
-      return res.status(400).json({ error: 'Datos de gasto inválidos' });
-    }
-    const nuevoGasto = await gastosRepository.crear({ concepto: concepto.trim(), categoria: categoria.trim(), monto, fecha });
+    const nuevoGasto = await gastosRepository.crear({ concepto, categoria, monto, fecha });
     res.status(201).json(nuevoGasto);
   } catch (error) {
     console.error(error);

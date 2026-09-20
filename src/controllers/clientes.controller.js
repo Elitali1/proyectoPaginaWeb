@@ -28,15 +28,9 @@ async function obtenerUno(req, res) {
 
 async function crear(req, res) {
   try {
-    const { nombre, telefono, direccion, cuit } = req.body;
-    if (typeof nombre !== 'string' || nombre.trim().length < 2 || nombre.length > 100 ||
-        typeof telefono !== 'string' || telefono.trim().length < 6 || telefono.length > 30 ||
-        (direccion !== undefined && direccion !== null && String(direccion).length > 250) ||
-        (cuit !== undefined && cuit !== null && !/^\d{11}$/.test(String(cuit)))) {
-      return res.status(400).json({ error: 'Datos de cliente inválidos' });
-    }
+    const { nombre, telefono, direccion } = req.body;
 
-    const nuevoCliente = await clientesRepository.crear({ nombre: nombre.trim(), telefono: telefono.trim(), direccion, cuit });
+    const nuevoCliente = await clientesRepository.crear({ nombre, telefono, direccion });
 
     res.status(201).json(nuevoCliente);
   } catch (error) {
@@ -48,15 +42,9 @@ async function crear(req, res) {
 async function actualizar(req, res) {
   try {
     const { id } = req.params;
-    const { nombre, telefono, direccion, cuit } = req.body;
-    if (typeof nombre !== 'string' || nombre.trim().length < 2 || nombre.length > 100 ||
-        typeof telefono !== 'string' || telefono.trim().length < 6 || telefono.length > 30 ||
-        (direccion !== undefined && direccion !== null && String(direccion).length > 250) ||
-        (cuit !== undefined && cuit !== null && !/^\d{11}$/.test(String(cuit)))) {
-      return res.status(400).json({ error: 'Datos de cliente inválidos' });
-    }
+    const { nombre, telefono, direccion } = req.body;
 
-    const clienteActualizado = await clientesRepository.actualizar(id, { nombre: nombre.trim(), telefono: telefono.trim(), direccion, cuit });
+    const clienteActualizado = await clientesRepository.actualizar(id, { nombre, telefono, direccion });
 
     if (!clienteActualizado) {
       return res.status(404).json({ error: 'Cliente no encontrado' });

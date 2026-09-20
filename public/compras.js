@@ -138,7 +138,7 @@ function renderizarDetalleCompra() {
     const insumo = insumos.find(i => i.id === item.insumo_id);
     const li = document.createElement('li');
     li.innerHTML = `
-      ${escaparHtml(insumo.nombre)}: ${item.cantidad} ${escaparHtml(insumo.unidad_medida)} x $${formatearPrecio(item.precio_unitario)}
+      ${insumo.nombre}: ${item.cantidad} ${insumo.unidad_medida} x $${formatearPrecio(item.precio_unitario)}
       <button type="button" class="btn-quitar-detalle" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);

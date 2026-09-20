@@ -11,23 +11,23 @@ async function obtenerPorId(id) {
 }
 
 async function crear(datos) {
-  const { nombre, telefono, direccion, cuit } = datos;
+  const { nombre, telefono, direccion } = datos;
   const resultado = await pool.query(
-    `INSERT INTO clientes (nombre, telefono, direccion, cuit)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO clientes (nombre, telefono, direccion)
+     VALUES ($1, $2, $3)
      RETURNING *`,
-    [nombre, telefono, direccion, cuit || null]
+    [nombre, telefono, direccion]
   );
   return resultado.rows[0];
 }
 
 async function actualizar(id, datos) {
-  const { nombre, telefono, direccion, cuit } = datos;
+  const { nombre, telefono, direccion } = datos;
   const resultado = await pool.query(
-    `UPDATE clientes SET nombre = $1, telefono = $2, direccion = $3, cuit = $4
-     WHERE id = $5
+    `UPDATE clientes SET nombre = $1, telefono = $2, direccion = $3
+     WHERE id = $4
      RETURNING *`,
-    [nombre, telefono, direccion, cuit || null, id]
+    [nombre, telefono, direccion, id]
   );
   return resultado.rows[0];
 }

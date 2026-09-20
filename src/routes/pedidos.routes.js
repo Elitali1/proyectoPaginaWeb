@@ -3,9 +3,8 @@ const router = express.Router();
 const pedidosController = require('../controllers/pedidos.controller.js');
 const verificarToken = require('../middlewares/auth.js');
 const verificarRol = require('../middlewares/verificarRol.js');
-const verificarAgente = require('../middlewares/verificarAgente.js');
 
-router.get('/pendientes-impresion', verificarAgente, pedidosController.obtenerPendientesImpresion);
+router.get('/pendientes-impresion', verificarToken, pedidosController.obtenerPendientesImpresion);
 router.get('/por-fecha', verificarToken, pedidosController.listarPorFecha);
 
 router.get('/', verificarToken, pedidosController.listar);
@@ -18,7 +17,7 @@ router.get('/:id/pdf', verificarToken, pedidosController.generarPdf);
 router.get('/:id/comanda', verificarToken, pedidosController.verComanda);
 router.post('/:id/imprimir-comanda', verificarToken, pedidosController.imprimirComandaFisica);
 router.put('/:id/productos', verificarToken, pedidosController.modificarProductos);
-router.post('/:id/confirmar-impresion', verificarAgente, pedidosController.confirmarImpresion);
+router.post('/:id/confirmar-impresion', verificarToken, pedidosController.confirmarImpresion);
 router.post('/:id/anular-factura', verificarToken, verificarRol('admin'), pedidosController.anularFactura);
 router.get('/:id/pdf-nota-credito', verificarToken, pedidosController.generarPdfNotaCredito);
 

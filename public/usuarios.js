@@ -37,8 +37,8 @@ async function cargarUsuarios() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${escaparHtml(u.nombre)}</strong> - ${escaparHtml(u.email)} (${escaparHtml(u.rol)})
-      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${escaparHtml(u.nombre)}" data-email="${escaparHtml(u.email)}" data-rol="${escaparHtml(u.rol)}">Editar</button>
+      <strong>${u.nombre}</strong> - ${u.email} (${u.rol})
+      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${u.nombre}" data-email="${u.email}" data-rol="${u.rol}">Editar</button>
       <button type="button" class="btn-eliminar" data-id="${u.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);

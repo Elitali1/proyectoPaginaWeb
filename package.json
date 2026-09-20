@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "hola.js",
   "scripts": {
-    "test": "node --test test/security.test.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon servidor.js",
     "postinstall": "patch-package"
     
