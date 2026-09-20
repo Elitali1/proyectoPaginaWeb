@@ -6,7 +6,7 @@ const verificarToken = require('../middlewares/auth.js');
 const verificarRol = require('../middlewares/verificarRol.js');
 
 // Per-route rate limiters
-const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+const loginLimiter = rateLimit({windowMs: 15 * 60 * 1000,max: 30,skipSuccessfulRequests: true});
 const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 
 router.get('/', verificarToken, verificarRol('admin'), usuariosController.listar);

@@ -154,12 +154,12 @@ async function revertirStockPorCancelacion(pedidoId) {
   }
 }
 
-async function revertirStockDeUnProducto(productoId, cantidadVendida, recetasRepository, insumosRepository) {
-  const receta = await recetasRepository.obtenerPorProducto(productoId);
+async function revertirStockDeUnProducto(productoId, cantidadVendida, recetasRepository, insumosRepository, cliente) {
+  const receta = await recetasRepository.obtenerPorProducto(productoId, cliente);
 
   for (const linea of receta) {
     const cantidadADevolver = Number(linea.cantidad) * cantidadVendida;
-    await insumosRepository.ajustarStock(linea.insumo_id, cantidadADevolver);
+    await insumosRepository.ajustarStock(linea.insumo_id, cantidadADevolver, cliente);
   }
 }
 
@@ -194,52 +194,86 @@ async function eliminar(id) {
 }
 
 async function actualizarProductos(id, datos) {
-  const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos } = datos;
+  const insumosRepository = require('./insumos.repository.js');
+  const recetasRepository = require('./recetas.repository.js');
 
-  const requiere_factura = medio_pago === 'transferencia';
+  const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos, monto_efectivo, monto_transferencia } = datos;
 
-  await pool.query(
-    `UPDATE pedidos
-     SET cliente = $1, canal = $2, medio_pago = $3, requiere_factura = $4,
-         tipo_entrega = $5, direccion_entrega = $6, cuit_receptor = $7
-     WHERE id = $8`,
-    [cliente, canal, medio_pago, requiere_factura, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, id]
-  );
+  const requiere_factura = medio_pago === 'transferencia' || (medio_pago === 'mixto' && Number(monto_transferencia) > 0);
 
-  await pool.query('DELETE FROM pedido_detalle WHERE pedido_id = $1', [id]);
+  const clienteDb = await pool.connect();
 
-  for (const item of productos) {
-    let precioFinal;
+  try {
+    await clienteDb.query('BEGIN');
 
-    if (item.producto_id_2) {
-      const p1 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
-      const p2 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
+    // Traemos el detalle viejo para poder revertir su stock antes de borrarlo
+    const detalleViejo = await clienteDb.query(
+      'SELECT producto_id, producto_id_2, cantidad FROM pedido_detalle WHERE pedido_id = $1',
+      [id]
+    );
 
-      if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
-        throw new Error('Uno de los productos seleccionados ya no está disponible');
+    for (const item of detalleViejo.rows) {
+      await revertirStockDeUnProducto(item.producto_id, item.cantidad, recetasRepository, insumosRepository, clienteDb);
+      if (item.producto_id_2) {
+        await revertirStockDeUnProducto(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository, clienteDb);
       }
-
-      precioFinal = (Number(p1.rows[0].precio) / 2) + (Number(p2.rows[0].precio) / 2) + 1000;
-    } else {
-      const p1 = await pool.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
-
-      if (!p1.rows[0].disponible) {
-        throw new Error('El producto seleccionado ya no está disponible');
-      }
-
-      precioFinal = Number(p1.rows[0].precio);
     }
 
-    await pool.query(
-      `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
+    await clienteDb.query(
+      `UPDATE pedidos
+       SET cliente = $1, canal = $2, medio_pago = $3, requiere_factura = $4,
+           tipo_entrega = $5, direccion_entrega = $6, cuit_receptor = $7,
+           monto_efectivo = $8, monto_transferencia = $9
+       WHERE id = $10`,
+      [cliente, canal, medio_pago, requiere_factura, tipo_entrega || 'retiro', direccion_entrega || null, cuit_receptor || null, monto_efectivo || null, monto_transferencia || null, id]
     );
+
+    await clienteDb.query('DELETE FROM pedido_detalle WHERE pedido_id = $1', [id]);
+
+    for (const item of productos) {
+      let precioFinal;
+
+      if (item.producto_id_2) {
+        const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
+        const p2 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
+
+        if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
+          throw new Error('Uno de los productos seleccionados ya no está disponible');
+        }
+
+        precioFinal = (Number(p1.rows[0].precio) / 2) + (Number(p2.rows[0].precio) / 2) + 1000;
+      } else {
+        const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
+
+        if (!p1.rows[0].disponible) {
+          throw new Error('El producto seleccionado ya no está disponible');
+        }
+
+        precioFinal = Number(p1.rows[0].precio);
+      }
+
+      await clienteDb.query(
+        `INSERT INTO pedido_detalle (pedido_id, producto_id, producto_id_2, cantidad, precio_unitario, tipo_masa, aclaraciones)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [id, item.producto_id, item.producto_id_2 || null, item.cantidad, precioFinal, item.tipo_masa || null, item.aclaraciones || null]
+      );
+
+      await descontarStockPorVenta(item.producto_id, item.cantidad, recetasRepository, insumosRepository, clienteDb);
+      if (item.producto_id_2) {
+        await descontarStockPorVenta(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository, clienteDb);
+      }
+    }
+
+    await clienteDb.query('COMMIT');
+  } catch (error) {
+    await clienteDb.query('ROLLBACK');
+    throw error;
+  } finally {
+    clienteDb.release();
   }
 
   return obtenerConDetalle(id);
 }
-
 async function marcarPendienteImpresion(id) {
   const resultado = await pool.query(
     'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 RETURNING *',
