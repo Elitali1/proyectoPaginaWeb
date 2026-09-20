@@ -6,3 +6,10 @@ node_modules/
 
 # Certificados de ARCA
 certificados-arca/
+# Otros archivos de entorno (el ejemplo sí se versiona)
+.env.*
+!.env.example
+
+# Logs y archivos de editor
+*.log
+.DS_Store

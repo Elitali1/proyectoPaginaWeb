@@ -11,23 +11,35 @@ async function obtenerPorId(id) {
 }
 
 async function crear(datos) {
-  const { nombre, telefono, direccion } = datos;
+  const { nombre, telefono, direccion, cuit } = datos;
   const resultado = await pool.query(
-    `INSERT INTO clientes (nombre, telefono, direccion)
-     VALUES ($1, $2, $3)
+    `INSERT INTO clientes (nombre, telefono, direccion, cuit)
+     VALUES ($1, $2, $3, $4)
      RETURNING *`,
-    [nombre, telefono, direccion]
+    [nombre, telefono, direccion, cuit ?? null]
   );
   return resultado.rows[0];
 }
 
+// Si `cuit` no viene (undefined) se conserva el que ya tiene el cliente; si viene null, se borra.
 async function actualizar(id, datos) {
-  const { nombre, telefono, direccion } = datos;
+  const { nombre, telefono, direccion, cuit } = datos;
+
+  if (cuit === undefined) {
+    const resultado = await pool.query(
+      `UPDATE clientes SET nombre = $1, telefono = $2, direccion = $3
+       WHERE id = $4
+       RETURNING *`,
+      [nombre, telefono, direccion, id]
+    );
+    return resultado.rows[0];
+  }
+
   const resultado = await pool.query(
-    `UPDATE clientes SET nombre = $1, telefono = $2, direccion = $3
-     WHERE id = $4
+    `UPDATE clientes SET nombre = $1, telefono = $2, direccion = $3, cuit = $4
+     WHERE id = $5
      RETURNING *`,
-    [nombre, telefono, direccion, id]
+    [nombre, telefono, direccion, cuit, id]
   );
   return resultado.rows[0];
 }
@@ -38,7 +50,9 @@ async function eliminar(id) {
     [id]
   );
   return resultado.rows[0];
-}async function obtenerPorTelefono(telefono) {
+}
+
+async function obtenerPorTelefono(telefono) {
   const resultado = await pool.query('SELECT * FROM clientes WHERE telefono = $1', [telefono]);
   return resultado.rows[0];
 }
@@ -52,6 +66,7 @@ async function buscarOCrear(telefono, nombre, direccion) {
 
   return crear({ nombre, telefono, direccion });
 }
+
 async function obtenerMasRecurrentes(desde, hasta, limite = 10) {
   const resultado = await pool.query(
     `SELECT

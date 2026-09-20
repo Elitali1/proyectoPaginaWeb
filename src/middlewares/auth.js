@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 
 function verificarToken(req, res, next) {
-  // Prioriza la cookie httpOnly (más segura); si no existe, acepta el header
-  // Authorization como respaldo, para no romper nada mientras migramos el frontend.
+  // Prioriza la cookie httpOnly (más segura). El header Authorization se sigue aceptando porque
+  // lo usa el agente de impresión de la PC del local (y las pruebas por API).
   const tokenDesdeCookie = req.cookies ? req.cookies.auth_token : null;
 
   const authHeader = req.headers['authorization'];
@@ -15,7 +15,7 @@ function verificarToken(req, res, next) {
   }
 
   try {
-    const datosUsuario = jwt.verify(token, process.env.JWT_SECRET);
+    const datosUsuario = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     req.usuario = datosUsuario;
     next();
   } catch (error) {

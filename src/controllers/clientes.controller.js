@@ -1,12 +1,44 @@
 const clientesRepository = require('../repositories/clientes.repository.js');
+const { ErrorNegocio, responderError } = require('../utils/errores.js');
+const { esTexto, textoOpcional, normalizarCuit, esCuitValido } = require('../utils/validaciones.js');
+
+function validarDatosCliente(body) {
+  const { nombre, telefono, direccion, cuit } = body || {};
+
+  if (!esTexto(nombre, { max: 120 })) throw new ErrorNegocio('El nombre del cliente es obligatorio');
+  if (!esTexto(telefono, { max: 30 })) throw new ErrorNegocio('El teléfono es obligatorio');
+
+  const datos = {
+    nombre: nombre.trim(),
+    telefono: telefono.trim(),
+    direccion: textoOpcional(direccion, 200)
+  };
+
+  // CUIT opcional: si no viene en el cuerpo no se toca; si viene vacío se borra; si viene, tiene que ser válido.
+  if (cuit !== undefined) {
+    const cuitNormalizado = normalizarCuit(cuit);
+    if (cuitNormalizado && !esCuitValido(cuitNormalizado)) {
+      throw new ErrorNegocio('El CUIT no es válido');
+    }
+    datos.cuit = cuitNormalizado;
+  }
+
+  return datos;
+}
+
+// Mensaje claro según qué dato repetido rechazó la base (teléfono o CUIT).
+function mensajeDuplicado(error) {
+  return String(error.constraint || '').includes('cuit')
+    ? 'Ya existe un cliente con ese CUIT'
+    : 'Ya existe un cliente con ese teléfono';
+}
 
 async function listar(req, res) {
   try {
     const clientes = await clientesRepository.obtenerTodos();
     res.json(clientes);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener clientes' });
+    responderError(res, error, 'Error al obtener clientes');
   }
 }
 
@@ -21,30 +53,31 @@ async function obtenerUno(req, res) {
 
     res.json(cliente);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener cliente' });
+    responderError(res, error, 'Error al obtener cliente');
   }
 }
 
 async function crear(req, res) {
   try {
-    const { nombre, telefono, direccion } = req.body;
+    const datos = validarDatosCliente(req.body);
 
-    const nuevoCliente = await clientesRepository.crear({ nombre, telefono, direccion });
+    const nuevoCliente = await clientesRepository.crear(datos);
 
     res.status(201).json(nuevoCliente);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al crear cliente' });
+    if (error && error.code === '23505') {
+      return res.status(409).json({ error: mensajeDuplicado(error) });
+    }
+    responderError(res, error, 'Error al crear cliente');
   }
 }
 
 async function actualizar(req, res) {
   try {
     const { id } = req.params;
-    const { nombre, telefono, direccion } = req.body;
+    const datos = validarDatosCliente(req.body);
 
-    const clienteActualizado = await clientesRepository.actualizar(id, { nombre, telefono, direccion });
+    const clienteActualizado = await clientesRepository.actualizar(id, datos);
 
     if (!clienteActualizado) {
       return res.status(404).json({ error: 'Cliente no encontrado' });
@@ -52,8 +85,10 @@ async function actualizar(req, res) {
 
     res.json(clienteActualizado);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al actualizar cliente' });
+    if (error && error.code === '23505') {
+      return res.status(409).json({ error: mensajeDuplicado(error) });
+    }
+    responderError(res, error, 'Error al actualizar cliente');
   }
 }
 
@@ -68,8 +103,7 @@ async function eliminar(req, res) {
 
     res.json({ mensaje: 'Cliente eliminado', cliente: clienteEliminado });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al eliminar cliente' });
+    responderError(res, error, 'Error al eliminar cliente');
   }
 }
 async function buscarPorTelefono(req, res) {
@@ -83,8 +117,7 @@ async function buscarPorTelefono(req, res) {
 
     res.json(cliente);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al buscar cliente' });
+    responderError(res, error, 'Error al buscar cliente');
   }
 }
 

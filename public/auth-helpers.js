@@ -26,6 +26,12 @@ function ocultarSiNoEsAdmin(idsElementos) {
     });
   }
 }
+// Escapa texto antes de meterlo en un innerHTML: sin esto, un nombre de cliente o una aclaración
+// con <etiquetas> o comillas rompía la página (o permitía inyectar HTML).
+function escapeHtml(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function manejarNoAutorizado(respuesta) {
   if (respuesta.status === 401) {
     window.location.href = 'login.html';

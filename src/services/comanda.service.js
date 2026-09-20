@@ -1,5 +1,6 @@
-const escpos = require('escpos');
-escpos.USB = require('escpos-usb');
+// Armado del texto de la comanda. No depende de ninguna librería de impresión: el servidor en la
+// nube usa `armarComanda`, y la impresión real está en impresora.service.js (solo la usa el agente
+// que corre en la PC del local).
 
 function formatearFecha(fechaISO) {
   const fechaObj = new Date(fechaISO);
@@ -12,6 +13,44 @@ function formatearFecha(fechaISO) {
 
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
+}
+
+function textoEntrega(pedido) {
+  return pedido.tipo_entrega === 'envio'
+    ? `Envio - ${pedido.direccion_entrega || 'sin direccion'}`
+    : 'Retiro en local';
+}
+
+function nombreDelItem(item) {
+  return item.nombre_producto_2
+    ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
+    : item.nombre_producto;
+}
+
+function textoMasa(item) {
+  if (!item.tipo_masa) return '';
+  return item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra';
+}
+
+function calcularTotal(pedido) {
+  return pedido.productos.reduce((suma, item) => suma + (item.cantidad * Number(item.precio_unitario)), 0);
+}
+
+// Qué tiene que hacer el repartidor con la plata en los envíos.
+// Devuelve null si no es un envío, o { texto, destacado } (destacado = hay que cobrar algo).
+// Antes un envío con pago mixto decía "YA PAGADO" aunque una parte fuera en efectivo.
+function instruccionDeCobro(pedido, total) {
+  if (pedido.tipo_entrega !== 'envio') return null;
+
+  if (pedido.medio_pago === 'efectivo') {
+    return { texto: `COBRAR: $${formatearPrecio(total)}`, destacado: true };
+  }
+
+  if (pedido.medio_pago === 'mixto' && Number(pedido.monto_efectivo) > 0) {
+    return { texto: `COBRAR EFECTIVO: $${formatearPrecio(pedido.monto_efectivo)}`, destacado: true };
+  }
+
+  return { texto: 'YA PAGADO - NO COBRAR', destacado: false };
 }
 
 function armarComanda(pedido) {
@@ -27,39 +66,31 @@ function armarComanda(pedido) {
   lineas.push('--------------------');
   lineas.push(`Cliente: ${pedido.cliente}`);
   lineas.push(`Canal: ${pedido.canal}`);
-
-  const entrega = pedido.tipo_entrega === 'envio'
-    ? `Envio - ${pedido.direccion_entrega || 'sin direccion'}`
-    : 'Retiro en local';
-  lineas.push(entrega);
+  lineas.push(textoEntrega(pedido));
 
   lineas.push('--------------------');
   lineas.push('PRODUCTOS:');
 
-  let total = 0;
   pedido.productos.forEach(item => {
-    const nombre = item.nombre_producto_2
-      ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
-      : item.nombre_producto;
-    const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
+    const masa = textoMasa(item);
     const subtotal = item.cantidad * Number(item.precio_unitario);
-    total += subtotal;
 
-    lineas.push(`${item.cantidad}x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}`);
+    lineas.push(`${item.cantidad}x ${nombreDelItem(item)}${masa ? ' - ' + masa : ''}`);
     if (item.aclaraciones) {
       lineas.push(`   (${item.aclaraciones})`);
     }
     lineas.push(`   $${formatearPrecio(subtotal)}`);
   });
 
+  const total = calcularTotal(pedido);
+
   lineas.push('--------------------');
   lineas.push(`TOTAL: $${formatearPrecio(total)}`);
   lineas.push(`Pago: ${pedido.medio_pago}`);
 
-  if (pedido.tipo_entrega === 'envio' && pedido.medio_pago === 'efectivo') {
-    lineas.push(`>>> COBRAR: $${formatearPrecio(total)} <<<`);
-  } else if (pedido.tipo_entrega === 'envio') {
-    lineas.push('YA PAGADO - NO COBRAR');
+  const cobro = instruccionDeCobro(pedido, total);
+  if (cobro) {
+    lineas.push(cobro.destacado ? `>>> ${cobro.texto} <<<` : cobro.texto);
   }
 
   lineas.push('====================');
@@ -67,79 +98,13 @@ function armarComanda(pedido) {
   return lineas.join('\n');
 }
 
-function imprimirTicketUnico(printer, pedido) {
-  return new Promise((resolve) => {
-    printer.align('CT').style('B').text('DONCHICHOPIZZA').style('NORMAL');
-
-    const fecha = formatearFecha(pedido.creado_en);
-    printer.text(`Pedido #${pedido.id} - ${fecha}`);
-    printer.drawLine();
-
-    printer.align('LT');
-    printer.text(`Cliente: ${pedido.cliente}`);
-    printer.text(`Canal: ${pedido.canal}`);
-
-    const entrega = pedido.tipo_entrega === 'envio'
-      ? `Envio - ${pedido.direccion_entrega || 'sin direccion'}`
-      : 'Retiro en local';
-    printer.text(entrega);
-    printer.drawLine();
-
-    let total = 0;
-    pedido.productos.forEach(item => {
-      const nombre = item.nombre_producto_2
-        ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
-        : item.nombre_producto;
-      const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
-      const subtotal = item.cantidad * Number(item.precio_unitario);
-      total += subtotal;
-
-      printer.text(`${item.cantidad}x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}`);
-      if (item.aclaraciones) {
-        printer.text(`   (${item.aclaraciones})`);
-      }
-      printer.text(`   $${formatearPrecio(subtotal)}`);
-    });
-
-    printer.drawLine();
-    printer.style('B').text(`TOTAL: $${formatearPrecio(total)}`).style('NORMAL');
-    printer.text(`Pago: ${pedido.medio_pago}`);
-
-    if (pedido.tipo_entrega === 'envio' && pedido.medio_pago === 'efectivo') {
-      printer.style('B').text(`COBRAR: $${formatearPrecio(total)}`).style('NORMAL');
-    } else if (pedido.tipo_entrega === 'envio') {
-      printer.text('YA PAGADO - NO COBRAR');
-    }
-
-    printer.text('').text('').text('');
-    printer.cut();
-    resolve();
-  });
-}
-
-function imprimirComanda(pedido) {
-  return new Promise((resolve, reject) => {
-    let device;
-    try {
-      device = new escpos.USB(0x1fc9, 0x2016);
-    } catch (error) {
-      return reject(new Error('No se encontró la impresora USB conectada'));
-    }
-
-    const printer = new escpos.Printer(device);
-
-    device.open(async (error) => {
-      if (error) return reject(error);
-
-      try {
-        await imprimirTicketUnico(printer, pedido);
-        await imprimirTicketUnico(printer, pedido);
-        printer.close(() => resolve());
-      } catch (errorImpresion) {
-        reject(errorImpresion);
-      }
-    });
-  });
-}
-
-module.exports = { armarComanda, imprimirComanda };
+module.exports = {
+  armarComanda,
+  instruccionDeCobro,
+  formatearFecha,
+  formatearPrecio,
+  textoEntrega,
+  nombreDelItem,
+  textoMasa,
+  calcularTotal
+};

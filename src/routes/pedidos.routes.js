@@ -12,7 +12,7 @@ router.get('/:id', verificarToken, pedidosController.obtenerUno);
 router.post('/', verificarToken, pedidosController.crear);
 router.post('/:id/facturar', verificarToken, pedidosController.facturar);
 router.put('/:id', verificarToken, pedidosController.actualizarEstado);
-router.delete('/:id', verificarToken, pedidosController.eliminar);
+router.delete('/:id', verificarToken, verificarRol('admin'), pedidosController.eliminar);
 router.get('/:id/pdf', verificarToken, pedidosController.generarPdf);
 router.get('/:id/comanda', verificarToken, pedidosController.verComanda);
 router.post('/:id/imprimir-comanda', verificarToken, pedidosController.imprimirComandaFisica);

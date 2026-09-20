@@ -1,5 +1,9 @@
 const API_URL = window.location.origin;
 
+function escapeHtml(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
@@ -43,7 +47,7 @@ async function cargarMenuPublico() {
         const div = document.createElement('div');
         div.className = 'menu-item';
         div.innerHTML = `
-          <span class="nombre">${producto.nombre}</span>
+          <span class="nombre">${escapeHtml(producto.nombre)}</span>
           <span class="precio">$${formatearPrecio(producto.precio)}</span>
         `;
         contenedor.appendChild(div);
@@ -93,8 +97,8 @@ async function cargarGaleria() {
         const div = document.createElement('div');
         div.className = 'galeria-item';
         div.innerHTML = `
-          <img src="${producto.imagen}" alt="${producto.nombre}">
-          <span class="etiqueta">${producto.nombre}</span>
+          <img src="${escapeHtml(producto.imagen)}" alt="${escapeHtml(producto.nombre)}" loading="lazy">
+          <span class="etiqueta">${escapeHtml(producto.nombre)}</span>
         `;
         subgrid.appendChild(div);
       });

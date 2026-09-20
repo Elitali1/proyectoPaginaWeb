@@ -37,8 +37,8 @@ async function cargarUsuarios() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${u.nombre}</strong> - ${u.email} (${u.rol})
-      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${u.nombre}" data-email="${u.email}" data-rol="${u.rol}">Editar</button>
+      <strong>${escapeHtml(u.nombre)}</strong> - ${escapeHtml(u.email)} (${escapeHtml(u.rol)})
+      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${escapeHtml(u.nombre)}" data-email="${escapeHtml(u.email)}" data-rol="${escapeHtml(u.rol)}">Editar</button>
       <button type="button" class="btn-eliminar" data-id="${u.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);
@@ -53,10 +53,15 @@ async function cargarUsuarios() {
         return;
       }
 
-      await fetch(`${API_URL}/usuarios/${id}`, {
+      const respuestaBorrar = await fetch(`${API_URL}/usuarios/${id}`, {
         method: 'DELETE',
         credentials: 'include'
       });
+
+      if (!respuestaBorrar.ok) {
+        const error = await respuestaBorrar.json().catch(() => ({}));
+        alert(error.error || 'No se pudo eliminar el usuario');
+      }
       cargarUsuarios();
     });
   });

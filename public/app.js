@@ -43,7 +43,7 @@ document.getElementById('telefono-cliente').addEventListener('blur', async (even
 
   if (!telefono) return;
 
-  const respuesta = await fetch(`${API_URL}/clientes/telefono/${telefono}`, {
+  const respuesta = await fetch(`${API_URL}/clientes/telefono/${encodeURIComponent(telefono)}`, {
     credentials: 'include'
   });
 
@@ -103,8 +103,12 @@ document.getElementById('monto-efectivo').addEventListener('input', validarPagoM
 document.getElementById('monto-transferencia').addEventListener('input', validarPagoMixto);
 
 async function cargarPedidos() {
-  const respuesta = await fetch(`${API_URL}/pedidos`, { credentials: 'include' });
+  const respuesta = await fetch(`${API_URL}/pedidos?activos=1`, { credentials: 'include' });
   if (manejarNoAutorizado(respuesta)) return;
+  if (!respuesta.ok) {
+    alert('No se pudieron cargar los pedidos. Actualizá la página.');
+    return;
+  }
   const pedidos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-pedidos');
@@ -117,15 +121,15 @@ async function cargarPedidos() {
     div.className = 'pedido';
 
     const entrega = pedido.tipo_entrega === 'envio'
-      ? `Envío - ${pedido.direccion_entrega || 'sin dirección'}`
+      ? `Envío - ${escapeHtml(pedido.direccion_entrega) || 'sin dirección'}`
       : 'Retiro en local';
 
     const detalleProductos = pedido.productos.map(item => {
       const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
-      const aclaracionTexto = item.aclaraciones ? ` (${item.aclaraciones})` : '';
+      const aclaracionTexto = item.aclaraciones ? ` (${escapeHtml(item.aclaraciones)})` : '';
       const nombre = item.nombre_producto_2
-        ? `Mitad ${item.nombre_producto} / Mitad ${item.nombre_producto_2}`
-        : item.nombre_producto;
+        ? `Mitad ${escapeHtml(item.nombre_producto)} / Mitad ${escapeHtml(item.nombre_producto_2)}`
+        : escapeHtml(item.nombre_producto);
       return `${item.cantidad} x ${nombre}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto}`;
     }).join('<br>');
 
@@ -141,10 +145,10 @@ async function cargarPedidos() {
 
     div.innerHTML = `
 
-      <strong>#${pedido.id} - ${pedido.cliente}</strong> - ${formatearFecha(pedido.creado_en)}<br>
-      Canal: ${pedido.canal} | Pago: ${infoPago} | ${entrega}<br>
+      <strong>#${pedido.id} - ${escapeHtml(pedido.cliente)}</strong> - ${formatearFecha(pedido.creado_en)}<br>
+      Canal: ${escapeHtml(pedido.canal)} | Pago: ${escapeHtml(infoPago)} | ${entrega}<br>
       ${detalleProductos}<br>
-      Total: $${formatearPrecio(pedido.total)} | Estado: ${pedido.estado}
+      Total: $${formatearPrecio(pedido.total)} | Estado: ${escapeHtml(pedido.estado)}
       ${botonFactura}
       <button type="button" class="btn-comanda" data-id="${pedido.id}">Imprimir comanda</button>
       <button type="button" class="btn-modificar" data-id="${pedido.id}">Modificar</button>
@@ -163,12 +167,17 @@ async function cargarPedidos() {
       const id = event.target.dataset.id;
       const nuevoEstado = event.target.value;
 
-      await fetch(`${API_URL}/pedidos/${id}`, {
+      const respuestaEstado = await fetch(`${API_URL}/pedidos/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ estado: nuevoEstado })
       });
+
+      if (!respuestaEstado.ok) {
+        const error = await respuestaEstado.json().catch(() => ({}));
+        alert(error.error || 'No se pudo cambiar el estado del pedido');
+      }
 
       cargarPedidos();
     });
@@ -215,12 +224,17 @@ async function cargarPedidos() {
     if (!confirmar) return;
 
     const id = boton.dataset.id;
-    await fetch(`${API_URL}/pedidos/${id}`, {
+    const respuestaCancelar = await fetch(`${API_URL}/pedidos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ estado: 'cancelado' })
     });
+
+    if (!respuestaCancelar.ok) {
+      const error = await respuestaCancelar.json().catch(() => ({}));
+      alert(error.error || 'No se pudo cancelar el pedido');
+    }
 
     cargarPedidos();
   });
@@ -394,11 +408,11 @@ function renderizarListaProductos() {
     total += subtotal;
 
     const masaTexto = item.tipo_masa ? (item.tipo_masa === 'molde' ? 'Al molde' : 'A la piedra') : '';
-    const aclaracionTexto = item.aclaraciones ? ` (${item.aclaraciones})` : '';
+    const aclaracionTexto = item.aclaraciones ? ` (${escapeHtml(item.aclaraciones)})` : '';
 
     const li = document.createElement('li');
     li.innerHTML = `
-      ${item.cantidad} x ${item.nombre}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto} - $${formatearPrecio(subtotal)}
+      ${item.cantidad} x ${escapeHtml(item.nombre)}${masaTexto ? ' - ' + masaTexto : ''}${aclaracionTexto} - $${formatearPrecio(subtotal)}
       <button type="button" class="btn-quitar" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);
@@ -492,6 +506,11 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
     }
     montoEfectivo = Number(document.getElementById('monto-efectivo').value) || 0;
     montoTransferencia = Number(document.getElementById('monto-transferencia').value) || 0;
+
+    if (montoEfectivo === 0 && montoTransferencia === 0) {
+      alert('En un pago mixto tenés que indicar cuánto va en efectivo y cuánto en transferencia');
+      return;
+    }
   }
 
   const datosGenerales = {

@@ -34,8 +34,8 @@ function mostrarCompras(compras) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${compra.proveedor}</strong> - $${formatearPrecio(compra.monto)}<br>
-      ${compra.concepto || ''} | Fecha: ${compra.fecha.split('T')[0]}
+      <strong>${escapeHtml(compra.proveedor)}</strong> - $${formatearPrecio(compra.monto)}<br>
+      ${escapeHtml(compra.concepto)} | Fecha: ${compra.fecha.split('T')[0]}
       <button type="button" class="btn-eliminar" data-id="${compra.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);
@@ -105,8 +105,7 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
     proveedor: document.getElementById('proveedor').value,
     concepto: document.getElementById('concepto').value || null,
     monto: Number(document.getElementById('monto').value),
-    fecha: document.getElementById('fecha').value,
-    subido_por: usuario.id
+    fecha: document.getElementById('fecha').value
   };
 
   const respuesta = await fetch(`${API_URL}/facturas-compra`, {
@@ -117,6 +116,11 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
   });
 
   const facturaCreada = await respuesta.json();
+
+  if (!respuesta.ok) {
+    alert(facturaCreada.error || 'No se pudo guardar la compra');
+    return;
+  }
   facturaCompraIdActual = facturaCreada.id;
   itemsDetalleCompra = [];
 
@@ -138,7 +142,7 @@ function renderizarDetalleCompra() {
     const insumo = insumos.find(i => i.id === item.insumo_id);
     const li = document.createElement('li');
     li.innerHTML = `
-      ${insumo.nombre}: ${item.cantidad} ${insumo.unidad_medida} x $${formatearPrecio(item.precio_unitario)}
+      ${escapeHtml(insumo.nombre)}: ${item.cantidad} ${escapeHtml(insumo.unidad_medida)} x $${formatearPrecio(item.precio_unitario)}
       <button type="button" class="btn-quitar-detalle" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);
@@ -200,7 +204,7 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
       const signo = alerta.variacionPorcentual > 0 ? '+' : '';
       const div = document.createElement('div');
       div.className = alerta.variacionPorcentual > 0 ? 'balance-negativo' : 'balance-positivo';
-      div.innerHTML = `⚠ ${insumo.nombre}: ${signo}${alerta.variacionPorcentual}% (de $${formatearPrecio(alerta.precioAnterior)} a $${formatearPrecio(alerta.precioNuevo)})`;
+      div.innerHTML = `⚠ ${escapeHtml(insumo.nombre)}: ${signo}${alerta.variacionPorcentual}% (de $${formatearPrecio(alerta.precioAnterior)} a $${formatearPrecio(alerta.precioNuevo)})`;
       contenedorAlertas.appendChild(div);
     });
   } else {

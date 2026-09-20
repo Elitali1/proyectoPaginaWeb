@@ -7,6 +7,14 @@ const axios = require('axios');
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000'; // for requests against local server
 
+// PELIGRO: este script le cambia la contraseña a TODOS los administradores por una contraseña fija
+// que está escrita en el repositorio. Si el .env apunta a la base de producción, deja todas las
+// cuentas admin con una clave pública. Solo corre si se lo pedís explícitamente.
+if (!process.argv.includes('--acepto-cambiar-todas-las-claves-admin')) {
+  console.error('Script bloqueado por seguridad. Leé el comentario del archivo y, si estás seguro y usás una base de PRUEBA, ejecutalo con --acepto-cambiar-todas-las-claves-admin');
+  process.exit(1);
+}
+
 async function run() {
   try {
     const adminsRes = await pool.query("SELECT id, email FROM usuarios WHERE rol = 'admin'");

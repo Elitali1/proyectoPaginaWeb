@@ -46,10 +46,10 @@ function mostrarClientes(clientes) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${cliente.nombre}</strong> - ${cliente.telefono}<br>
-      ${cliente.direccion ? `Dirección: ${cliente.direccion}<br>` : ''}
-      ${cliente.cuit ? `CUIT: ${cliente.cuit}<br>` : ''}
-      <button type="button" class="btn-editar-cliente" data-id="${cliente.id}" data-nombre="${cliente.nombre}" data-telefono="${cliente.telefono}" data-direccion="${cliente.direccion || ''}" data-cuit="${cliente.cuit || ''}">Editar</button>
+      <strong>${escapeHtml(cliente.nombre)}</strong> - ${escapeHtml(cliente.telefono)}<br>
+      ${cliente.direccion ? `Dirección: ${escapeHtml(cliente.direccion)}<br>` : ''}
+      ${cliente.cuit ? `CUIT: ${escapeHtml(cliente.cuit)}<br>` : ''}
+      <button type="button" class="btn-editar-cliente" data-id="${cliente.id}" data-nombre="${escapeHtml(cliente.nombre)}" data-telefono="${escapeHtml(cliente.telefono)}" data-direccion="${escapeHtml(cliente.direccion)}" data-cuit="${escapeHtml(cliente.cuit)}">Editar</button>
     `;
     contenedor.appendChild(div);
   });
@@ -106,6 +106,12 @@ document.getElementById('formulario-cliente').addEventListener('submit', async (
     });
 
     if (manejarNoAutorizado(respuesta)) return;
+
+    if (!respuesta.ok) {
+      const error = await respuesta.json().catch(() => ({}));
+      alert(error.error || 'Error al actualizar el cliente');
+      return;
+    }
 
     editandoId = null;
     document.getElementById('titulo-formulario-cliente').textContent = 'Agregar cliente';
