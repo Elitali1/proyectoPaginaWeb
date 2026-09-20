@@ -13,7 +13,12 @@ async function listar(req, res) {
 async function crear(req, res) {
   try {
     const { nombre, unidad_medida, stock_minimo } = req.body;
-    const nuevoInsumo = await insumosRepository.crear({ nombre, unidad_medida, stock_minimo });
+    if (typeof nombre !== 'string' || nombre.trim().length < 2 || nombre.length > 100 ||
+        typeof unidad_medida !== 'string' || unidad_medida.trim().length < 1 ||
+        !Number.isFinite(Number(stock_minimo)) || Number(stock_minimo) < 0) {
+      return res.status(400).json({ error: 'Datos de insumo inválidos' });
+    }
+    const nuevoInsumo = await insumosRepository.crear({ nombre: nombre.trim(), unidad_medida: unidad_medida.trim(), stock_minimo });
     res.status(201).json(nuevoInsumo);
   } catch (error) {
     console.error(error);
@@ -26,11 +31,11 @@ async function ajustarStockManual(req, res) {
     const { id } = req.params;
     const { cantidad, motivo } = req.body;
 
-    if (!cantidad || cantidad === 0) {
+    if (!Number.isFinite(Number(cantidad)) || Number(cantidad) === 0) {
       return res.status(400).json({ error: 'La cantidad debe ser distinta de cero' });
     }
 
-    const insumoActualizado = await insumosRepository.ajustarStock(id, cantidad);
+    const insumoActualizado = await insumosRepository.ajustarStock(id, Number(cantidad));
 
     if (!insumoActualizado) {
       return res.status(404).json({ error: 'Insumo no encontrado' });
@@ -48,6 +53,7 @@ async function alternarActivo(req, res) {
   try {
     const { id } = req.params;
     const { activo } = req.body;
+    if (typeof activo !== 'boolean') return res.status(400).json({ error: 'Estado inválido' });
 
     const insumoActualizado = await insumosRepository.alternarActivo(id, activo);
 
@@ -65,6 +71,9 @@ async function actualizarStockMinimo(req, res) {
   try {
     const { id } = req.params;
     const { stock_minimo } = req.body;
+    if (!Number.isFinite(Number(stock_minimo)) || Number(stock_minimo) < 0) {
+      return res.status(400).json({ error: 'Stock mínimo inválido' });
+    }
 
     const insumoActualizado = await insumosRepository.actualizarStockMinimo(id, stock_minimo);
 

@@ -36,8 +36,15 @@ async function obtenerUna(req, res) {
 async function crear(req, res) {
   try {
     const { proveedor, concepto, monto, fecha, archivo_url, subido_por } = req.body;
+    if (typeof proveedor !== 'string' || proveedor.trim().length < 2 ||
+        typeof concepto !== 'string' || concepto.trim().length < 2 ||
+        !Number.isFinite(Number(monto)) || Number(monto) <= 0 ||
+        !fecha || Number.isNaN(new Date(fecha).getTime())) {
+      return res.status(400).json({ error: 'Datos de factura de compra inválidos' });
+    }
     const nuevaFactura = await facturasCompraRepository.crear({
-      proveedor, concepto, monto, fecha, archivo_url, subido_por
+      proveedor: proveedor.trim(), concepto: concepto.trim(), monto, fecha, archivo_url,
+      subido_por: req.usuario.id
     });
     res.status(201).json(nuevaFactura);
   } catch (error) {
@@ -49,8 +56,6 @@ async function crear(req, res) {
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
-
-    await facturasCompraRepository.revertirStockPorFactura(id);
 
     const facturaEliminada = await facturasCompraRepository.eliminar(id);
 
@@ -69,7 +74,11 @@ async function agregarDetalleFactura(req, res) {
     const { id } = req.params;
     const { items } = req.body;
 
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0 || items.length > 100 ||
+        items.some(item => !item || !Number.isInteger(Number(item.insumo_id)) ||
+          Number(item.insumo_id) <= 0 || !Number.isFinite(Number(item.cantidad)) ||
+          Number(item.cantidad) <= 0 || !Number.isFinite(Number(item.precio_unitario)) ||
+          Number(item.precio_unitario) < 0)) {
       return res.status(400).json({ error: 'Necesitás cargar al menos un item' });
     }
 

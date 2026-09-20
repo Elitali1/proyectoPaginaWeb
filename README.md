@@ -37,6 +37,21 @@ npm install
 
 Crear un `.env` con las variables usadas en `src/config/db.js`, `arca.service.js` y `servidor.js` (conexión a base de datos, JWT, credenciales de ARCA, Cloudinary y Brevo).
 
+El agente local de impresión necesita un token propio, distinto de las sesiones de los usuarios:
+
+```env
+AGENTE_TOKEN=un-token-largo-y-seguro
+ARCA_PRODUCTION=true
+```
+
+`ARCA_PRODUCTION=false` debe usarse únicamente con credenciales de homologación.
+
+Para comprobar que el servidor está disponible:
+
+```text
+GET /health
+```
+
 ```bash
 npm run dev
 ```

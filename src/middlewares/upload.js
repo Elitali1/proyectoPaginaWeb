@@ -19,6 +19,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({
   storage,
+  fileFilter: (req, file, callback) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      return callback(new Error('Solo se permiten imágenes JPG, PNG o WEBP'));
+    }
+    callback(null, true);
+  },
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 

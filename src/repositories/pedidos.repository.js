@@ -39,11 +39,11 @@ async function obtenerTodos() {
   }));
 }
 
-async function obtenerConDetalle(id) {
-  const pedido = await pool.query('SELECT * FROM pedidos WHERE id = $1', [id]);
+async function obtenerConDetalle(id, cliente = pool) {
+  const pedido = await cliente.query('SELECT * FROM pedidos WHERE id = $1', [id]);
   if (pedido.rows.length === 0) return null;
 
-  const detalle = await pool.query(
+  const detalle = await cliente.query(
     `SELECT pd.producto_id, p1.nombre AS nombre_producto,
             pd.producto_id_2, p2.nombre AS nombre_producto_2,
             pd.cantidad, pd.precio_unitario, pd.tipo_masa, pd.aclaraciones
@@ -62,6 +62,12 @@ async function crear(datos) {
   const recetasRepository = require('./recetas.repository.js');
 
   const { cliente, canal, medio_pago, requiere_factura, cliente_id, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = datos;
+  if (!Array.isArray(productos) || productos.length === 0) {
+    throw new Error('El pedido debe tener al menos un producto');
+  }
+  if (productos.some(item => !item || !Number.isInteger(Number(item.cantidad)) || Number(item.cantidad) <= 0)) {
+    throw new Error('La cantidad de cada producto debe ser un entero positivo');
+  }
 
   const clienteDb = await pool.connect();
   let pedidoId;
@@ -84,6 +90,7 @@ async function crear(datos) {
         const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
         const p2 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
 
+        if (!p1.rows[0] || !p2.rows[0]) throw new Error('Producto inexistente');
         if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
           throw new Error('Uno de los productos seleccionados ya no está disponible');
         }
@@ -92,6 +99,7 @@ async function crear(datos) {
       } else {
         const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
 
+        if (!p1.rows[0]) throw new Error('Producto inexistente');
         if (!p1.rows[0].disponible) {
           throw new Error('El producto seleccionado ya no está disponible');
         }
@@ -123,12 +131,21 @@ async function crear(datos) {
 }
 
 async function descontarStockPorVenta(productoId, cantidadVendida, recetasRepository, insumosRepository, cliente) {
+  if (!cliente || !Number.isInteger(Number(cantidadVendida)) || Number(cantidadVendida) <= 0) {
+    throw new Error('La cantidad del producto debe ser un entero positivo');
+  }
   const receta = await recetasRepository.obtenerPorProducto(productoId, cliente);
 
   for (const linea of receta) {
     const cantidadADescontar = Number(linea.cantidad) * cantidadVendida;
-
-    const insumoActual = await insumosRepository.obtenerPorId(linea.insumo_id, cliente);
+    const insumoActualResult = await cliente.query(
+      'SELECT * FROM insumos WHERE id = $1 FOR UPDATE',
+      [linea.insumo_id]
+    );
+    const insumoActual = insumoActualResult.rows[0];
+    if (!insumoActual) {
+      throw new Error(`El insumo ${linea.insumo_id} no existe`);
+    }
     const stockResultante = Number(insumoActual.stock_actual) - cantidadADescontar;
 
     if (stockResultante < 0) {
@@ -143,13 +160,33 @@ async function revertirStockPorCancelacion(pedidoId) {
   const insumosRepository = require('./insumos.repository.js');
   const recetasRepository = require('./recetas.repository.js');
 
-  const pedido = await obtenerConDetalle(pedidoId);
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const pedidoResult = await cliente.query('SELECT estado FROM pedidos WHERE id = $1 FOR UPDATE', [pedidoId]);
+    if (!pedidoResult.rows[0] || pedidoResult.rows[0].estado === 'cancelado') {
+      await cliente.query('ROLLBACK');
+      return;
+    }
+    const pedido = await obtenerConDetalle(pedidoId, cliente);
+    await revertirDetalle(pedido, recetasRepository, insumosRepository, cliente);
+    await cliente.query('UPDATE pedidos SET estado = $1 WHERE id = $2', ['cancelado', pedidoId]);
+    await cliente.query('COMMIT');
+  } catch (error) {
+    await cliente.query('ROLLBACK');
+    throw error;
+  } finally {
+    cliente.release();
+  }
+}
+
+async function revertirDetalle(pedido, recetasRepository, insumosRepository, cliente) {
   if (!pedido) return;
 
   for (const item of pedido.productos) {
-    await revertirStockDeUnProducto(item.producto_id, item.cantidad, recetasRepository, insumosRepository);
+    await revertirStockDeUnProducto(item.producto_id, item.cantidad, recetasRepository, insumosRepository, cliente);
     if (item.producto_id_2) {
-      await revertirStockDeUnProducto(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository);
+      await revertirStockDeUnProducto(item.producto_id_2, item.cantidad, recetasRepository, insumosRepository, cliente);
     }
   }
 }
@@ -164,33 +201,62 @@ async function revertirStockDeUnProducto(productoId, cantidadVendida, recetasRep
 }
 
 async function actualizarEstado(id, estado) {
-  const pedidoActual = await pool.query('SELECT estado FROM pedidos WHERE id = $1', [id]);
-
-  if (pedidoActual.rows.length === 0) {
-    return null;
+  const insumosRepository = require('./insumos.repository.js');
+  const recetasRepository = require('./recetas.repository.js');
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const pedidoActual = await cliente.query('SELECT * FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    if (pedidoActual.rows.length === 0) {
+      await cliente.query('ROLLBACK');
+      return null;
+    }
+    const pedido = pedidoActual.rows[0];
+    if (pedido.estado === 'cancelado' && estado !== 'cancelado') {
+      throw new Error('No se puede reactivar un pedido cancelado');
+    }
+    if (estado === 'cancelado' && pedido.estado !== 'cancelado') {
+      const pedidoConDetalle = await obtenerConDetalle(id, cliente);
+      await revertirDetalle(pedidoConDetalle, recetasRepository, insumosRepository, cliente);
+    }
+    const resultado = await cliente.query(
+      'UPDATE pedidos SET estado = $1 WHERE id = $2 RETURNING *',
+      [estado, id]
+    );
+    await cliente.query('COMMIT');
+    return resultado.rows[0];
+  } catch (error) {
+    await cliente.query('ROLLBACK');
+    throw error;
+  } finally {
+    cliente.release();
   }
-
-  const estadoAnterior = pedidoActual.rows[0].estado;
-
-  const resultado = await pool.query(
-    'UPDATE pedidos SET estado = $1 WHERE id = $2 RETURNING *',
-    [estado, id]
-  );
-
-  // Si se está cancelando un pedido que no estaba cancelado antes, devolvemos el stock
-  if (estado === 'cancelado' && estadoAnterior !== 'cancelado') {
-    await revertirStockPorCancelacion(id);
-  }
-
-  return resultado.rows[0];
 }
 
 async function eliminar(id) {
-  const resultado = await pool.query(
-    'DELETE FROM pedidos WHERE id = $1 RETURNING *',
-    [id]
-  );
-  return resultado.rows[0];
+  const insumosRepository = require('./insumos.repository.js');
+  const recetasRepository = require('./recetas.repository.js');
+  const cliente = await pool.connect();
+  try {
+    await cliente.query('BEGIN');
+    const pedidoResult = await cliente.query('SELECT * FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    if (!pedidoResult.rows[0]) {
+      await cliente.query('ROLLBACK');
+      return null;
+    }
+    const pedido = await obtenerConDetalle(id, cliente);
+    if (pedido.estado !== 'cancelado') {
+      await revertirDetalle(pedido, recetasRepository, insumosRepository, cliente);
+    }
+    const resultado = await cliente.query('DELETE FROM pedidos WHERE id = $1 RETURNING *', [id]);
+    await cliente.query('COMMIT');
+    return resultado.rows[0];
+  } catch (error) {
+    await cliente.query('ROLLBACK');
+    throw error;
+  } finally {
+    cliente.release();
+  }
 }
 
 async function actualizarProductos(id, datos) {
@@ -198,6 +264,10 @@ async function actualizarProductos(id, datos) {
   const recetasRepository = require('./recetas.repository.js');
 
   const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos, monto_efectivo, monto_transferencia } = datos;
+  if (!Array.isArray(productos) || productos.length === 0 ||
+      productos.some(item => !item || !Number.isInteger(Number(item.cantidad)) || Number(item.cantidad) <= 0)) {
+    throw new Error('El pedido debe tener productos con cantidades válidas');
+  }
 
   const requiere_factura = medio_pago === 'transferencia' || (medio_pago === 'mixto' && Number(monto_transferencia) > 0);
 
@@ -211,6 +281,9 @@ async function actualizarProductos(id, datos) {
       'SELECT producto_id, producto_id_2, cantidad FROM pedido_detalle WHERE pedido_id = $1',
       [id]
     );
+    const pedidoActual = await clienteDb.query('SELECT estado FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    if (!pedidoActual.rows[0]) throw new Error('Pedido no encontrado');
+    if (pedidoActual.rows[0].estado === 'cancelado') throw new Error('No se puede modificar un pedido cancelado');
 
     for (const item of detalleViejo.rows) {
       await revertirStockDeUnProducto(item.producto_id, item.cantidad, recetasRepository, insumosRepository, clienteDb);
@@ -237,6 +310,7 @@ async function actualizarProductos(id, datos) {
         const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
         const p2 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id_2]);
 
+        if (!p1.rows[0] || !p2.rows[0]) throw new Error('Producto inexistente');
         if (!p1.rows[0].disponible || !p2.rows[0].disponible) {
           throw new Error('Uno de los productos seleccionados ya no está disponible');
         }
@@ -245,6 +319,7 @@ async function actualizarProductos(id, datos) {
       } else {
         const p1 = await clienteDb.query('SELECT precio, disponible FROM productos WHERE id = $1', [item.producto_id]);
 
+        if (!p1.rows[0]) throw new Error('Producto inexistente');
         if (!p1.rows[0].disponible) {
           throw new Error('El producto seleccionado ya no está disponible');
         }

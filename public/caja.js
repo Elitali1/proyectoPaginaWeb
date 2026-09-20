@@ -64,9 +64,9 @@ async function cargarCierres(desde, hasta) {
 
     let detalleVentasHtml = '';
     Object.keys(grupos).forEach(categoria => {
-      detalleVentasHtml += `<strong>${categoria}</strong><br>`;
+      detalleVentasHtml += `<strong>${escaparHtml(categoria)}</strong><br>`;
       grupos[categoria].forEach(item => {
-        detalleVentasHtml += `${item.producto_nombre}: ${item.cantidad_vendida}<br>`;
+        detalleVentasHtml += `${escaparHtml(item.producto_nombre)}: ${item.cantidad_vendida}<br>`;
       });
     });
 
@@ -101,8 +101,8 @@ async function cargarGastos(desde, hasta) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${gasto.concepto}</strong> - $${formatearPrecio(gasto.monto)}
-      ${gasto.categoria ? ` (${gasto.categoria})` : ''} - ${gasto.fecha.split('T')[0]}
+      <strong>${escaparHtml(gasto.concepto)}</strong> - $${formatearPrecio(gasto.monto)}
+      ${gasto.categoria ? ` (${escaparHtml(gasto.categoria)})` : ''} - ${gasto.fecha.split('T')[0]}
       <button type="button" class="btn-eliminar-gasto" data-id="${gasto.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);

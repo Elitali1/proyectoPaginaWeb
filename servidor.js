@@ -22,7 +22,7 @@ const recetasRoutes = require('./src/routes/recetas.routes.js');
 const dashboardRoutes = require('./src/routes/dashboard.routes.js');
 const contactoRoutes = require('./src/routes/contacto.routes.js');
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
@@ -50,9 +50,6 @@ app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 const generalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
 app.use(generalLimiter);
 
-// Rate limiting: stricter for auth endpoints (applied per-route below)
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
-
 app.use(express.static('public'));
 app.use('/pedidos', pedidosRoutes);
 app.use('/clientes', clientesRoutes);
@@ -68,6 +65,28 @@ app.use('/insumos', insumosRoutes);
 app.use('/recetas', recetasRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/contacto', contactoRoutes);
+
+app.get('/health', (req, res) => {
+  res.json({ ok: true });
+});
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+
+  if (error instanceof SyntaxError && error.status === 400 && error.body) {
+    return res.status(400).json({ error: 'JSON inválido' });
+  }
+
+  if (error.message && (
+    error.message.includes('Solo se permiten imágenes') ||
+    error.code === 'LIMIT_FILE_SIZE'
+  )) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  console.error('Error no controlado:', error);
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
 
 const PUERTO = process.env.PORT || 3000;
 app.listen(PUERTO, () => {

@@ -5,6 +5,15 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.donchichopizza.com
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'no-reply@example.com';
 const SENDER_NAME = process.env.SENDER_NAME || 'Mi App';
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 async function sendResetPasswordEmail(toEmail, token) {
   const resetLink = `${FRONTEND_URL}/resetear-password.html?token=${encodeURIComponent(token)}&email=${encodeURIComponent(
     toEmail
@@ -21,7 +30,7 @@ async function sendResetPasswordEmail(toEmail, token) {
   </html>`;
 
   if (!BREVO_API_KEY) {
-    console.warn('BREVO_API_KEY no configurada — no se enviará email. Link de reset (dev):', resetLink);
+    console.warn('BREVO_API_KEY no configurada — no se enviará email.');
     return;
   }
 
@@ -48,14 +57,17 @@ async function sendResetPasswordEmail(toEmail, token) {
 }
 
 async function sendContactEmail(nombreRemitente, emailRemitente, mensaje) {
+  const nombreSeguro = escapeHtml(nombreRemitente);
+  const emailSeguro = escapeHtml(emailRemitente);
+  const mensajeSeguro = escapeHtml(mensaje).replace(/\r?\n/g, '<br>');
   const htmlContent = `
   <html>
     <body>
       <p>Nuevo mensaje de contacto desde la landing de Donchichopizza:</p>
-      <p><strong>Nombre:</strong> ${nombreRemitente}</p>
-      <p><strong>Email:</strong> ${emailRemitente}</p>
+      <p><strong>Nombre:</strong> ${nombreSeguro}</p>
+      <p><strong>Email:</strong> ${emailSeguro}</p>
       <p><strong>Mensaje:</strong></p>
-      <p>${mensaje}</p>
+      <p>${mensajeSeguro}</p>
     </body>
   </html>`;
 

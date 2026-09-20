@@ -66,11 +66,11 @@ async function cargarProductos() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${producto.nombre}</strong> - $${formatearPrecio(producto.precio)}
-      ${producto.categoria_nombre ? ` (${producto.categoria_nombre})` : ''}
+      <strong>${escaparHtml(producto.nombre)}</strong> - $${formatearPrecio(producto.precio)}
+      ${producto.categoria_nombre ? ` (${escaparHtml(producto.categoria_nombre)})` : ''}
       ${producto.disponible ? '' : ' (no disponible)'}
-      ${producto.imagen ? `<br><small>Imagen: ${producto.imagen}</small>` : ''}
-      <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${producto.nombre}" data-precio="${producto.precio}" data-disponible="${producto.disponible}" data-imagen="${producto.imagen || ''}" data-categoria="${producto.categoria_id || ''}">Editar</button>
+      ${producto.imagen ? `<br><small>Imagen: ${escaparHtml(producto.imagen)}</small>` : ''}
+      <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${escaparHtml(producto.nombre)}" data-precio="${producto.precio}" data-disponible="${producto.disponible}" data-imagen="${escaparHtml(producto.imagen || '')}" data-categoria="${producto.categoria_id || ''}">Editar</button>
       <button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
         ${producto.disponible ? 'Marcar no disponible' : 'Reactivar'}
       </button>
@@ -142,7 +142,7 @@ function renderizarListaReceta() {
     const insumo = insumosDisponibles.find(i => i.id === item.insumo_id);
     const li = document.createElement('li');
     li.innerHTML = `
-      ${insumo ? insumo.nombre : 'Insumo'}: ${item.cantidad} ${insumo ? insumo.unidad_medida : ''}
+      ${escaparHtml(insumo ? insumo.nombre : 'Insumo')}: ${item.cantidad} ${escaparHtml(insumo ? insumo.unidad_medida : '')}
       <button type="button" class="btn-quitar-receta" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);

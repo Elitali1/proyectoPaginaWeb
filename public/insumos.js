@@ -46,14 +46,14 @@ async function cargarInsumos() {
       div.style.border = '2px solid #B03A2E';
     }
     div.innerHTML = `
-      <strong>${insumo.nombre}</strong> (${insumo.unidad_medida})
+      <strong>${escaparHtml(insumo.nombre)}</strong> (${escaparHtml(insumo.unidad_medida)})
       ${insumo.activo ? '' : ' (inactivo)'}
       ${stockBajo ? ' <span class="balance-negativo">⚠ STOCK BAJO</span>' : ''}<br>
-      Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
-      Stock mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida}<br>
-      Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
-      <button type="button" class="btn-editar-insumo" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}" data-minimo="${insumo.stock_minimo}">Editar</button>
-      <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${insumo.nombre}" data-unidad="${insumo.unidad_medida}">Ajustar stock</button>
+      Stock actual: ${insumo.stock_actual} ${escaparHtml(insumo.unidad_medida)}<br>
+      Stock mínimo: ${insumo.stock_minimo} ${escaparHtml(insumo.unidad_medida)}<br>
+      Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${escaparHtml(insumo.unidad_medida)}
+      <button type="button" class="btn-editar-insumo" data-id="${insumo.id}" data-nombre="${escaparHtml(insumo.nombre)}" data-unidad="${escaparHtml(insumo.unidad_medida)}" data-minimo="${insumo.stock_minimo}">Editar</button>
+      <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${escaparHtml(insumo.nombre)}" data-unidad="${escaparHtml(insumo.unidad_medida)}">Ajustar stock</button>
       <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
         ${insumo.activo ? 'Desactivar' : 'Reactivar'}
       </button>
