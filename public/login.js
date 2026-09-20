@@ -11,6 +11,7 @@ document.getElementById('formulario-login').addEventListener('submit', async (ev
     const respuesta = await fetch(`${API_URL}/usuarios/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, password })
     });
 
@@ -22,7 +23,8 @@ document.getElementById('formulario-login').addEventListener('submit', async (ev
 
     const datos = await respuesta.json();
 
-    localStorage.setItem('token', datos.token);
+    // El token ya viaja en una cookie httpOnly segura, no hace falta guardarlo acá.
+    // Solo guardamos los datos del usuario (nombre, rol) para mostrarlos en pantalla.
     localStorage.setItem('usuario', JSON.stringify(datos.usuario));
 
     window.location.href = 'pedidos.html';

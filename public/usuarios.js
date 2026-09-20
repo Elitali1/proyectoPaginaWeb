@@ -1,18 +1,20 @@
 requiereAdmin();
 
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -21,8 +23,11 @@ let editandoId = null;
 
 async function cargarUsuarios() {
   const respuesta = await fetch(`${API_URL}/usuarios`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
   const usuarios = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-usuarios');
@@ -50,7 +55,7 @@ async function cargarUsuarios() {
 
       await fetch(`${API_URL}/usuarios/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       cargarUsuarios();
     });
@@ -97,11 +102,13 @@ document.getElementById('formulario-usuario').addEventListener('submit', async (
     const respuesta = await fetch(`${API_URL}/usuarios/${editandoId}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(datosUsuario)
     });
+
+    if (manejarNoAutorizado(respuesta)) return;
 
     if (!respuesta.ok) {
       const error = await respuesta.json();
@@ -123,11 +130,13 @@ document.getElementById('formulario-usuario').addEventListener('submit', async (
     const respuesta = await fetch(`${API_URL}/usuarios`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ nombre, email, password, rol })
     });
+
+    if (manejarNoAutorizado(respuesta)) return;
 
     if (!respuesta.ok) {
       const error = await respuesta.json();

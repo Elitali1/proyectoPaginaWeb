@@ -1,11 +1,10 @@
 const API_URL = window.location.origin;
-const token = localStorage.getItem("token");
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+if (!usuario) {
   window.location.href = "login.html";
 }
 
-const usuario = JSON.parse(localStorage.getItem("usuario"));
 document.getElementById("info-usuario").textContent =
   `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin([
@@ -18,8 +17,11 @@ ocultarSiNoEsAdmin([
   "link-dashboard",
 ]);
 
-document.getElementById("btn-logout").addEventListener("click", () => {
-  localStorage.removeItem("token");
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  await fetch(`${API_URL}/usuarios/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
   localStorage.removeItem("usuario");
   window.location.href = "login.html";
 });
@@ -48,8 +50,11 @@ function obtenerFechaComercial(offsetDias = 0) {
 
 async function cargarHistorial(fecha) {
   const respuesta = await fetch(`${API_URL}/pedidos/por-fecha?fecha=${fecha}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
   const pedidos = await respuesta.json();
 
   const contenedor = document.getElementById("contenedor-historial");
@@ -134,8 +139,10 @@ async function cargarHistorial(fecha) {
 
 async function verPdf(pedidoId) {
   const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}/pdf`, {
-    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   if (!respuesta.ok) {
     alert("No se pudo obtener el PDF de la factura");
@@ -150,9 +157,11 @@ async function verNotaCredito(pedidoId) {
   const respuesta = await fetch(
     `${API_URL}/pedidos/${pedidoId}/pdf-nota-credito`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     },
   );
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   if (!respuesta.ok) {
     const error = await respuesta.json();
@@ -199,11 +208,13 @@ async function anularFactura(pedidoId, totalFactura, fechaActual) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       body: JSON.stringify({ monto, motivo }),
     },
   );
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   const datos = await respuesta.json();
 
@@ -222,8 +233,10 @@ async function facturarDesdeHistorial(pedidoId, boton, fechaActual) {
 
   const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}/facturar`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   const datos = await respuesta.json();
 

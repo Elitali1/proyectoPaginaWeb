@@ -1,16 +1,15 @@
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -23,7 +22,6 @@ let insumos = [];
 let itemsDetalleCompra = [];
 let facturaCompraIdActual = null;
 
-// ---- Listado general de compras ----
 function mostrarCompras(compras) {
   const contenedor = document.getElementById('contenedor-compras');
   contenedor.innerHTML = '';
@@ -50,7 +48,7 @@ function mostrarCompras(compras) {
       const id = boton.dataset.id;
       await fetch(`${API_URL}/facturas-compra/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       cargarCompras();
     });
@@ -58,9 +56,8 @@ function mostrarCompras(compras) {
 }
 
 async function cargarCompras() {
-  const respuesta = await fetch(`${API_URL}/facturas-compra`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/facturas-compra`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
   const compras = await respuesta.json();
   mostrarCompras(compras);
 }
@@ -75,7 +72,7 @@ document.getElementById('btn-filtrar').addEventListener('click', async () => {
   }
 
   const respuesta = await fetch(`${API_URL}/facturas-compra?desde=${desde}&hasta=${hasta}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
   const compras = await respuesta.json();
   mostrarCompras(compras);
@@ -87,11 +84,8 @@ document.getElementById('btn-limpiar-filtro').addEventListener('click', () => {
   cargarCompras();
 });
 
-// ---- Cargar el selector de insumos para itemizar ----
 async function cargarInsumosEnSelector() {
-  const respuesta = await fetch(`${API_URL}/insumos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/insumos`, { credentials: 'include' });
   insumos = (await respuesta.json()).filter(i => i.activo);
 
   const select = document.getElementById('detalle-insumo');
@@ -104,7 +98,6 @@ async function cargarInsumosEnSelector() {
   });
 }
 
-// ---- Al guardar la factura general, mostrar la sección de itemizar ----
 document.getElementById('formulario-compra').addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -118,10 +111,8 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
 
   const respuesta = await fetch(`${API_URL}/facturas-compra`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(nuevaCompra)
   });
 
@@ -139,7 +130,6 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
   cargarCompras();
 });
 
-// ---- Renderizar la lista de items agregados a la compra actual ----
 function renderizarDetalleCompra() {
   const lista = document.getElementById('lista-detalle-compra');
   lista.innerHTML = '';
@@ -163,7 +153,6 @@ function renderizarDetalleCompra() {
   });
 }
 
-// ---- Botón "Agregar item" a la lista de detalle ----
 document.getElementById('btn-agregar-detalle').addEventListener('click', () => {
   const insumoId = Number(document.getElementById('detalle-insumo').value);
   const cantidad = Number(document.getElementById('detalle-cantidad').value);
@@ -182,7 +171,6 @@ document.getElementById('btn-agregar-detalle').addEventListener('click', () => {
   renderizarDetalleCompra();
 });
 
-// ---- Guardar el detalle completo de la compra ----
 document.getElementById('btn-guardar-detalle').addEventListener('click', async () => {
   if (itemsDetalleCompra.length === 0) {
     alert('Agregá al menos un item, o usá "Omitir" si esta compra no es de insumos');
@@ -191,10 +179,8 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
 
   const respuesta = await fetch(`${API_URL}/facturas-compra/${facturaCompraIdActual}/detalle`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ items: itemsDetalleCompra })
   });
 
@@ -226,7 +212,6 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
   facturaCompraIdActual = null;
 });
 
-// ---- Omitir la itemización de esta compra ----
 document.getElementById('btn-omitir-detalle').addEventListener('click', () => {
   document.getElementById('seccion-detalle-compra').classList.add('oculto');
   itemsDetalleCompra = [];

@@ -1,18 +1,20 @@
 requiereAdmin();
 
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-clientes', 'link-caja', 'link-usuarios', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -36,8 +38,10 @@ let graficoTopProductos = null;
 
 async function cargarDashboard(desde, hasta) {
   const respuesta = await fetch(`${API_URL}/dashboard?desde=${desde}&hasta=${hasta}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   if (!respuesta.ok) {
     alert('Error al cargar el dashboard');

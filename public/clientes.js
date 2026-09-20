@@ -1,18 +1,20 @@
 requiereAdmin();
 
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-clientes', 'link-caja', 'link-usuarios', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -22,8 +24,11 @@ let clientesCache = [];
 
 async function cargarClientes() {
   const respuesta = await fetch(`${API_URL}/clientes`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
   clientesCache = await respuesta.json();
   mostrarClientes(clientesCache);
 }
@@ -91,14 +96,16 @@ document.getElementById('formulario-cliente').addEventListener('submit', async (
   };
 
   if (editandoId) {
-    await fetch(`${API_URL}/clientes/${editandoId}`, {
+    const respuesta = await fetch(`${API_URL}/clientes/${editandoId}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(datosCliente)
     });
+
+    if (manejarNoAutorizado(respuesta)) return;
 
     editandoId = null;
     document.getElementById('titulo-formulario-cliente').textContent = 'Agregar cliente';
@@ -108,11 +115,13 @@ document.getElementById('formulario-cliente').addEventListener('submit', async (
     const respuesta = await fetch(`${API_URL}/clientes`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(datosCliente)
     });
+
+    if (manejarNoAutorizado(respuesta)) return;
 
     if (!respuesta.ok) {
       const error = await respuesta.json();

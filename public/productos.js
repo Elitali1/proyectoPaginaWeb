@@ -1,18 +1,17 @@
 requiereAdmin();
 
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -27,9 +26,8 @@ function formatearPrecio(numero) {
 }
 
 async function cargarCategorias() {
-  const respuesta = await fetch(`${API_URL}/categorias`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/categorias`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
   categorias = await respuesta.json();
 
   const select = document.getElementById('categoria');
@@ -43,9 +41,7 @@ async function cargarCategorias() {
 }
 
 async function cargarInsumosParaReceta() {
-  const respuesta = await fetch(`${API_URL}/insumos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/insumos`, { credentials: 'include' });
   insumosDisponibles = (await respuesta.json()).filter(i => i.activo);
 
   const select = document.getElementById('receta-insumo');
@@ -59,9 +55,8 @@ async function cargarInsumosParaReceta() {
 }
 
 async function cargarProductos() {
-  const respuesta = await fetch(`${API_URL}/productos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/productos`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
   const productos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-productos');
@@ -92,10 +87,8 @@ async function cargarProductos() {
 
       await fetch(`${API_URL}/productos/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           nombre: producto.nombre,
           precio: producto.precio,
@@ -128,11 +121,8 @@ async function cargarProductos() {
   });
 }
 
-// ---- Cargar la receta ya guardada de un producto, y su costo/margen ----
 async function cargarRecetaDeProducto(productoId) {
-  const respuesta = await fetch(`${API_URL}/recetas/${productoId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/recetas/${productoId}`, { credentials: 'include' });
   const receta = await respuesta.json();
 
   itemsReceta = receta.map(linea => ({
@@ -189,10 +179,8 @@ document.getElementById('btn-guardar-receta').addEventListener('click', async ()
 
   await fetch(`${API_URL}/recetas/${editandoId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ items: itemsReceta })
   });
 
@@ -201,9 +189,7 @@ document.getElementById('btn-guardar-receta').addEventListener('click', async ()
 });
 
 async function mostrarCostoYMargen(productoId) {
-  const respuesta = await fetch(`${API_URL}/recetas/${productoId}/costo`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/recetas/${productoId}/costo`, { credentials: 'include' });
   const datos = await respuesta.json();
 
   const contenedor = document.getElementById('resultado-costo');
@@ -247,10 +233,8 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
   if (editandoId) {
     await fetch(`${API_URL}/productos/${editandoId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(datosProducto)
     });
     editandoId = null;
@@ -262,10 +246,8 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
   } else {
   const respuesta = await fetch(`${API_URL}/productos`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(datosProducto)
   });
 
@@ -306,7 +288,7 @@ document.getElementById('btn-subir-foto').addEventListener('click', async () => 
 
   const respuesta = await fetch(`${API_URL}/productos/${editandoId}/imagen`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include',
     body: formData
   });
 

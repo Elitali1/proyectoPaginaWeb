@@ -1,18 +1,17 @@
 requiereAdmin();
 
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -24,9 +23,8 @@ function formatearPrecio(numero) {
 }
 
 async function cargarInsumos() {
-  const respuesta = await fetch(`${API_URL}/insumos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/insumos`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
   const insumos = await respuesta.json();
 
   mostrarAlertasStock(insumos);
@@ -70,10 +68,8 @@ async function cargarInsumos() {
 
       await fetch(`${API_URL}/insumos/${id}/activo`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ activo: !activoActual })
       });
 
@@ -104,10 +100,8 @@ async function cargarInsumos() {
 
       const respuesta = await fetch(`${API_URL}/insumos/${id}/ajustar-stock`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ cantidad, motivo })
       });
 
@@ -179,19 +173,15 @@ document.getElementById('formulario-insumo').addEventListener('submit', async (e
   if (editandoId) {
     await fetch(`${API_URL}/insumos/${editandoId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(datosInsumo)
     });
 
     await fetch(`${API_URL}/insumos/${editandoId}/stock-minimo`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ stock_minimo: datosInsumo.stock_minimo })
     });
 
@@ -202,10 +192,8 @@ document.getElementById('formulario-insumo').addEventListener('submit', async (e
   } else {
     await fetch(`${API_URL}/insumos`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(datosInsumo)
     });
   }

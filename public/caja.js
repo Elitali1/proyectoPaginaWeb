@@ -1,16 +1,18 @@
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, {
+    method: 'POST',
+    credentials: 'include'
+  });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -32,8 +34,11 @@ function obtenerRangoUltimoMes() {
 
 async function cargarCierres(desde, hasta) {
   const respuesta = await fetch(`${API_URL}/cierre-caja?desde=${desde}&hasta=${hasta}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
   const cierres = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-cierres');
@@ -77,8 +82,11 @@ async function cargarCierres(desde, hasta) {
 
 async function cargarGastos(desde, hasta) {
   const respuesta = await fetch(`${API_URL}/gastos?desde=${desde}&hasta=${hasta}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
   const gastos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-gastos');
@@ -105,7 +113,7 @@ async function cargarGastos(desde, hasta) {
       const id = boton.dataset.id;
       await fetch(`${API_URL}/gastos/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
       const desdeActual = document.getElementById('gastos-desde').value;
       const hastaActual = document.getElementById('gastos-hasta').value;
@@ -127,9 +135,9 @@ document.getElementById('formulario-gasto').addEventListener('submit', async (ev
   await fetch(`${API_URL}/gastos`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/json'
     },
+    credentials: 'include',
     body: JSON.stringify(nuevoGasto)
   });
 
@@ -146,8 +154,10 @@ document.getElementById('formulario-balance').addEventListener('submit', async (
   const hasta = document.getElementById('balance-hasta').value;
 
   const respuesta = await fetch(`${API_URL}/cierre-caja/balance?desde=${desde}&hasta=${hasta}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   const contenedor = document.getElementById('resultado-balance');
 
@@ -183,11 +193,13 @@ document.getElementById('formulario-cierre').addEventListener('submit', async (e
   const respuesta = await fetch(`${API_URL}/cierre-caja`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/json'
     },
+    credentials: 'include',
     body: JSON.stringify({ fecha, cerrado_por: usuario.id })
   });
+
+  if (manejarNoAutorizado(respuesta)) return;
 
   if (!respuesta.ok) {
     const error = await respuesta.json();

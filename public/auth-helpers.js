@@ -26,3 +26,10 @@ function ocultarSiNoEsAdmin(idsElementos) {
     });
   }
 }
+function manejarNoAutorizado(respuesta) {
+  if (respuesta.status === 401) {
+    window.location.href = 'login.html';
+    return true;
+  }
+  return false;
+}

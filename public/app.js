@@ -1,16 +1,15 @@
 const API_URL = window.location.origin;
-const token = localStorage.getItem('token');
 
-if (!token) {
+const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+if (!usuario) {
   window.location.href = 'login.html';
 }
 
-const usuario = JSON.parse(localStorage.getItem('usuario'));
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
 ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
 
-document.getElementById('btn-logout').addEventListener('click', () => {
-  localStorage.removeItem('token');
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
   localStorage.removeItem('usuario');
   window.location.href = 'login.html';
 });
@@ -37,7 +36,6 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
 
-// ---- Buscar cliente por teléfono y autocompletar nombre/dirección (como sugerencia editable) ----
 document.getElementById('telefono-cliente').addEventListener('blur', async (event) => {
   const telefono = event.target.value.trim();
   const mensaje = document.getElementById('mensaje-cliente-encontrado');
@@ -46,7 +44,7 @@ document.getElementById('telefono-cliente').addEventListener('blur', async (even
   if (!telefono) return;
 
   const respuesta = await fetch(`${API_URL}/clientes/telefono/${telefono}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
 
   if (!respuesta.ok) {
@@ -67,7 +65,6 @@ document.getElementById('telefono-cliente').addEventListener('blur', async (even
   mensaje.textContent = `Cliente encontrado: ${cliente.nombre}`;
 });
 
-// ---- Mostrar/ocultar los campos de pago mixto según el medio de pago elegido ----
 document.getElementById('medio_pago').addEventListener('change', (event) => {
   const esMixto = event.target.value === 'mixto';
   document.getElementById('seccion-pago-mixto').classList.toggle('oculto', !esMixto);
@@ -79,7 +76,6 @@ document.getElementById('medio_pago').addEventListener('change', (event) => {
   }
 });
 
-// ---- Validar en vivo que la suma del pago mixto coincida con el total ----
 function validarPagoMixto() {
   const totalPedido = productosDelPedido.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
   const montoEfectivo = Number(document.getElementById('monto-efectivo').value) || 0;
@@ -106,11 +102,9 @@ function validarPagoMixto() {
 document.getElementById('monto-efectivo').addEventListener('input', validarPagoMixto);
 document.getElementById('monto-transferencia').addEventListener('input', validarPagoMixto);
 
-// ---- Cargar y mostrar la lista de pedidos ----
 async function cargarPedidos() {
-  const respuesta = await fetch(`${API_URL}/pedidos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/pedidos`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
   const pedidos = await respuesta.json();
 
   const contenedor = document.getElementById('contenedor-pedidos');
@@ -171,10 +165,8 @@ async function cargarPedidos() {
 
       await fetch(`${API_URL}/pedidos/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ estado: nuevoEstado })
       });
 
@@ -190,7 +182,7 @@ async function cargarPedidos() {
 
       const respuesta = await fetch(`${API_URL}/pedidos/${id}/facturar`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
 
       const datos = await respuesta.json();
@@ -225,10 +217,8 @@ async function cargarPedidos() {
     const id = boton.dataset.id;
     await fetch(`${API_URL}/pedidos/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ estado: 'cancelado' })
     });
 
@@ -237,7 +227,6 @@ async function cargarPedidos() {
 });
 }
 
-// ---- Imprimir comanda (agrega el pedido a la cola de impresión del agente) ----
 async function imprimirComanda(pedidoId, boton) {
   const textoOriginal = boton.textContent;
   boton.disabled = true;
@@ -246,7 +235,7 @@ async function imprimirComanda(pedidoId, boton) {
   try {
     const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}/imprimir-comanda`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
+      credentials: 'include'
     });
 
     if (!respuesta.ok) {
@@ -262,11 +251,8 @@ async function imprimirComanda(pedidoId, boton) {
   }
 }
 
-// ---- Cargar un pedido existente en el formulario, en modo edición ----
 async function cargarPedidoParaEditar(pedidoId) {
-  const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/pedidos/${pedidoId}`, { credentials: 'include' });
 
   if (!respuesta.ok) {
     alert('No se pudo cargar el pedido para editar');
@@ -335,11 +321,8 @@ document.getElementById('btn-cancelar-edicion-pedido').addEventListener('click',
   document.getElementById('mensaje-cliente-encontrado').textContent = '';
 });
 
-// ---- Cargar catálogo de productos (solo disponibles) para el buscador y el select 2 ----
 async function cargarProductosEnFormulario() {
-  const respuesta = await fetch(`${API_URL}/productos`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const respuesta = await fetch(`${API_URL}/productos`, { credentials: 'include' });
   const todosLosProductos = await respuesta.json();
   catalogoProductos = todosLosProductos.filter(p => p.disponible);
   cargarSelect2();
@@ -357,7 +340,6 @@ function cargarSelect2() {
   });
 }
 
-// ---- Buscador de productos (filtra mientras se escribe) ----
 document.getElementById('buscador-producto').addEventListener('input', (event) => {
   const texto = event.target.value.toLowerCase();
   const resultados = document.getElementById('resultados-busqueda');
@@ -389,22 +371,18 @@ document.getElementById('buscador-producto').addEventListener('input', (event) =
   resultados.classList.toggle('mostrar', coincidencias.length > 0);
 });
 
-// ---- Mostrar/ocultar el select 2 según el checkbox de combinar ----
 document.getElementById('check-combinar').addEventListener('change', (event) => {
   document.getElementById('select-producto-2').classList.toggle('oculto', !event.target.checked);
 });
 
-// ---- Mostrar/ocultar el campo de dirección según tipo de entrega ----
 document.getElementById('tipo_entrega').addEventListener('change', (event) => {
   document.getElementById('label-direccion').classList.toggle('oculto', event.target.value !== 'envio');
 });
 
-// ---- Mostrar/ocultar el campo de CUIT según el checkbox ----
 document.getElementById('check-facturar-cuit').addEventListener('change', (event) => {
   document.getElementById('label-cuit').classList.toggle('oculto', !event.target.checked);
 });
 
-// ---- Mostrar la lista de productos ya agregados al pedido en construcción, con total ----
 function renderizarListaProductos() {
   const lista = document.getElementById('lista-productos-agregados');
   lista.innerHTML = '';
@@ -438,7 +416,6 @@ function renderizarListaProductos() {
   document.getElementById('total-pedido').textContent = `Total: $${formatearPrecio(total)}`;
 }
 
-// ---- Botón "Agregar" producto a la lista ----
 document.getElementById('btn-agregar-producto').addEventListener('click', () => {
   const combinar = document.getElementById('check-combinar').checked;
   const cantidad = Number(document.getElementById('cantidad-nueva').value);
@@ -496,7 +473,6 @@ document.getElementById('btn-agregar-producto').addEventListener('click', () => 
   validarPagoMixto();
 });
 
-// ---- Envío del formulario: crear pedido nuevo, o guardar cambios si se está editando ----
 document.getElementById('formulario-pedido').addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -534,10 +510,8 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
   if (editandoPedidoId) {
     const respuesta = await fetch(`${API_URL}/pedidos/${editandoPedidoId}/productos`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(datosGenerales)
     });
 
@@ -563,10 +537,8 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
 
   const respuesta = await fetch(`${API_URL}/pedidos`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(datosGenerales)
   });
 
@@ -586,6 +558,5 @@ document.getElementById('formulario-pedido').addEventListener('submit', async (e
   cargarPedidos();
 });
 
-// ---- Al cargar la página ----
 cargarPedidos();
 cargarProductosEnFormulario();
