@@ -6,11 +6,11 @@ function verificarToken(req, res, next) {
   const tokenDesdeCookie = req.cookies ? req.cookies.auth_token : null;
 
   const authHeader = req.headers['authorization'];
-  const tokenDesdeHeader = authHeader ? authHeader.split(' ')[1] : null;
+  const [scheme, tokenDesdeHeader] = authHeader.split(' ');
 
-  const token = tokenDesdeCookie || tokenDesdeHeader;
+  const token = tokenDesdeCookie || (scheme === 'Bearer' ? tokenDesdeHeader : null);
 
-  if (!token) {
+  if (!token || !process.env.JWT_SECRET) {
     return res.status(401).json({ error: 'No se proporcionó token' });
   }
 

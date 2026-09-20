@@ -1,5 +1,12 @@
 const productosRepository = require('../repositories/productos.repository.js');
 
+function validarProducto({ nombre, precio, disponible, categoria_id }) {
+  return typeof nombre === 'string' && nombre.trim().length >= 2 && nombre.length <= 150 &&
+    Number.isFinite(Number(precio)) && Number(precio) >= 0 &&
+    typeof disponible === 'boolean' &&
+    Number.isInteger(Number(categoria_id)) && Number(categoria_id) > 0;
+}
+
 async function listar(req, res) {
   try {
     const productos = await productosRepository.obtenerTodos();
@@ -29,6 +36,9 @@ async function obtenerUno(req, res) {
 async function crear(req, res) {
   try {
     const { nombre, precio, disponible, imagen, categoria_id } = req.body;
+    if (!validarProducto({ nombre, precio, disponible, categoria_id })) {
+      return res.status(400).json({ error: 'Datos de producto inválidos' });
+    }
     const nuevoProducto = await productosRepository.crear({ nombre, precio, disponible, imagen, categoria_id });
     res.status(201).json(nuevoProducto);
   } catch (error) {
@@ -41,6 +51,9 @@ async function actualizar(req, res) {
   try {
     const { id } = req.params;
     const { nombre, precio, disponible, imagen, categoria_id } = req.body;
+    if (!validarProducto({ nombre, precio, disponible, categoria_id })) {
+      return res.status(400).json({ error: 'Datos de producto inválidos' });
+    }
 
     const productoActualizado = await productosRepository.actualizar(id, { nombre, precio, disponible, imagen, categoria_id });
 

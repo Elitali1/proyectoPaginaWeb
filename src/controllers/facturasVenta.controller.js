@@ -29,6 +29,10 @@ async function obtenerUna(req, res) {
 async function crear(req, res) {
   try {
     const { pedido_id, tipo_comprobante, monto } = req.body;
+    if (!Number.isInteger(Number(pedido_id)) || Number(pedido_id) <= 0 ||
+        !tipo_comprobante || !Number.isFinite(Number(monto)) || Number(monto) <= 0) {
+      return res.status(400).json({ error: 'pedido_id, tipo_comprobante y monto válido son obligatorios' });
+    }
 
     const existente = await facturasVentaRepository.obtenerPorPedido(pedido_id);
     if (existente) {

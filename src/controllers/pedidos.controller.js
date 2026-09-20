@@ -6,6 +6,19 @@ const { InvoicePdfGenerator } = require('@arcasdk/pdf');
 const comandaService = require('../services/comanda.service.js');
 const notasCreditoRepository = require('../repositories/notasCredito.repository.js');
 
+function obtenerIdValido(valor) {
+  const id = Number(valor);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function validarProductos(productos) {
+  return Array.isArray(productos) && productos.length > 0 && productos.every(item =>
+    item && Number.isInteger(Number(item.producto_id)) && Number(item.producto_id) > 0 &&
+    (!item.producto_id_2 || (Number.isInteger(Number(item.producto_id_2)) && Number(item.producto_id_2) > 0)) &&
+    Number.isInteger(Number(item.cantidad)) && Number(item.cantidad) > 0
+  );
+}
+
 async function listar(req, res) {
   try {
     const pedidos = await pedidosRepository.obtenerTodos();
@@ -18,7 +31,8 @@ async function listar(req, res) {
 
 async function obtenerUno(req, res) {
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
     const pedido = await pedidosRepository.obtenerConDetalle(id);
 
     if (!pedido) {
@@ -37,6 +51,9 @@ async function crear(req, res) {
     const clientesRepository = require('../repositories/clientes.repository.js');
 
     const { cliente, canal, medio_pago, telefono, productos, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = req.body;
+    if (!medio_pago || !validarProductos(productos)) {
+      return res.status(400).json({ error: 'medio_pago y productos válidos son obligatorios' });
+    }
 
     // Requiere factura si es transferencia pura, o si es mixto con parte en transferencia
     const requiere_factura = medio_pago === 'transferencia' || (medio_pago === 'mixto' && Number(monto_transferencia) > 0);
@@ -60,8 +77,11 @@ async function crear(req, res) {
 
 async function actualizarEstado(req, res) {
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
     const { estado } = req.body;
+    const estadosValidos = ['pendiente', 'en preparación', 'listo', 'entregado', 'cancelado'];
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
+    if (!estadosValidos.includes(estado)) return res.status(400).json({ error: 'Estado de pedido inválido' });
 
     const pedidoActualizado = await pedidosRepository.actualizarEstado(id, estado);
 
@@ -78,7 +98,8 @@ async function actualizarEstado(req, res) {
 
 async function eliminar(req, res) {
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
 
     const pedidoEliminado = await pedidosRepository.eliminar(id);
 
@@ -94,8 +115,10 @@ async function eliminar(req, res) {
 }
 
 async function facturar(req, res) {
+  let clienteFacturacion = null;
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
 
     const pedido = await pedidosRepository.obtenerConDetalle(id);
     if (!pedido) {
@@ -106,42 +129,46 @@ async function facturar(req, res) {
       return res.status(400).json({ error: 'Este pedido no requiere factura (no fue pagado por transferencia)' });
     }
 
-    const facturaExistente = await facturasVentaRepository.obtenerPorPedido(id);
-    if (facturaExistente) {
-      return res.status(400).json({ error: 'Este pedido ya tiene una factura asociada' });
-    }
-
     // Si es mixto, se factura solo la parte de transferencia; si no, el total del pedido
     const esMixto = pedido.medio_pago === 'mixto';
     const total = esMixto
       ? Number(pedido.monto_transferencia)
       : pedido.productos.reduce((suma, item) => suma + (item.cantidad * Number(item.precio_unitario)), 0);
+    if (!Number.isFinite(total) || total <= 0) {
+      return res.status(400).json({ error: 'El monto a facturar debe ser positivo' });
+    }
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
-
-    const facturaNueva = await facturasVentaRepository.crear({
-      pedido_id: id,
-      tipo_comprobante: 'Factura C',
-      monto: total
-    });
+    const inicio = await facturasVentaRepository.iniciarFacturacion(id, total);
+    if (inicio.factura) {
+      if (inicio.factura.estado === 'emitida') return res.json(inicio.factura);
+      return res.status(409).json({ error: 'Ya existe una facturación en curso o fallida para este pedido' });
+    }
+    clienteFacturacion = inicio.cliente;
 
     try {
       const resultadoArca = await arcaService.emitirFactura({ monto: total, cuitReceptor });
 
-      const facturaEmitida = await facturasVentaRepository.marcarEmitida(
-        facturaNueva.id,
+      const facturaEmitida = await facturasVentaRepository.completarFacturacion(
+        clienteFacturacion,
+        inicio.factura.id,
         resultadoArca.numeroComprobante,
         resultadoArca.cae,
         resultadoArca.caeFchVto
       );
+      clienteFacturacion = null;
 
       res.json(facturaEmitida);
     } catch (errorArca) {
       console.error('Error al emitir en ARCA:', errorArca);
-      await facturasVentaRepository.marcarError(facturaNueva.id);
+      await facturasVentaRepository.fallarFacturacion(clienteFacturacion, inicio.factura.id);
+      clienteFacturacion = null;
       res.status(500).json({ error: 'Error al emitir la factura en ARCA' });
     }
   } catch (error) {
+    if (clienteFacturacion) {
+      try { await facturasVentaRepository.fallarFacturacion(clienteFacturacion, 0); } catch (errorLiberacion) { console.error(errorLiberacion); }
+    }
     console.error(error);
     res.status(500).json({ error: 'Error al facturar el pedido' });
   }
@@ -149,7 +176,8 @@ async function facturar(req, res) {
 
 async function generarPdf(req, res) {
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
 
     const pedido = await pedidosRepository.obtenerConDetalle(id);
     if (!pedido) {
@@ -270,7 +298,7 @@ async function imprimirComandaFisica(req, res) {
 }
 async function modificarProductos(req, res) {
   try {
-    const { id } = req.params;
+    const id = obtenerIdValido(req.params.id);
     const { cliente, canal, medio_pago, tipo_entrega, direccion_entrega, cuit_receptor, productos } = req.body;
 
     const pedidoExistente = await pedidosRepository.obtenerConDetalle(id);
@@ -278,7 +306,8 @@ async function modificarProductos(req, res) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    if (!productos || productos.length === 0) {
+    if (!id) return res.status(400).json({ error: 'ID de pedido inválido' });
+    if (!validarProductos(productos)) {
       return res.status(400).json({ error: 'El pedido debe tener al menos un producto' });
     }
 
@@ -330,6 +359,9 @@ async function anularFactura(req, res) {
   try {
     const { id } = req.params;
     const { monto, motivo } = req.body;
+    if (!Number.isFinite(Number(monto)) || Number(monto) <= 0 || typeof motivo !== 'string' || motivo.trim().length > 500) {
+      return res.status(400).json({ error: 'Monto o motivo inválido' });
+    }
 
     const factura = await facturasVentaRepository.obtenerPorPedido(id);
 
@@ -342,6 +374,9 @@ async function anularFactura(req, res) {
 
     if (totalYaAcreditado + Number(monto) > Number(factura.monto)) {
       return res.status(400).json({ error: 'El monto a acreditar supera el total de la factura' });
+    }
+    if (typeof motivo !== 'string' || motivo.trim().length > 500) {
+      return res.status(400).json({ error: 'Motivo inválido' });
     }
 
     const pedido = await pedidosRepository.obtenerConDetalle(id);
@@ -365,7 +400,7 @@ async function anularFactura(req, res) {
       cae: resultadoArca.cae,
       vencimiento_cae: resultadoArca.caeFchVto,
       monto: Number(monto),
-      motivo
+      motivo: motivo.trim()
     });
 
     res.json(notaCredito);

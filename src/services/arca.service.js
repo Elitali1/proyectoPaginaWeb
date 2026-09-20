@@ -14,8 +14,21 @@ const arca = new Arca({
   cert,
   key,
   cuit: Number(process.env.ARCA_CUIT),
-  production: true
+  production: process.env.ARCA_PRODUCTION !== 'false'
 });
+
+function fechaArgentina() {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date()).reduce((resultado, parte) => {
+    resultado[parte.type] = parte.value;
+    return resultado;
+  }, {});
+  return `${partes.year}${partes.month}${partes.day}`;
+}
 
 // Lock simple: encadena todas las emisiones una detrás de otra, para que
 // nunca dos peticiones consulten "el último comprobante" al mismo tiempo.
@@ -36,7 +49,7 @@ async function emitirFactura({ monto, cuitReceptor }) {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipo);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
-    const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const fecha = fechaArgentina();
 
     const docTipo = cuitReceptor ? 80 : 99;
     const docNro = cuitReceptor || 0;
@@ -79,7 +92,7 @@ async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada }) {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipoNC);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
-    const fecha = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const fecha = fechaArgentina();
 
     const docTipo = cuitReceptor ? 80 : 99;
     const docNro = cuitReceptor || 0;

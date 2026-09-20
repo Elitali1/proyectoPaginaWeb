@@ -46,10 +46,10 @@ function mostrarClientes(clientes) {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${cliente.nombre}</strong> - ${cliente.telefono}<br>
-      ${cliente.direccion ? `Dirección: ${cliente.direccion}<br>` : ''}
-      ${cliente.cuit ? `CUIT: ${cliente.cuit}<br>` : ''}
-      <button type="button" class="btn-editar-cliente" data-id="${cliente.id}" data-nombre="${cliente.nombre}" data-telefono="${cliente.telefono}" data-direccion="${cliente.direccion || ''}" data-cuit="${cliente.cuit || ''}">Editar</button>
+      <strong>${escaparHtml(cliente.nombre)}</strong> - ${escaparHtml(cliente.telefono)}<br>
+      ${cliente.direccion ? `Dirección: ${escaparHtml(cliente.direccion)}<br>` : ''}
+      ${cliente.cuit ? `CUIT: ${escaparHtml(cliente.cuit)}<br>` : ''}
+      <button type="button" class="btn-editar-cliente" data-id="${cliente.id}" data-nombre="${escaparHtml(cliente.nombre)}" data-telefono="${escaparHtml(cliente.telefono)}" data-direccion="${escaparHtml(cliente.direccion || '')}" data-cuit="${escaparHtml(cliente.cuit || '')}">Editar</button>
     `;
     contenedor.appendChild(div);
   });

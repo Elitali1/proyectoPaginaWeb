@@ -67,7 +67,7 @@ async function actualizar(id, datos) {
       `UPDATE usuarios SET nombre = $1, email = $2, rol = $3, password_hash = $4
        WHERE id = $5
        RETURNING id, nombre, email, rol, creado_en`,
-      [nombre, email, rol, password_hash, id]
+      [nombre, email.toLowerCase(), rol, password_hash, id]
     );
     return resultado.rows[0];
   }
@@ -76,7 +76,7 @@ async function actualizar(id, datos) {
     `UPDATE usuarios SET nombre = $1, email = $2, rol = $3
      WHERE id = $4
      RETURNING id, nombre, email, rol, creado_en`,
-    [nombre, email, rol, id]
+    [nombre, email.toLowerCase(), rol, id]
   );
   return resultado.rows[0];
 }
