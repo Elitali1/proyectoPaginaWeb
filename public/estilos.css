@@ -152,6 +152,25 @@ nav a:hover {
   font-family: var(--font-display);
 }
 
+/* ---- Dashboard: productos más vendidos por categoría ---- */
+.categoria-top-productos {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: #FFFDF9;
+}
+
+.categoria-top-productos h3 {
+  margin: 0 0 8px 0;
+  color: var(--color-primary-dark);
+  font-family: var(--font-display);
+}
+
+.categoria-top-productos p {
+  margin: 4px 0;
+}
+
 /* ---- Formularios ---- */
 form label {
   display: block;

@@ -133,10 +133,13 @@ async function calcularResumenPeriodo(desde, hasta) {
     [desde, hasta]
   );
 
+  // A diferencia de calcularVentasPorProducto/calcularVentasPorProductoEnRango (que se usan en el
+  // cierre de caja diario y agrupan todas las pizzas en un solo total), acá se muestra cada
+  // producto por separado — el dashboard lo organiza por categoría en el frontend.
   const productos = await pool.query(
     `SELECT
        c.nombre AS categoria_nombre,
-       CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END AS producto_nombre,
+       p.nombre AS producto_nombre,
        SUM(pd.cantidad) AS cantidad_vendida
      FROM pedido_detalle pd
      JOIN pedidos ped ON ped.id = pd.pedido_id
@@ -144,8 +147,8 @@ async function calcularResumenPeriodo(desde, hasta) {
      LEFT JOIN categorias c ON c.id = p.categoria_id
      WHERE ${diaComercial('ped.creado_en')} BETWEEN $1 AND $2
        AND ped.estado != 'cancelado'
-     GROUP BY c.nombre, CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END
-     ORDER BY cantidad_vendida DESC`,
+     GROUP BY c.nombre, p.nombre
+     ORDER BY c.nombre, cantidad_vendida DESC`,
     [desde, hasta]
   );
 
@@ -159,4 +162,37 @@ async function calcularResumenPeriodo(desde, hasta) {
     topProductos: productos.rows
   };
 }
-module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, calcularVentasPorProductoEnRango, crear, obtenerTodos, obtenerPorFecha, actualizar, obtenerPorRangoFechas, calcularResumenPeriodo };
+
+// Total cobrado en efectivo vs. transferencia/MercadoPago en todo el período (no depende de que
+// cada día tenga un cierre de caja cargado, a diferencia de sumar filas de cierre_caja).
+async function calcularTotalesPorMedioPago(desde, hasta) {
+  const resultado = await pool.query(
+    `SELECT
+       COALESCE(SUM(
+         CASE
+           WHEN medio_pago = 'efectivo' THEN total
+           WHEN medio_pago = 'mixto' THEN monto_efectivo
+           ELSE 0
+         END
+       ), 0) AS total_efectivo,
+       COALESCE(SUM(
+         CASE
+           WHEN medio_pago = 'transferencia' THEN total
+           WHEN medio_pago = 'mixto' THEN monto_transferencia
+           ELSE 0
+         END
+       ), 0) AS total_transferencia
+     FROM (
+       SELECT p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia,
+              SUM(pd.cantidad * pd.precio_unitario) AS total
+       FROM pedidos p
+       JOIN pedido_detalle pd ON pd.pedido_id = p.id
+       WHERE ${diaComercial('p.creado_en')} BETWEEN $1 AND $2
+         AND p.estado != 'cancelado'
+       GROUP BY p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia
+     ) AS totales_por_pedido`,
+    [desde, hasta]
+  );
+  return resultado.rows[0];
+}
+module.exports = { calcularTotalesDelDia, calcularVentasPorProducto, calcularVentasPorProductoEnRango, crear, obtenerTodos, obtenerPorFecha, actualizar, obtenerPorRangoFechas, calcularResumenPeriodo, calcularTotalesPorMedioPago };

@@ -34,8 +34,6 @@ function obtenerRangoUltimoMes() {
   };
 }
 
-let graficoTopProductos = null;
-
 async function cargarDashboard(desde, hasta) {
   const respuesta = await fetch(`${API_URL}/dashboard?desde=${desde}&hasta=${hasta}`, {
     credentials: 'include'
@@ -50,16 +48,16 @@ async function cargarDashboard(desde, hasta) {
 
   const datos = await respuesta.json();
 
-  mostrarResumen(datos.resumen);
+  mostrarResumen(datos.resumen, datos.pagos);
   mostrarStockBajo(datos.stockBajo);
-  mostrarTopProductos(datos.topProductos);
+  mostrarProductosPorCategoria(datos.topProductos);
   mostrarClientesRecurrentes(datos.clientesRecurrentes);
   mostrarMejoresMargenes(datos.mejoresMargenes);
   mostrarBalance(datos.balance);
 }
 
 // ---- Tarjetas de resumen ----
-function mostrarResumen(resumen) {
+function mostrarResumen(resumen, pagos) {
   const contenedor = document.getElementById('tarjetas-resumen');
   contenedor.innerHTML = `
     <div class="tarjeta-metrica">
@@ -73,6 +71,14 @@ function mostrarResumen(resumen) {
     <div class="tarjeta-metrica">
       <p class="metrica-label">Ticket promedio</p>
       <p class="metrica-valor">$${formatearPrecio(resumen.ticketPromedio.toFixed(0))}</p>
+    </div>
+    <div class="tarjeta-metrica">
+      <p class="metrica-label">Cobrado en efectivo</p>
+      <p class="metrica-valor">$${formatearPrecio(pagos.efectivo)}</p>
+    </div>
+    <div class="tarjeta-metrica">
+      <p class="metrica-label">Cobrado en MercadoPago</p>
+      <p class="metrica-valor">$${formatearPrecio(pagos.mercadopago)}</p>
     </div>
   `;
 }
@@ -98,36 +104,43 @@ function mostrarStockBajo(stockBajo) {
   });
 }
 
-// ---- Gráfico de barras: top productos ----
-function mostrarTopProductos(topProductos) {
-  const ctx = document.getElementById('grafico-top-productos');
+// ---- Productos más vendidos, agrupados por categoría ----
+function mostrarProductosPorCategoria(topProductos) {
+  const contenedor = document.getElementById('contenedor-dash-top-productos');
+  contenedor.innerHTML = '';
 
-  const etiquetas = topProductos.map(p => p.producto_nombre);
-  const valores = topProductos.map(p => Number(p.cantidad_vendida));
-
-  if (graficoTopProductos) {
-    graficoTopProductos.destroy();
+  if (!topProductos || topProductos.length === 0) {
+    contenedor.innerHTML = '<p>Todavía no hay ventas en este período.</p>';
+    return;
   }
 
-  graficoTopProductos = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: etiquetas,
-      datasets: [{
-        label: 'Unidades vendidas',
-        data: valores,
-        backgroundColor: '#7A2E28'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+  // Agrupa manteniendo el orden en que llegan las categorías (el backend ya las ordena alfabéticamente).
+  const categorias = new Map();
+  topProductos.forEach(fila => {
+    const categoria = fila.categoria_nombre || 'Sin categoría';
+    if (!categorias.has(categoria)) categorias.set(categoria, []);
+    categorias.get(categoria).push(fila);
+  });
+
+  categorias.forEach((productos, categoria) => {
+    const seccion = document.createElement('div');
+    seccion.className = 'categoria-top-productos';
+
+    const titulo = document.createElement('h3');
+    titulo.textContent = categoria;
+    seccion.appendChild(titulo);
+
+    // Por las dudas, se ordena también acá por cantidad vendida (de mayor a menor).
+    productos
+      .slice()
+      .sort((a, b) => Number(b.cantidad_vendida) - Number(a.cantidad_vendida))
+      .forEach((producto, index) => {
+        const p = document.createElement('p');
+        p.innerHTML = `#${index + 1} - ${escapeHtml(producto.producto_nombre)}: <strong>${escapeHtml(producto.cantidad_vendida)}</strong> unidades`;
+        seccion.appendChild(p);
+      });
+
+    contenedor.appendChild(seccion);
   });
 }
 

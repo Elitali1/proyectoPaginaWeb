@@ -4,6 +4,8 @@ const recetasRepository = require('../repositories/recetas.repository.js');
 const insumosRepository = require('../repositories/insumos.repository.js');
 const facturasCompraRepository = require('../repositories/facturasCompra.repository.js');
 const gastosRepository = require('../repositories/gastos.repository.js');
+const { responderError } = require('../utils/errores.js');
+const { esFechaISO } = require('../utils/validaciones.js');
 
 async function obtenerDashboard(req, res) {
   try {
@@ -12,8 +14,12 @@ async function obtenerDashboard(req, res) {
     if (!desde || !hasta) {
       return res.status(400).json({ error: 'Necesitás indicar desde y hasta' });
     }
+    if (!esFechaISO(desde) || !esFechaISO(hasta)) {
+      return res.status(400).json({ error: 'Las fechas deben tener el formato AAAA-MM-DD' });
+    }
 
     const resumen = await cierreCajaRepository.calcularResumenPeriodo(desde, hasta);
+    const totalesPorMedioPago = await cierreCajaRepository.calcularTotalesPorMedioPago(desde, hasta);
     const clientesRecurrentes = await clientesRepository.obtenerMasRecurrentes(desde, hasta, 10);
     const mejoresMargenes = await recetasRepository.obtenerMejoresMargenes(10);
 
@@ -37,6 +43,11 @@ async function obtenerDashboard(req, res) {
         ventasTotales: resumen.ventasTotales,
         ticketPromedio: resumen.ticketPromedio
       },
+      // "mercadopago" es como en el local se le dice a todo lo que se cobra por transferencia/link de pago.
+      pagos: {
+        efectivo: Number(totalesPorMedioPago.total_efectivo),
+        mercadopago: Number(totalesPorMedioPago.total_transferencia)
+      },
       topProductos: resumen.topProductos,
       clientesRecurrentes,
       mejoresMargenes,
@@ -49,8 +60,7 @@ async function obtenerDashboard(req, res) {
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al generar el dashboard' });
+    responderError(res, error, 'Error al generar el dashboard');
   }
 }
 
