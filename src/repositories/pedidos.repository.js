@@ -45,7 +45,8 @@ async function obtenerTodos({ soloActivos = false } = {}) {
 
   return resultado.rows.map(pedido => ({
     ...pedido,
-    ya_facturado: pedido.estado_factura === 'emitida'
+    ya_facturado: pedido.estado_factura === 'emitida',
+    ya_impreso: pedido.impreso_en !== null
   }));
 }
 
@@ -68,7 +69,7 @@ async function obtenerConDetalle(id) {
   );
 
   const productos = detalle.rows.map(({ pedido_id, ...resto }) => resto);
-  return { ...pedido.rows[0], productos };
+  return { ...pedido.rows[0], productos, ya_impreso: pedido.rows[0].impreso_en !== null };
 }
 
 // Igual que obtenerConDetalle pero para varios pedidos con solo 2 consultas (antes era 1 por pedido).
@@ -283,7 +284,8 @@ async function actualizarProductos(id, datos) {
       `UPDATE pedidos
        SET cliente = $1, canal = $2, medio_pago = $3, requiere_factura = $4,
            tipo_entrega = $5, direccion_entrega = $6, cuit_receptor = $7,
-           monto_efectivo = $8, monto_transferencia = $9
+           monto_efectivo = $8, monto_transferencia = $9,
+           impreso_en = NULL
        WHERE id = $10`,
       [cliente, canal, medio_pago, requiere_factura, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia, id]
     );
@@ -299,9 +301,14 @@ async function actualizarProductos(id, datos) {
   return obtenerConDetalle(id);
 }
 
+// Encola la comanda para imprimir, pero solo si nunca se imprimió (impreso_en IS NULL). Una vez
+// impresa, la única forma de volver a encolarla es modificar el pedido (actualizarProductos la
+// resetea a NULL). Esto evita que un doble clic, o volver a apretar el botón después de imprimida,
+// mande la misma comanda dos veces a la impresora.
+// Devuelve undefined si el pedido no existe o si ya estaba impresa.
 async function marcarPendienteImpresion(id) {
   const resultado = await pool.query(
-    'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 RETURNING *',
+    'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 AND impreso_en IS NULL RETURNING *',
     [id]
   );
   return resultado.rows[0];
@@ -316,7 +323,7 @@ async function obtenerPendientesImpresion() {
 
 async function marcarImpresionCompleta(id) {
   const resultado = await pool.query(
-    'UPDATE pedidos SET pendiente_impresion = false WHERE id = $1 RETURNING *',
+    'UPDATE pedidos SET pendiente_impresion = false, impreso_en = NOW() WHERE id = $1 RETURNING *',
     [id]
   );
   return resultado.rows[0];
@@ -360,7 +367,8 @@ async function obtenerPorFecha(fecha) {
 
   return resultado.rows.map(pedido => ({
     ...pedido,
-    ya_facturado: pedido.estado_factura === 'emitida'
+    ya_facturado: pedido.estado_factura === 'emitida',
+    ya_impreso: pedido.impreso_en !== null
   }));
 }
 module.exports = { obtenerTodos, obtenerConDetalle, crear, actualizarEstado, eliminar, actualizarProductos, marcarPendienteImpresion, obtenerPendientesImpresion, marcarImpresionCompleta, obtenerPorFecha };

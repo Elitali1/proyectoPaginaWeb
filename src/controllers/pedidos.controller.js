@@ -303,7 +303,13 @@ async function imprimirComandaFisica(req, res) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
-    await pedidosRepository.marcarPendienteImpresion(id);
+    // Si ya se había impreso y el pedido no se modificó desde entonces, no se vuelve a encolar
+    // (evita mandar la misma comanda dos veces a la impresora).
+    const encolado = await pedidosRepository.marcarPendienteImpresion(id);
+    if (!encolado) {
+      return res.status(409).json({ error: 'Esta comanda ya se imprimió. Si necesitás otra copia, modificá el pedido (aunque sea sin cambios reales) y volvé a intentar.' });
+    }
+
     res.json({ mensaje: 'Comanda enviada a la cola de impresión' });
   } catch (error) {
     responderError(res, error, 'Error al encolar la comanda para imprimir');

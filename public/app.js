@@ -143,6 +143,12 @@ async function cargarPedidos() {
           : `<button type="button" class="btn-facturar" data-id="${pedido.id}">Facturar</button>`)
       : '';
 
+    // Una vez impresa, el botón queda deshabilitado para no mandar la misma comanda dos veces a la
+    // impresora. Se vuelve a habilitar automáticamente si el pedido se modifica (botón "Modificar").
+    const botonComanda = pedido.ya_impreso
+      ? `<button type="button" disabled title="Ya se imprimió. Modificá el pedido si necesitás otra copia.">Ya impresa ✓</button>`
+      : `<button type="button" class="btn-comanda" data-id="${pedido.id}">Imprimir comanda</button>`;
+
     div.innerHTML = `
 
       <strong>#${pedido.id} - ${escapeHtml(pedido.cliente)}</strong> - ${formatearFecha(pedido.creado_en)}<br>
@@ -150,7 +156,7 @@ async function cargarPedidos() {
       ${detalleProductos}<br>
       Total: $${formatearPrecio(pedido.total)} | Estado: ${escapeHtml(pedido.estado)}
       ${botonFactura}
-      <button type="button" class="btn-comanda" data-id="${pedido.id}">Imprimir comanda</button>
+      ${botonComanda}
       <button type="button" class="btn-modificar" data-id="${pedido.id}">Modificar</button>
       <button type="button" class="btn-cancelar" data-id="${pedido.id}">Cancelar pedido</button>
       <select class="cambiar-estado" data-id="${pedido.id}">
