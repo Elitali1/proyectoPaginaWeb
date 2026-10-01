@@ -214,8 +214,10 @@ document.getElementById('btn-actualizar-dashboard').addEventListener('click', ()
   cargarDashboard(desde, hasta);
 });
 
-// ---- Al cargar la página: mostrar el último mes por defecto ----
+// ---- Al cargar la página: sugerir el último mes en las fechas, pero no traer datos todavía
+// (antes se cargaba solo apenas se abría la página, y con muchas ventas se hacía una lista
+// interminable sin que lo pidieras) ----
 const rangoInicial = obtenerRangoUltimoMes();
 document.getElementById('dashboard-desde').value = rangoInicial.desde;
 document.getElementById('dashboard-hasta').value = rangoInicial.hasta;
-cargarDashboard(rangoInicial.desde, rangoInicial.hasta);
+document.getElementById('tarjetas-resumen').innerHTML = '<p>Elegí un período y apretá "Actualizar" para ver las métricas.</p>';

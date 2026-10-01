@@ -234,12 +234,14 @@ document.getElementById('btn-filtrar-gastos').addEventListener('click', () => {
   cargarGastos(desde, hasta);
 });
 
+// Los campos de fecha arrancan con el último mes como sugerencia, pero no se trae nada
+// automáticamente: hay que apretar "Filtrar" (antes se mostraban solos apenas se abría la página).
 const rangoInicial = obtenerRangoUltimoMes();
 
 document.getElementById('cierres-desde').value = rangoInicial.desde;
 document.getElementById('cierres-hasta').value = rangoInicial.hasta;
-cargarCierres(rangoInicial.desde, rangoInicial.hasta);
+document.getElementById('contenedor-cierres').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver los cierres.</p>';
 
 document.getElementById('gastos-desde').value = rangoInicial.desde;
 document.getElementById('gastos-hasta').value = rangoInicial.hasta;
-cargarGastos(rangoInicial.desde, rangoInicial.hasta);
+document.getElementById('contenedor-gastos').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver los gastos.</p>';

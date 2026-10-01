@@ -50,7 +50,7 @@ function mostrarCompras(compras) {
         method: 'DELETE',
         credentials: 'include'
       });
-      cargarCompras();
+      actualizarListaCompras();
     });
   });
 }
@@ -62,7 +62,29 @@ async function cargarCompras() {
   mostrarCompras(compras);
 }
 
-document.getElementById('btn-filtrar').addEventListener('click', async () => {
+async function cargarComprasFiltradas(desde, hasta) {
+  const respuesta = await fetch(`${API_URL}/facturas-compra?desde=${desde}&hasta=${hasta}`, {
+    credentials: 'include'
+  });
+  if (manejarNoAutorizado(respuesta)) return;
+  const compras = await respuesta.json();
+  mostrarCompras(compras);
+}
+
+// Se usa después de crear o borrar una compra: si ya había un filtro de fechas aplicado, lo
+// respeta; si no, vuelve a pedir que se elijan fechas en vez de mostrar TODO el historial de nuevo.
+function actualizarListaCompras() {
+  const desde = document.getElementById('filtro-desde').value;
+  const hasta = document.getElementById('filtro-hasta').value;
+
+  if (desde && hasta) {
+    cargarComprasFiltradas(desde, hasta);
+  } else {
+    document.getElementById('contenedor-compras').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver las compras.</p>';
+  }
+}
+
+document.getElementById('btn-filtrar').addEventListener('click', () => {
   const desde = document.getElementById('filtro-desde').value;
   const hasta = document.getElementById('filtro-hasta').value;
 
@@ -71,11 +93,7 @@ document.getElementById('btn-filtrar').addEventListener('click', async () => {
     return;
   }
 
-  const respuesta = await fetch(`${API_URL}/facturas-compra?desde=${desde}&hasta=${hasta}`, {
-    credentials: 'include'
-  });
-  const compras = await respuesta.json();
-  mostrarCompras(compras);
+  cargarComprasFiltradas(desde, hasta);
 });
 
 document.getElementById('btn-limpiar-filtro').addEventListener('click', () => {
@@ -131,7 +149,7 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
 
   document.getElementById('seccion-detalle-compra').scrollIntoView({ behavior: 'smooth' });
 
-  cargarCompras();
+  actualizarListaCompras();
 });
 
 function renderizarDetalleCompra() {
@@ -222,5 +240,7 @@ document.getElementById('btn-omitir-detalle').addEventListener('click', () => {
   facturaCompraIdActual = null;
 });
 
-cargarCompras();
+// No se carga nada automáticamente: se espera a que elijas un rango y apretés "Filtrar"
+// (antes mostraba TODO el historial de compras apenas se abría la página).
+document.getElementById('contenedor-compras').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver las compras.</p>';
 cargarInsumosEnSelector();
