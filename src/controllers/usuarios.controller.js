@@ -142,8 +142,11 @@ async function login(req, res) {
     // success: reset failed attempts
     await usuariosRepository.resetFailedLogin(usuario.email);
 
+    // Sucursal donde trabaja el usuario. Si la base todavía no tiene la columna (o es NULL), se usa la 1.
+    const sucursalId = Number.isInteger(usuario.sucursal_id) ? usuario.sucursal_id : 1;
+
     const token = jwt.sign(
-      { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol },
+      { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId },
       process.env.JWT_SECRET,
       { expiresIn: '8h', algorithm: 'HS256' }
     );
@@ -153,7 +156,7 @@ async function login(req, res) {
 
     // El token también va en el cuerpo porque el agente de impresión y las pruebas por API lo usan
     // en el header Authorization. El navegador no lo necesita: usa la cookie httpOnly.
-    res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol } });
+        res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId } });
   } catch (error) {
     responderError(res, error, 'Error al iniciar sesión');
   }

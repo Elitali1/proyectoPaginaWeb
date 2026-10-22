@@ -17,6 +17,9 @@ function verificarToken(req, res, next) {
   try {
     const datosUsuario = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
     req.usuario = datosUsuario;
+        // Sucursal del usuario, tomada del token firmado (no de lo que mande el navegador).
+    // Los tokens emitidos antes de este cambio no la traen: se asume la sucursal 1.
+    req.sucursalId = Number.isInteger(datosUsuario.sucursal_id) ? datosUsuario.sucursal_id : 1;
     next();
   } catch (error) {
     return res.status(401).json({ error: 'Token inválido o expirado' });
