@@ -6,7 +6,8 @@
     "start": "node servidor.js",
     "test": "node --test test/",
     "dev": "nodemon servidor.js",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "migrate": "node-pg-migrate -m migrations"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-pg-migrate": "^9.0.0",
     "patch-package": "^8.0.1",
     "pg": "^8.23.0",
     "usb": "^1.9.2"
