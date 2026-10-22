@@ -85,24 +85,27 @@ function normalizarPedido(body) {
   };
 }
 
-// Busca los productos en la base y calcula el precio de cada línea. Nunca se confía en el
-// precio que manda el navegador.
-async function resolverItems(db, items) {
+// Busca los productos en la base y calcula el precio de cada línea con el precio de la sucursal.
+// Nunca se confía en el precio que manda el navegador.
+async function resolverItems(db, items, sucursalId) {
   const ids = [...new Set(items.flatMap(item => (item.producto_id_2 ? [item.producto_id, item.producto_id_2] : [item.producto_id])))];
   const resultado = await db.query(
-    'SELECT id, precio, disponible FROM productos WHERE id = ANY($1::bigint[])',
-    [ids]
+    `SELECT p.id, ps.precio, ps.disponible
+     FROM productos p
+     JOIN productos_sucursal ps ON ps.producto_id = p.id AND ps.sucursal_id = $2
+     WHERE p.id = ANY($1::bigint[])`,
+    [ids, sucursalId]
   );
   const porId = new Map(resultado.rows.map(fila => [Number(fila.id), fila]));
 
   return items.map(item => {
     const p1 = porId.get(item.producto_id);
-    if (!p1) throw new ErrorNegocio('Uno de los productos del pedido no existe');
+    if (!p1) throw new ErrorNegocio('Uno de los productos del pedido no existe o no se vende en esta sucursal');
 
     let precio_unitario;
     if (item.producto_id_2) {
       const p2 = porId.get(item.producto_id_2);
-      if (!p2) throw new ErrorNegocio('Uno de los productos del pedido no existe');
+      if (!p2) throw new ErrorNegocio('Uno de los productos del pedido no existe o no se vende en esta sucursal');
       if (!p1.disponible || !p2.disponible) {
         throw new ErrorNegocio('Uno de los productos seleccionados ya no está disponible');
       }

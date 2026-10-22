@@ -157,18 +157,18 @@ async function insertarDetalle(db, pedidoId, items) {
 }
 
 // `datos` ya viene validado y normalizado por pedidosService.normalizarPedido.
-async function crear(datos) {
+async function crear(datos, sucursalId = 1) {
   const { cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = datos;
 
   const pedidoId = await conTransaccion(async (db) => {
-    const items = await pedidosService.resolverItems(db, datos.productos);
+    const items = await pedidosService.resolverItems(db, datos.productos, sucursalId);
     pedidosService.validarPago(datos, pedidosService.calcularTotal(items));
 
     const cabecera = await db.query(
-      `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO pedidos (cliente, canal, medio_pago, requiere_factura, cliente_id, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia, sucursal_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING id`,
-      [cliente, canal, medio_pago, requiere_factura, cliente_id ?? null, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia]
+      [cliente, canal, medio_pago, requiere_factura, cliente_id ?? null, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia, sucursalId]
     );
     const id = cabecera.rows[0].id;
 
@@ -258,7 +258,8 @@ async function actualizarProductos(id, datos) {
       [id]
     );
 
-    const items = await pedidosService.resolverItems(db, datos.productos);
+    // Un pedido que se edita usa los precios de su propia sucursal.
+    const items = await pedidosService.resolverItems(db, datos.productos, pedidoActual.sucursal_id);
     const total = pedidosService.calcularTotal(items);
     pedidosService.validarPago(datos, total);
 
