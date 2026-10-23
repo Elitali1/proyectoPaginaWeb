@@ -98,18 +98,19 @@ async function obtenerVariosConDetalle(ids) {
   }));
 }
 
-async function descontarStockPorVenta(productoId, cantidadVendida, db) {
-  const receta = await recetasRepository.obtenerPorProducto(productoId, db);
+// El stock se descuenta de la sucursal del pedido.
+async function descontarStockPorVenta(productoId, cantidadVendida, sucursalId, db) {
+  const receta = await recetasRepository.obtenerPorProducto(productoId, sucursalId, db);
 
   for (const linea of receta) {
     const cantidadADescontar = Number((Number(linea.cantidad) * cantidadVendida).toFixed(6));
     if (!(cantidadADescontar > 0)) continue;
 
     // El chequeo de stock y el descuento son una única operación atómica en la base.
-    const actualizado = await insumosRepository.descontarStockSiHay(linea.insumo_id, cantidadADescontar, db);
+    const actualizado = await insumosRepository.descontarStockSiHay(linea.insumo_id, cantidadADescontar, sucursalId, db);
 
     if (!actualizado) {
-      const insumo = await insumosRepository.obtenerPorId(linea.insumo_id, db);
+      const insumo = await insumosRepository.obtenerPorId(linea.insumo_id, sucursalId, db);
       const nombre = insumo ? insumo.nombre : `#${linea.insumo_id}`;
       const quedan = insumo ? `${insumo.stock_actual} ${insumo.unidad_medida}` : '0';
       throw new ErrorNegocio(`No hay stock suficiente de "${nombre}" (quedan ${quedan}, se necesitan ${cantidadADescontar})`);
@@ -117,31 +118,31 @@ async function descontarStockPorVenta(productoId, cantidadVendida, db) {
   }
 }
 
-async function devolverStockDeUnProducto(productoId, cantidadVendida, db) {
-  const receta = await recetasRepository.obtenerPorProducto(productoId, db);
+async function devolverStockDeUnProducto(productoId, cantidadVendida, sucursalId, db) {
+  const receta = await recetasRepository.obtenerPorProducto(productoId, sucursalId, db);
 
   for (const linea of receta) {
     const cantidadADevolver = Number((Number(linea.cantidad) * cantidadVendida).toFixed(6));
     if (!(cantidadADevolver > 0)) continue;
-    await insumosRepository.ajustarStock(linea.insumo_id, cantidadADevolver, db);
+    await insumosRepository.ajustarStock(linea.insumo_id, cantidadADevolver, sucursalId, db);
   }
 }
 
 // `items` puede ser el detalle de un pedido o los ítems nuevos: ambos tienen producto_id, producto_id_2 y cantidad.
-async function devolverStockDeItems(items, db) {
+async function devolverStockDeItems(items, sucursalId, db) {
   for (const item of items) {
-    await devolverStockDeUnProducto(item.producto_id, item.cantidad, db);
+    await devolverStockDeUnProducto(item.producto_id, item.cantidad, sucursalId, db);
     if (item.producto_id_2) {
-      await devolverStockDeUnProducto(item.producto_id_2, item.cantidad, db);
+      await devolverStockDeUnProducto(item.producto_id_2, item.cantidad, sucursalId, db);
     }
   }
 }
 
-async function descontarStockDeItems(items, db) {
+async function descontarStockDeItems(items, sucursalId, db) {
   for (const item of items) {
-    await descontarStockPorVenta(item.producto_id, item.cantidad, db);
+    await descontarStockPorVenta(item.producto_id, item.cantidad, sucursalId, db);
     if (item.producto_id_2) {
-      await descontarStockPorVenta(item.producto_id_2, item.cantidad, db);
+      await descontarStockPorVenta(item.producto_id_2, item.cantidad, sucursalId, db);
     }
   }
 }
@@ -173,7 +174,7 @@ async function crear(datos, sucursalId = 1) {
     const id = cabecera.rows[0].id;
 
     await insertarDetalle(db, id, items);
-    await descontarStockDeItems(items, db);
+    await descontarStockDeItems(items, sucursalId, db);
 
     return id;
   });
@@ -185,7 +186,7 @@ async function crear(datos, sucursalId = 1) {
 // pedido bloqueado, para que dos cancelaciones simultáneas no devuelvan el stock dos veces.
 async function actualizarEstado(id, estado) {
   return conTransaccion(async (db) => {
-    const actual = await db.query('SELECT estado FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
     if (actual.rows.length === 0) return null;
 
     const estadoAnterior = actual.rows[0].estado;
@@ -204,7 +205,7 @@ async function actualizarEstado(id, estado) {
         'SELECT producto_id, producto_id_2, cantidad FROM pedido_detalle WHERE pedido_id = $1',
         [id]
       );
-      await devolverStockDeItems(detalle.rows, db);
+      await devolverStockDeItems(detalle.rows, actual.rows[0].sucursal_id, db);
     }
 
     return resultado.rows[0];
@@ -213,7 +214,7 @@ async function actualizarEstado(id, estado) {
 
 async function eliminar(id) {
   return conTransaccion(async (db) => {
-    const actual = await db.query('SELECT estado FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
     if (actual.rows.length === 0) return null;
 
     const factura = await db.query(
@@ -230,7 +231,7 @@ async function eliminar(id) {
         'SELECT producto_id, producto_id_2, cantidad FROM pedido_detalle WHERE pedido_id = $1',
         [id]
       );
-      await devolverStockDeItems(detalle.rows, db);
+      await devolverStockDeItems(detalle.rows, actual.rows[0].sucursal_id, db);
     }
 
     const resultado = await db.query('DELETE FROM pedidos WHERE id = $1 RETURNING *', [id]);
@@ -279,7 +280,7 @@ async function actualizarProductos(id, datos) {
       }
     }
 
-    await devolverStockDeItems(detalleViejo.rows, db);
+    await devolverStockDeItems(detalleViejo.rows, pedidoActual.sucursal_id, db);
 
     await db.query(
       `UPDATE pedidos
@@ -293,7 +294,7 @@ async function actualizarProductos(id, datos) {
 
     await db.query('DELETE FROM pedido_detalle WHERE pedido_id = $1', [id]);
     await insertarDetalle(db, id, items);
-    await descontarStockDeItems(items, db);
+    await descontarStockDeItems(items, pedidoActual.sucursal_id, db);
 
     return true;
   });

@@ -21,14 +21,14 @@ async function obtenerDashboard(req, res) {
     const resumen = await cierreCajaRepository.calcularResumenPeriodo(desde, hasta);
     const totalesPorMedioPago = await cierreCajaRepository.calcularTotalesPorMedioPago(desde, hasta);
     const clientesRecurrentes = await clientesRepository.obtenerMasRecurrentes(desde, hasta, 10);
-    const mejoresMargenes = await recetasRepository.obtenerMejoresMargenes(10);
+    const mejoresMargenes = await recetasRepository.obtenerMejoresMargenes(10, req.sucursalId);
 
-    const todosLosInsumos = await insumosRepository.obtenerTodos();
+    const todosLosInsumos = await insumosRepository.obtenerTodos(req.sucursalId);
     const stockBajo = todosLosInsumos.filter(insumo =>
       insumo.activo && Number(insumo.stock_minimo) > 0 && Number(insumo.stock_actual) < Number(insumo.stock_minimo)
     );
 
-    const compras = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta);
+    const compras = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
     const totalCompras = compras.reduce((suma, c) => suma + Number(c.monto), 0);
 
     const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta);
