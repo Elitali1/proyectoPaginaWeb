@@ -7,8 +7,11 @@ const { ErrorNegocio } = require('../utils/errores.js');
 const { normalizarCuit, redondear2 } = require('../utils/validaciones.js');
 const { diaComercial } = require('./sqlFechas.js');
 
-async function obtenerTodos({ soloActivos = false } = {}) {
-  const filtro = soloActivos ? "WHERE p.estado NOT IN ('entregado', 'cancelado')" : '';
+// Lista los pedidos de UNA sucursal (obligatorio: nunca se mezclan sucursales en un listado).
+async function obtenerTodos({ soloActivos = false, sucursalId } = {}) {
+  const condiciones = ['p.sucursal_id = $1'];
+  if (soloActivos) condiciones.push("p.estado NOT IN ('entregado', 'cancelado')");
+  const filtro = `WHERE ${condiciones.join(' AND ')}`;
 
   const resultado = await pool.query(`
     SELECT
@@ -41,7 +44,7 @@ async function obtenerTodos({ soloActivos = false } = {}) {
     ${filtro}
     GROUP BY p.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
     ORDER BY p.id DESC
-  `);
+  `, [sucursalId]);
 
   return resultado.rows.map(pedido => ({
     ...pedido,
@@ -54,8 +57,13 @@ const COLUMNAS_DETALLE = `pd.pedido_id, pd.producto_id, p1.nombre AS nombre_prod
             pd.producto_id_2, p2.nombre AS nombre_producto_2,
             pd.cantidad, pd.precio_unitario, pd.tipo_masa, pd.aclaraciones`;
 
-async function obtenerConDetalle(id) {
-  const pedido = await pool.query('SELECT * FROM pedidos WHERE id = $1', [id]);
+// Con sucursalId, devuelve null si el pedido existe pero es de otra sucursal (se ve igual que "no existe").
+// Sin sucursalId (null) no filtra: solo para uso interno, justo después de crear/modificar un pedido.
+async function obtenerConDetalle(id, sucursalId = null) {
+  const pedido = await pool.query(
+    'SELECT * FROM pedidos WHERE id = $1 AND ($2::int IS NULL OR sucursal_id = $2::int)',
+    [id, sucursalId]
+  );
   if (pedido.rows.length === 0) return null;
 
   const detalle = await pool.query(
@@ -184,9 +192,9 @@ async function crear(datos, sucursalId = 1) {
 
 // Cambia el estado y, si se cancela, devuelve el stock: todo en una sola transacción y con el
 // pedido bloqueado, para que dos cancelaciones simultáneas no devuelvan el stock dos veces.
-async function actualizarEstado(id, estado) {
+async function actualizarEstado(id, estado, sucursalId) {
   return conTransaccion(async (db) => {
-    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 AND sucursal_id = $2 FOR UPDATE', [id, sucursalId]);
     if (actual.rows.length === 0) return null;
 
     const estadoAnterior = actual.rows[0].estado;
@@ -212,9 +220,9 @@ async function actualizarEstado(id, estado) {
   });
 }
 
-async function eliminar(id) {
+async function eliminar(id, sucursalId) {
   return conTransaccion(async (db) => {
-    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    const actual = await db.query('SELECT estado, sucursal_id FROM pedidos WHERE id = $1 AND sucursal_id = $2 FOR UPDATE', [id, sucursalId]);
     if (actual.rows.length === 0) return null;
 
     const factura = await db.query(
@@ -241,11 +249,11 @@ async function eliminar(id) {
 
 // `datos` ya viene validado y normalizado por pedidosService.normalizarPedido.
 // Devuelve null si el pedido no existe.
-async function actualizarProductos(id, datos) {
+async function actualizarProductos(id, datos, sucursalId) {
   const { cliente, canal, medio_pago, requiere_factura, tipo_entrega, direccion_entrega, cuit_receptor, monto_efectivo, monto_transferencia } = datos;
 
   const existe = await conTransaccion(async (db) => {
-    const cabeceraActual = await db.query('SELECT * FROM pedidos WHERE id = $1 FOR UPDATE', [id]);
+    const cabeceraActual = await db.query('SELECT * FROM pedidos WHERE id = $1 AND sucursal_id = $2 FOR UPDATE', [id, sucursalId]);
     if (cabeceraActual.rows.length === 0) return false;
     const pedidoActual = cabeceraActual.rows[0];
 
@@ -300,7 +308,7 @@ async function actualizarProductos(id, datos) {
   });
 
   if (!existe) return null;
-  return obtenerConDetalle(id);
+  return obtenerConDetalle(id, sucursalId);
 }
 
 // Encola la comanda para imprimir, pero solo si nunca se imprimió (impreso_en IS NULL). Una vez
@@ -308,29 +316,31 @@ async function actualizarProductos(id, datos) {
 // resetea a NULL). Esto evita que un doble clic, o volver a apretar el botón después de imprimida,
 // mande la misma comanda dos veces a la impresora.
 // Devuelve undefined si el pedido no existe o si ya estaba impresa.
-async function marcarPendienteImpresion(id) {
+async function marcarPendienteImpresion(id, sucursalId) {
   const resultado = await pool.query(
-    'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 AND impreso_en IS NULL RETURNING *',
-    [id]
+    'UPDATE pedidos SET pendiente_impresion = true WHERE id = $1 AND sucursal_id = $2 AND impreso_en IS NULL RETURNING *',
+    [id, sucursalId]
   );
   return resultado.rows[0];
 }
 
-async function obtenerPendientesImpresion() {
+// Cada agente de impresión (uno por local) recibe solo los pedidos de su sucursal.
+async function obtenerPendientesImpresion(sucursalId) {
   const pedidos = await pool.query(
-    'SELECT id FROM pedidos WHERE pendiente_impresion = true ORDER BY id ASC'
+    'SELECT id FROM pedidos WHERE pendiente_impresion = true AND sucursal_id = $1 ORDER BY id ASC',
+    [sucursalId]
   );
   return obtenerVariosConDetalle(pedidos.rows.map(fila => fila.id));
 }
 
-async function marcarImpresionCompleta(id) {
+async function marcarImpresionCompleta(id, sucursalId) {
   const resultado = await pool.query(
-    'UPDATE pedidos SET pendiente_impresion = false, impreso_en = NOW() WHERE id = $1 RETURNING *',
-    [id]
+    'UPDATE pedidos SET pendiente_impresion = false, impreso_en = NOW() WHERE id = $1 AND sucursal_id = $2 RETURNING *',
+    [id, sucursalId]
   );
   return resultado.rows[0];
 }
-async function obtenerPorFecha(fecha) {
+async function obtenerPorFecha(fecha, sucursalId) {
   const resultado = await pool.query(`
     SELECT
       p.*,
@@ -362,10 +372,10 @@ async function obtenerPorFecha(fecha) {
     LEFT JOIN productos p1 ON p1.id = pd.producto_id
     LEFT JOIN productos p2 ON p2.id = pd.producto_id_2
     LEFT JOIN facturas_venta fv ON fv.pedido_id = p.id
-    WHERE ${diaComercial('p.creado_en')} = $1
+    WHERE ${diaComercial('p.creado_en')} = $1 AND p.sucursal_id = $2
     GROUP BY p.id, fv.id, fv.numero_comprobante, fv.cae, fv.vencimiento_cae, fv.estado
     ORDER BY p.id DESC
-  `, [fecha]);
+  `, [fecha, sucursalId]);
 
   return resultado.rows.map(pedido => ({
     ...pedido,

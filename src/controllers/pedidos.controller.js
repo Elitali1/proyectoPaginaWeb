@@ -44,7 +44,7 @@ async function conReintentos(operacion, intentos = 3) {
 async function listar(req, res) {
   try {
     const soloActivos = req.query.activos === '1' || req.query.activos === 'true';
-    const pedidos = await pedidosRepository.obtenerTodos({ soloActivos });
+    const pedidos = await pedidosRepository.obtenerTodos({ soloActivos, sucursalId: req.sucursalId });
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pedidos');
@@ -54,7 +54,7 @@ async function listar(req, res) {
 async function obtenerUno(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -77,7 +77,7 @@ async function crear(req, res) {
       clienteId = clienteVinculado.id;
     }
 
-    const nuevoPedido = await pedidosRepository.crear({ ...datos, cliente_id: clienteId });
+    const nuevoPedido = await pedidosRepository.crear({ ...datos, cliente_id: clienteId }, req.sucursalId);
 
     res.status(201).json(nuevoPedido);
   } catch (error) {
@@ -94,7 +94,7 @@ async function actualizarEstado(req, res) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
-    const pedidoActualizado = await pedidosRepository.actualizarEstado(id, estado);
+    const pedidoActualizado = await pedidosRepository.actualizarEstado(id, estado, req.sucursalId);
 
     if (!pedidoActualizado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -110,7 +110,7 @@ async function eliminar(req, res) {
   try {
     const { id } = req.params;
 
-    const pedidoEliminado = await pedidosRepository.eliminar(id);
+    const pedidoEliminado = await pedidosRepository.eliminar(id, req.sucursalId);
 
     if (!pedidoEliminado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -126,7 +126,7 @@ async function facturar(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -202,7 +202,7 @@ async function generarPdf(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -281,7 +281,7 @@ async function generarPdf(req, res) {
 async function verComanda(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -297,7 +297,7 @@ async function verComanda(req, res) {
 async function imprimirComandaFisica(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -305,7 +305,7 @@ async function imprimirComandaFisica(req, res) {
 
     // Si ya se había impreso y el pedido no se modificó desde entonces, no se vuelve a encolar
     // (evita mandar la misma comanda dos veces a la impresora).
-    const encolado = await pedidosRepository.marcarPendienteImpresion(id);
+    const encolado = await pedidosRepository.marcarPendienteImpresion(id, req.sucursalId);
     if (!encolado) {
       return res.status(409).json({ error: 'Esta comanda ya se imprimió. Si necesitás otra copia, modificá el pedido (aunque sea sin cambios reales) y volvé a intentar.' });
     }
@@ -322,7 +322,7 @@ async function modificarProductos(req, res) {
     // Ahora sí se leen también monto_efectivo y monto_transferencia (antes se perdían al editar un pago mixto).
     const datos = pedidosService.normalizarPedido(req.body);
 
-    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, datos);
+    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, datos, req.sucursalId);
     if (!pedidoActualizado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -334,7 +334,7 @@ async function modificarProductos(req, res) {
 }
 async function obtenerPendientesImpresion(req, res) {
   try {
-    const pedidos = await pedidosRepository.obtenerPendientesImpresion();
+    const pedidos = await pedidosRepository.obtenerPendientesImpresion(req.sucursalId);
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pendientes de impresión');
@@ -344,7 +344,7 @@ async function obtenerPendientesImpresion(req, res) {
 async function confirmarImpresion(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.marcarImpresionCompleta(id);
+    const pedido = await pedidosRepository.marcarImpresionCompleta(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -367,7 +367,7 @@ async function listarPorFecha(req, res) {
       return res.status(400).json({ error: 'La fecha debe tener el formato AAAA-MM-DD' });
     }
 
-    const pedidos = await pedidosRepository.obtenerPorFecha(fecha);
+    const pedidos = await pedidosRepository.obtenerPorFecha(fecha, req.sucursalId);
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pedidos por fecha');
@@ -384,6 +384,12 @@ async function anularFactura(req, res) {
       return res.status(400).json({ error: 'El monto a acreditar debe ser un número mayor a cero' });
     }
     const monto = redondear2(montoRecibido);
+
+    // Primero se confirma que el pedido es de esta sucursal, antes de tocar ARCA.
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
 
     const factura = await facturasVentaRepository.obtenerPorPedido(id);
 
@@ -405,7 +411,6 @@ async function anularFactura(req, res) {
       return res.status(400).json({ error: 'El monto a acreditar supera el total de la factura' });
     }
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
 
     const fechaFactura = fechaDeComprobante(factura.creado_en).replace(/-/g, '');
@@ -453,7 +458,7 @@ async function generarPdfNotaCredito(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
