@@ -18,8 +18,8 @@ async function obtenerDashboard(req, res) {
       return res.status(400).json({ error: 'Las fechas deben tener el formato AAAA-MM-DD' });
     }
 
-    const resumen = await cierreCajaRepository.calcularResumenPeriodo(desde, hasta);
-    const totalesPorMedioPago = await cierreCajaRepository.calcularTotalesPorMedioPago(desde, hasta);
+    const resumen = await cierreCajaRepository.calcularResumenPeriodo(desde, hasta, req.sucursalId);
+    const totalesPorMedioPago = await cierreCajaRepository.calcularTotalesPorMedioPago(desde, hasta, req.sucursalId);
     const clientesRecurrentes = await clientesRepository.obtenerMasRecurrentes(desde, hasta, 10);
     const mejoresMargenes = await recetasRepository.obtenerMejoresMargenes(10, req.sucursalId);
 
@@ -31,7 +31,7 @@ async function obtenerDashboard(req, res) {
     const compras = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
     const totalCompras = compras.reduce((suma, c) => suma + Number(c.monto), 0);
 
-    const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta);
+    const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
     const totalGastos = gastos.reduce((suma, g) => suma + Number(g.monto), 0);
 
     const gananciaNeta = resumen.ventasTotales - totalCompras - totalGastos;
