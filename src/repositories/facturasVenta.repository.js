@@ -39,7 +39,8 @@ async function crear(datos) {
 //  - pendiente y vigente   -> error (hay otra emisión en curso)
 //  - en error / abandonada -> se reutiliza la misma fila para reintentar
 //  - no existe             -> se crea
-async function reservarEmision({ pedido_id, tipo_comprobante, monto }) {
+// `pto_vta` es el punto de venta de ARCA con el que se va a emitir (queda guardado en la factura).
+async function reservarEmision({ pedido_id, tipo_comprobante, monto, pto_vta }) {
   return conTransaccion(async (db) => {
     await db.query('SELECT pg_advisory_xact_lock(1001, $1::int)', [pedido_id]);
 
@@ -61,19 +62,19 @@ async function reservarEmision({ pedido_id, tipo_comprobante, monto }) {
 
       const reintento = await db.query(
         `UPDATE facturas_venta
-         SET estado = 'pendiente', tipo_comprobante = $1, monto = $2, creado_en = NOW()
-         WHERE id = $3
+         SET estado = 'pendiente', tipo_comprobante = $1, monto = $2, pto_vta = $3, creado_en = NOW()
+         WHERE id = $4
          RETURNING *`,
-        [tipo_comprobante, monto, factura.id]
+        [tipo_comprobante, monto, pto_vta, factura.id]
       );
       return reintento.rows[0];
     }
 
     const nueva = await db.query(
-      `INSERT INTO facturas_venta (pedido_id, tipo_comprobante, monto, estado)
-       VALUES ($1, $2, $3, 'pendiente')
+      `INSERT INTO facturas_venta (pedido_id, tipo_comprobante, monto, estado, pto_vta)
+       VALUES ($1, $2, $3, 'pendiente', $4)
        RETURNING *`,
-      [pedido_id, tipo_comprobante, monto]
+      [pedido_id, tipo_comprobante, monto, pto_vta]
     );
     return nueva.rows[0];
   });

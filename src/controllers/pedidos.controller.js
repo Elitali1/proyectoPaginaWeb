@@ -6,16 +6,19 @@ const clientesRepository = require('../repositories/clientes.repository.js');
 const { InvoicePdfGenerator } = require('@arcasdk/pdf');
 const comandaService = require('../services/comanda.service.js');
 const notasCreditoRepository = require('../repositories/notasCredito.repository.js');
+const sucursalesRepository = require('../repositories/sucursales.repository.js');
 const { ESTADOS_PEDIDO } = require('../config/negocio.js');
 const { responderError } = require('../utils/errores.js');
 const { esNumero, esFechaISO, textoOpcional, redondear2 } = require('../utils/validaciones.js');
 const { fechaDeComprobante } = require('../utils/fechas.js');
 
 // Datos fijos del emisor que van en los PDF de facturas y notas de crédito.
-function datosEmisor() {
+// El domicilio es el de la sucursal (el que tiene registrado su punto de venta en ARCA); si la
+// sucursal no lo tiene cargado se usa el del local original.
+function datosEmisor(direccionSucursal) {
   return {
     razonSocial: 'Donchichopizza',
-    domicilioComercial: 'General Villegas 4446,Lanús Buenos Aires',
+    domicilioComercial: direccionSucursal || 'General Villegas 4446,Lanús Buenos Aires',
     condicionIva: 'Responsable Monotributo',
     cuit: String(process.env.ARCA_CUIT),
     iibb: String(process.env.ARCA_CUIT),
@@ -151,17 +154,23 @@ async function facturar(req, res) {
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
 
+    // Punto de venta de ARCA de la sucursal del pedido. Se resuelve ANTES de reservar la emisión:
+    // si la sucursal no tiene punto de venta, falla acá y no queda ninguna factura a medias.
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
+    const ptoVta = sucursalesRepository.ptoVtaDeEmision(sucursal);
+
     // Reserva atómica: si ya hay una factura emitida o en proceso lanza ErrorNegocio;
     // si quedó una anterior en error, la reutiliza para reintentar.
     const facturaNueva = await facturasVentaRepository.reservarEmision({
       pedido_id: id,
       tipo_comprobante: 'Factura C',
-      monto: total
+      monto: total,
+      pto_vta: ptoVta
     });
 
     let resultadoArca;
     try {
-      resultadoArca = await arcaService.emitirFactura({ monto: total, cuitReceptor });
+      resultadoArca = await arcaService.emitirFactura({ monto: total, cuitReceptor, ptoVta });
     } catch (errorArca) {
       console.error('Error al emitir en ARCA:', errorArca);
       try {
@@ -212,6 +221,8 @@ async function generarPdf(req, res) {
       return res.status(400).json({ error: 'Este pedido no tiene una factura emitida' });
     }
 
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
+
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
     const nombreReceptor = pedido.cliente || 'Consumidor Final';
     const esMixto = pedido.medio_pago === 'mixto';
@@ -248,7 +259,7 @@ async function generarPdf(req, res) {
 
     const generator = new InvoicePdfGenerator();
     const pdfBuffer = await generator.generate({
-      emisor: datosEmisor(),
+      emisor: datosEmisor(sucursal.direccion),
       receptor: {
         razonSocial: nombreReceptor,
         condicionIva: cuitReceptor ? 'Responsable Inscripto' : 'Consumidor Final',
@@ -257,7 +268,8 @@ async function generarPdf(req, res) {
       },
       cbteTipo: Number(process.env.ARCA_CBTE_TIPO),
       cbteLetra: 'C',
-      puntoVenta: Number(process.env.ARCA_PTO_VTA),
+      // Facturas viejas (anteriores a las sucursales) no tienen pto_vta guardado: se emitieron con la variable.
+      puntoVenta: Number(factura.pto_vta) || Number(process.env.ARCA_PTO_VTA),
       cbteDesde: Number(factura.numero_comprobante),
       cbteHasta: Number(factura.numero_comprobante),
       cbteFecha: fechaComprobante,
@@ -397,6 +409,10 @@ async function anularFactura(req, res) {
       return res.status(400).json({ error: 'Este pedido no tiene una factura emitida para anular' });
     }
 
+    // La nota de crédito sale con el mismo punto de venta que la factura que acredita.
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
+    const ptoVta = Number(factura.pto_vta) || sucursalesRepository.ptoVtaDeEmision(sucursal);
+
     claveEnCurso = factura.id;
     if (notasCreditoEnCurso.has(claveEnCurso)) {
       claveEnCurso = null;
@@ -418,6 +434,7 @@ async function anularFactura(req, res) {
     const resultadoArca = await arcaService.emitirNotaCredito({
       monto,
       cuitReceptor,
+      ptoVta,
       facturaAsociada: {
         tipoComprobante: Number(process.env.ARCA_CBTE_TIPO) || 11,
         numeroComprobante: factura.numero_comprobante,
@@ -433,7 +450,8 @@ async function anularFactura(req, res) {
         cae: resultadoArca.cae,
         vencimiento_cae: resultadoArca.caeFchVto,
         monto,
-        motivo: textoOpcional(motivo, 200)
+        motivo: textoOpcional(motivo, 200),
+        pto_vta: ptoVta
       }));
       res.json(notaCredito);
     } catch (errorGuardado) {
@@ -474,6 +492,7 @@ async function generarPdfNotaCredito(req, res) {
     }
 
     const notaCredito = notasCredito[notasCredito.length - 1]; // la más reciente
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
     const nombreReceptor = pedido.cliente || 'Consumidor Final';
@@ -486,7 +505,7 @@ async function generarPdfNotaCredito(req, res) {
 
     const generator = new InvoicePdfGenerator();
     const pdfBuffer = await generator.generate({
-      emisor: datosEmisor(),
+      emisor: datosEmisor(sucursal.direccion),
       receptor: {
         razonSocial: nombreReceptor,
         condicionIva: cuitReceptor ? 'Responsable Inscripto' : 'Consumidor Final',
@@ -495,7 +514,7 @@ async function generarPdfNotaCredito(req, res) {
       },
       cbteTipo: 13,
       cbteLetra: 'C',
-      puntoVenta: Number(process.env.ARCA_PTO_VTA),
+      puntoVenta: Number(notaCredito.pto_vta) || Number(factura.pto_vta) || Number(process.env.ARCA_PTO_VTA),
       cbteDesde: Number(notaCredito.numero_comprobante),
       cbteHasta: Number(notaCredito.numero_comprobante),
       cbteFecha: fechaComprobante,
