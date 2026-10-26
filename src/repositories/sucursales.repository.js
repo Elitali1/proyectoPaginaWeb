@@ -27,4 +27,4 @@ function ptoVtaDeEmision(sucursal) {
   throw new ErrorNegocio('Esta sucursal todavía no tiene un punto de venta de ARCA configurado. Avisá al administrador.', 409);
 }
 
-module.exports = { obtener, listar, ptoVtaDeEmision };s
+module.exports = { obtener, listar, ptoVtaDeEmision };
