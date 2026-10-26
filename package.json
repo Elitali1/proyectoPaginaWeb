@@ -7,7 +7,8 @@
     "test": "node --test test/",
     "dev": "nodemon servidor.js",
     "postinstall": "patch-package",
-    "migrate": "node-pg-migrate -m migrations"
+    "migrate": "node-pg-migrate -m migrations",
+    "test:staging": "node --test tests/multi-sucursal.e2e.test.js"
   },
   "keywords": [],
   "author": "",
