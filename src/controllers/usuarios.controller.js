@@ -178,11 +178,41 @@ async function login(req, res) {
     // Set httpOnly cookie as well
     res.cookie('auth_token', token, { ...COOKIE_OPTIONS, maxAge: 8 * 60 * 60 * 1000 });
 
+    // Nombre de la sucursal para mostrarlo arriba en el panel.
+    const sucursal = await sucursalesRepository.obtener(sucursalId);
+
     // El token también va en el cuerpo porque el agente de impresión y las pruebas por API lo usan
     // en el header Authorization. El navegador no lo necesita: usa la cookie httpOnly.
-        res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId } });
+    res.json({
+      token,
+      usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId, sucursal_nombre: sucursal.nombre }
+    });
   } catch (error) {
     responderError(res, error, 'Error al iniciar sesión');
+  }
+}
+
+// El administrador puede trabajar en cualquier sucursal sin cerrar sesión: se emite un token nuevo con la
+// sucursal elegida. No cambia la sucursal guardada del usuario (al volver a entrar, vuelve a la suya).
+// El navegador no decide nada por su cuenta: la sucursal viaja firmada dentro del token.
+async function cambiarSucursal(req, res) {
+  try {
+    const sucursalId = leerSucursalId(req.body && req.body.sucursal_id);
+    if (sucursalId === null) throw new ErrorNegocio('Indicá la sucursal');
+
+    const sucursal = await sucursalesRepository.obtener(sucursalId);
+    if (!sucursal.activa) throw new ErrorNegocio('La sucursal no está activa', 409);
+
+    const { id, nombre, rol } = req.usuario;
+    const token = jwt.sign(
+      { id, nombre, rol, sucursal_id: sucursalId },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h', algorithm: 'HS256' }
+    );
+    res.cookie('auth_token', token, { ...COOKIE_OPTIONS, maxAge: 8 * 60 * 60 * 1000 });
+    res.json({ usuario: { id, nombre, rol, sucursal_id: sucursalId, sucursal_nombre: sucursal.nombre } });
+  } catch (error) {
+    responderError(res, error, 'Error al cambiar de sucursal');
   }
 }
 
@@ -305,4 +335,4 @@ async function logout(req, res) {
   res.json({ mensaje: 'Sesión finalizada' });
 }
 
-module.exports = { listar, listarSucursales, crear, eliminar, login, actualizar, solicitarReset, confirmarReset, logout };
+module.exports = { listar, listarSucursales, cambiarSucursal, crear, eliminar, login, actualizar, solicitarReset, confirmarReset, logout };

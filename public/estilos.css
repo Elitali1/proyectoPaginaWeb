@@ -376,6 +376,76 @@ button:disabled {
   color: var(--color-primary-dark);
   margin: 0;
 }
+/* ============================================================================
+   SUCURSALES: indicador arriba, colores por local y banda de staging.
+   El atributo data-sucursal lo pone auth-helpers.js en <html>.
+   La sucursal 1 NO se toca: conserva los colores de :root.
+   Para una sucursal nueva, se copia el bloque de abajo con su número y otros colores.
+   ============================================================================ */
+
+.badge-sucursal {
+  display: inline-block;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+#indicador-sucursal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+#selector-sucursal {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Sucursal 2: azul */
+html[data-sucursal="2"] {
+  --color-bg: #E4EEF5;
+  --color-primary: #1F5C8A;
+  --color-primary-dark: #163F5E;
+  --color-secondary: #5FB3A1;
+  --color-text-muted: #5E7384;
+  --color-border: #C5D6E3;
+  --shadow: 0 2px 10px rgba(31, 92, 138, 0.12);
+}
+
+html[data-sucursal="2"] form input:focus,
+html[data-sucursal="2"] form select:focus {
+  box-shadow: 0 0 0 2px rgba(31, 92, 138, 0.18);
+}
+
+html[data-sucursal="2"] .btn-comanda:hover,
+html[data-sucursal="2"] .btn-modificar:hover,
+html[data-sucursal="2"] .btn-editar:hover,
+html[data-sucursal="2"] .btn-toggle:hover {
+  background-color: #4A9A88;
+}
+
+/* Banda de ambiente de pruebas */
+#banda-staging {
+  background: #B03A2E;
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  margin: -20px -20px 14px -20px;
+  letter-spacing: 0.03em;
+}
 /* ---- Responsive: celular ---- */
 @media (max-width: 600px) {
   body {
