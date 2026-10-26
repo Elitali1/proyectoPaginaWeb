@@ -110,8 +110,8 @@ async function ajustarStockManual(id, cantidadDelta, sucursalId) {
 
     const resultado = await db.query(
       `UPDATE insumo_sucursal
-       SET stock_actual = stock_actual + $1
-       WHERE insumo_id = $2 AND sucursal_id = $3 AND ($1 > 0 OR stock_actual + $1 >= 0)
+       SET stock_actual = stock_actual + $1::numeric
+       WHERE insumo_id = $2 AND sucursal_id = $3 AND ($1::numeric > 0 OR stock_actual + $1::numeric >= 0)
        RETURNING insumo_id`,
       [cantidadDelta, id, sucursalId]
     );
