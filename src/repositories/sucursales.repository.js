@@ -9,6 +9,12 @@ async function obtener(id) {
   return resultado.rows[0];
 }
 
+// Lista para el selector del panel de usuarios. No incluye datos fiscales (punto de venta, dirección).
+async function listar() {
+  const resultado = await pool.query('SELECT id, nombre, activa FROM sucursales ORDER BY id');
+  return resultado.rows;
+}
+
 // Punto de venta de ARCA con el que emite una sucursal.
 //  - Si la sucursal lo tiene cargado (sucursales.pto_vta), se usa ese.
 //  - La sucursal 1 (el local original) mantiene la variable ARCA_PTO_VTA como respaldo, así sigue
@@ -21,4 +27,4 @@ function ptoVtaDeEmision(sucursal) {
   throw new ErrorNegocio('Esta sucursal todavía no tiene un punto de venta de ARCA configurado. Avisá al administrador.', 409);
 }
 
-module.exports = { obtener, ptoVtaDeEmision };
+module.exports = { obtener, listar, ptoVtaDeEmision };s
