@@ -35,6 +35,9 @@ function obtenerRangoUltimoMes() {
 }
 
 async function cargarDashboard(desde, hasta) {
+  // El consolidado se pide aparte: si falla, el dashboard de esta sucursal se muestra igual.
+  cargarConsolidado(desde, hasta);
+
   const respuesta = await fetch(`${API_URL}/dashboard?desde=${desde}&hasta=${hasta}`, {
     credentials: 'include'
   });
@@ -48,16 +51,16 @@ async function cargarDashboard(desde, hasta) {
 
   const datos = await respuesta.json();
 
-  mostrarResumen(datos.resumen, datos.pagos);
+  mostrarResumen(datos.resumen, datos.pagos, datos.cuentaTransferencia);
   mostrarStockBajo(datos.stockBajo);
   mostrarProductosPorCategoria(datos.topProductos);
   mostrarClientesRecurrentes(datos.clientesRecurrentes);
   mostrarMejoresMargenes(datos.mejoresMargenes);
-  mostrarBalance(datos.balance);
+  mostrarBalance(datos.estadoResultados, datos.balance);
 }
 
 // ---- Tarjetas de resumen ----
-function mostrarResumen(resumen, pagos) {
+function mostrarResumen(resumen, pagos, cuentaTransferencia) {
   const contenedor = document.getElementById('tarjetas-resumen');
   contenedor.innerHTML = `
     <div class="tarjeta-metrica">
@@ -77,7 +80,7 @@ function mostrarResumen(resumen, pagos) {
       <p class="metrica-valor">$${formatearPrecio(pagos.efectivo)}</p>
     </div>
     <div class="tarjeta-metrica">
-      <p class="metrica-label">Cobrado en MercadoPago</p>
+      <p class="metrica-label">Cobrado en ${escapeHtml(cuentaTransferencia || 'MercadoPago')}</p>
       <p class="metrica-valor">$${formatearPrecio(pagos.mercadopago)}</p>
     </div>
   `;
@@ -187,19 +190,180 @@ function mostrarMejoresMargenes(margenes) {
   });
 }
 
-// ---- Balance / rentabilidad ----
-function mostrarBalance(balance) {
-  const contenedor = document.getElementById('contenedor-dash-balance');
-  const claseResultado = balance.gananciaNeta >= 0 ? 'balance-positivo' : 'balance-negativo';
+// ---- Estado de resultados (rentabilidad del período) ----
+function formatearPorcentaje(valor) {
+  return valor === null || valor === undefined ? 'sin ventas' : `${valor}%`;
+}
 
+// Crea una fila "etiqueta ........ valor". Las opciones: clase del valor, negrita, sangría.
+function filaEstado(etiqueta, valor, opciones = {}) {
+  const p = document.createElement('p');
+  p.className = 'cons-fila' + (opciones.destacada ? ' cons-destacada' : '') + (opciones.sangria ? ' cons-sangria' : '');
+  const a = document.createElement('span');
+  a.textContent = etiqueta;
+  const b = document.createElement('strong');
+  b.textContent = valor;
+  if (opciones.clase) b.className = opciones.clase;
+  p.appendChild(a);
+  p.appendChild(b);
+  return p;
+}
+
+function claseSegunSigno(numero) {
+  return numero >= 0 ? 'balance-positivo' : 'balance-negativo';
+}
+
+// Dibuja el estado de resultados completo dentro de un contenedor (lo usan el dashboard de la
+// sucursal y el consolidado).
+function dibujarEstadoResultados(contenedor, e) {
+  contenedor.innerHTML = '';
+
+  if (e.condicionIva === 'responsable_inscripto') {
+    contenedor.appendChild(filaEstado('Ventas con IVA', `$${formatearPrecio(e.ventasBrutas)}`));
+    contenedor.appendChild(filaEstado('IVA de las ventas (no es ganancia)', `-$${formatearPrecio(e.iva)}`, { sangria: true }));
+  }
+  contenedor.appendChild(filaEstado(e.condicionIva === 'responsable_inscripto' ? 'Ventas netas' : 'Ventas', `$${formatearPrecio(e.ventasNetas)}`, { destacada: true }));
+
+  contenedor.appendChild(filaEstado('Compras de insumos', `-$${formatearPrecio(e.compras)}`, { sangria: true }));
+  if (e.gastosDirectos > 0) {
+    contenedor.appendChild(filaEstado('Mercadería cargada como gasto (ej. empanadas)', `-$${formatearPrecio(e.gastosDirectos)}`, { sangria: true }));
+  }
+  contenedor.appendChild(filaEstado(`Ganancia bruta (${formatearPorcentaje(e.margenBrutoPorcentual)})`, `$${formatearPrecio(e.gananciaBruta)}`, { destacada: true, clase: claseSegunSigno(e.gananciaBruta) }));
+
+  contenedor.appendChild(filaEstado('Gastos variables', `-$${formatearPrecio(e.gastosVariables)}`, { sangria: true }));
+  contenedor.appendChild(filaEstado(`Margen de contribución (${formatearPorcentaje(e.margenContribucionPorcentual)})`, `$${formatearPrecio(e.margenContribucion)}`, { destacada: true, clase: claseSegunSigno(e.margenContribucion) }));
+
+  contenedor.appendChild(filaEstado('Gastos fijos (sueldos, alquiler, servicios)', `-$${formatearPrecio(e.gastosFijos)}`, { sangria: true }));
+  if (e.gastosSinClasificar > 0) {
+    contenedor.appendChild(filaEstado('Gastos sin clasificar', `-$${formatearPrecio(e.gastosSinClasificar)}`, { sangria: true, clase: 'balance-negativo' }));
+  }
+  contenedor.appendChild(filaEstado(`Resultado neto (${formatearPorcentaje(e.margenNetoPorcentual)})`, `$${formatearPrecio(e.resultadoNeto)}`, { destacada: true, clase: claseSegunSigno(e.resultadoNeto) }));
+
+  if (e.puntoEquilibrio !== null) {
+    const texto = e.colchonSobreEquilibrio >= 0
+      ? `Ya superaste el equilibrio por $${formatearPrecio(e.colchonSobreEquilibrio)}`
+      : `Te faltan $${formatearPrecio(Math.abs(e.colchonSobreEquilibrio))} de ventas para cubrir los costos fijos`;
+    contenedor.appendChild(filaEstado('Punto de equilibrio del período', `$${formatearPrecio(e.puntoEquilibrio)}`, { destacada: true }));
+    const nota = document.createElement('p');
+    nota.className = 'cons-participacion';
+    nota.textContent = texto;
+    contenedor.appendChild(nota);
+  } else if (e.gastosFijos > 0) {
+    const nota = document.createElement('p');
+    nota.className = 'cons-participacion';
+    nota.textContent = 'No hay punto de equilibrio: con los costos variables actuales cada venta no deja margen para cubrir los fijos.';
+    contenedor.appendChild(nota);
+  }
+
+  if (e.gastosSinClasificar > 0) {
+    const aviso = document.createElement('p');
+    aviso.className = 'cons-aviso';
+    aviso.textContent = `Tenés $${formatearPrecio(e.gastosSinClasificar)} en gastos sin clasificar. Marcalos como fijos o variables en "Cierre de caja" para que el resultado sea exacto.`;
+    contenedor.appendChild(aviso);
+  }
+}
+
+function mostrarBalance(estado, balanceViejo) {
+  const contenedor = document.getElementById('contenedor-dash-balance');
+
+  if (estado) {
+    dibujarEstadoResultados(contenedor, estado);
+    return;
+  }
+
+  // Por si el servidor todavía no devuelve el estado de resultados (versión vieja): se muestra el balance simple.
+  const claseResultado = balanceViejo.gananciaNeta >= 0 ? 'balance-positivo' : 'balance-negativo';
   contenedor.innerHTML = `
     <div class="pedido">
-      <p>Ventas: $${formatearPrecio(balance.ventas)}</p>
-      <p>Compras de mercadería: -$${formatearPrecio(balance.compras)}</p>
-      <p>Gastos: -$${formatearPrecio(balance.gastos)}</p>
-      <p class="${claseResultado}"><strong>Ganancia neta: $${formatearPrecio(balance.gananciaNeta)}</strong></p>
+      <p>Ventas: $${formatearPrecio(balanceViejo.ventas)}</p>
+      <p>Compras de mercadería: -$${formatearPrecio(balanceViejo.compras)}</p>
+      <p>Gastos: -$${formatearPrecio(balanceViejo.gastos)}</p>
+      <p class="${claseResultado}"><strong>Ganancia neta: $${formatearPrecio(balanceViejo.gananciaNeta)}</strong></p>
     </div>
   `;
+}
+
+// ---- Comparativa entre sucursales (solo se muestra si hay más de una con movimiento) ----
+function crearTarjeta(label, valor, clase) {
+  const div = document.createElement('div');
+  div.className = 'tarjeta-metrica';
+  const l = document.createElement('p');
+  l.className = 'metrica-label';
+  l.textContent = label;
+  const v = document.createElement('p');
+  v.className = `metrica-valor ${clase || ''}`.trim();
+  v.textContent = valor;
+  div.appendChild(l);
+  div.appendChild(v);
+  return div;
+}
+
+async function cargarConsolidado(desde, hasta) {
+  const seccion = document.getElementById('seccion-consolidado');
+  try {
+    const respuesta = await fetch(`${API_URL}/dashboard-consolidado?desde=${desde}&hasta=${hasta}`, { credentials: 'include' });
+    if (!respuesta.ok) {
+      seccion.classList.add('oculto');
+      return;
+    }
+    const datos = await respuesta.json();
+    if (datos.porSucursal.length < 2) {
+      seccion.classList.add('oculto');
+      return;
+    }
+    seccion.classList.remove('oculto');
+
+    const t = datos.total;
+    const e = t.estado;
+    const totales = document.getElementById('cons-totales');
+    totales.innerHTML = '';
+    totales.appendChild(crearTarjeta('Ventas (todos los locales)', `$${formatearPrecio(t.ventas)}`));
+    totales.appendChild(crearTarjeta('Pedidos', String(t.pedidos)));
+    totales.appendChild(crearTarjeta(`Ganancia bruta (${formatearPorcentaje(e.margenBrutoPorcentual)})`, `$${formatearPrecio(e.gananciaBruta)}`, claseSegunSigno(e.gananciaBruta)));
+    totales.appendChild(crearTarjeta('Gastos fijos', `-$${formatearPrecio(e.gastosFijos)}`));
+    totales.appendChild(crearTarjeta(`Resultado neto (${formatearPorcentaje(e.margenNetoPorcentual)})`, `$${formatearPrecio(e.resultadoNeto)}`, claseSegunSigno(e.resultadoNeto)));
+
+    const locales = document.getElementById('cons-locales');
+    locales.innerHTML = '';
+    datos.porSucursal.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'cons-local';
+
+      const titulo = document.createElement('h3');
+      titulo.textContent = s.activa ? s.nombre : `${s.nombre} (inactiva)`;
+      div.appendChild(titulo);
+
+      const barra = document.createElement('progress');
+      barra.max = 100;
+      barra.value = s.participacionPorcentual;
+      barra.title = `${s.participacionPorcentual}% de las ventas`;
+      div.appendChild(barra);
+      const part = document.createElement('p');
+      part.className = 'cons-participacion';
+      part.textContent = `${s.participacionPorcentual}% de las ventas`;
+      div.appendChild(part);
+
+      const est = s.estado;
+      div.appendChild(filaEstado('Ventas', `$${formatearPrecio(s.ventas)}`));
+      div.appendChild(filaEstado('Pedidos', String(s.pedidos)));
+      div.appendChild(filaEstado('Ticket promedio', `$${formatearPrecio(s.ticketPromedio)}`));
+      div.appendChild(filaEstado('Efectivo', `$${formatearPrecio(s.efectivo)}`));
+      div.appendChild(filaEstado(s.cuentaTransferencia, `$${formatearPrecio(s.transferencia)}`));
+      div.appendChild(filaEstado(`Ganancia bruta (${formatearPorcentaje(est.margenBrutoPorcentual)})`, `$${formatearPrecio(est.gananciaBruta)}`, { clase: claseSegunSigno(est.gananciaBruta) }));
+      div.appendChild(filaEstado('Gastos variables', `-$${formatearPrecio(est.gastosVariables)}`));
+      div.appendChild(filaEstado('Gastos fijos', `-$${formatearPrecio(est.gastosFijos)}`));
+      if (est.gastosSinClasificar > 0) {
+        div.appendChild(filaEstado('Sin clasificar', `-$${formatearPrecio(est.gastosSinClasificar)}`, { clase: 'balance-negativo' }));
+      }
+      div.appendChild(filaEstado(`Resultado neto (${formatearPorcentaje(est.margenNetoPorcentual)})`, `$${formatearPrecio(est.resultadoNeto)}`, { destacada: true, clase: claseSegunSigno(est.resultadoNeto) }));
+      div.appendChild(filaEstado('Punto de equilibrio', est.puntoEquilibrio === null ? 'no hay' : `$${formatearPrecio(est.puntoEquilibrio)}`));
+      locales.appendChild(div);
+    });
+
+    dibujarEstadoResultados(document.getElementById('cons-estado'), e);
+  } catch (error) {
+    seccion.classList.add('oculto');
+  }
 }
 
 document.getElementById('btn-actualizar-dashboard').addEventListener('click', () => {

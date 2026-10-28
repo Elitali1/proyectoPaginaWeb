@@ -8,7 +8,7 @@ const FACTOR_MAXIMO = 10;
 
 // Datos de una sucursal: nombre (obligatorio), dirección y punto de venta (opcionales), activa.
 function validarDatosSucursal(body) {
-  const { nombre, direccion, pto_vta, activa } = body || {};
+  const { nombre, direccion, pto_vta, activa, cuenta_transferencia } = body || {};
 
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     throw new ErrorNegocio('El nombre de la sucursal es obligatorio');
@@ -38,7 +38,16 @@ function validarDatosSucursal(body) {
     throw new ErrorNegocio('El campo activa debe ser verdadero o falso');
   }
 
-  return { nombre: nombre.trim(), direccion: direccionLimpia, pto_vta: ptoVta, activa };
+  // Cuenta donde la sucursal cobra las transferencias (Mercado Pago, un banco...). Es solo un nombre para
+  // mostrar y controlar. Si no viene, queda la que ya tenía (o 'MercadoPago' al crear).
+  let cuentaTransferencia;
+  if (cuenta_transferencia !== undefined && cuenta_transferencia !== null && String(cuenta_transferencia).trim() !== '') {
+    if (typeof cuenta_transferencia !== 'string') throw new ErrorNegocio('La cuenta de cobro no es válida');
+    if (cuenta_transferencia.trim().length > 100) throw new ErrorNegocio('El nombre de la cuenta de cobro es demasiado largo (máximo 100 caracteres)');
+    cuentaTransferencia = cuenta_transferencia.trim();
+  }
+
+  return { nombre: nombre.trim(), direccion: direccionLimpia, pto_vta: ptoVta, activa, cuenta_transferencia: cuentaTransferencia };
 }
 
 // Opciones al crear una sucursal: de qué sucursal copiar productos e insumos, y con qué factor de precios.

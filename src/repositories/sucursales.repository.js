@@ -18,7 +18,7 @@ async function listar() {
 
 // Lista completa para la pantalla de administración de sucursales (solo admin).
 async function listarCompleta() {
-  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa FROM sucursales ORDER BY id');
+  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa, cuenta_transferencia FROM sucursales ORDER BY id');
   return resultado.rows;
 }
 
@@ -90,10 +90,10 @@ async function crear(datos, { copiarDe, factor }) {
     }
 
     const nueva = await db.query(
-      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, nombre, direccion, pto_vta, activa`,
-      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true]
+      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa, cuenta_transferencia)
+       VALUES ($1, $2, $3, $4, COALESCE($5, 'MercadoPago'))
+       RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia`,
+      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true, datos.cuenta_transferencia ?? null]
     );
     const sucursal = nueva.rows[0];
 
@@ -133,10 +133,11 @@ async function actualizar(id, datos) {
 
     const resultado = await db.query(
       `UPDATE sucursales
-          SET nombre = $1, direccion = $2, pto_vta = $3, activa = $4
+          SET nombre = $1, direccion = $2, pto_vta = $3, activa = $4,
+              cuenta_transferencia = COALESCE($6, cuenta_transferencia)
         WHERE id = $5
-        RETURNING id, nombre, direccion, pto_vta, activa`,
-      [datos.nombre, datos.direccion, datos.pto_vta, activa, id]
+        RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia`,
+      [datos.nombre, datos.direccion, datos.pto_vta, activa, id, datos.cuenta_transferencia ?? null]
     );
     return resultado.rows[0];
   });

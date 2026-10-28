@@ -8,7 +8,7 @@ if (!usuario) {
 }
 
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-sucursales', 'link-sucursales', 'link-clientes', 'link-dashboard']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-sucursales', 'link-clientes', 'link-dashboard']);
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
@@ -43,6 +43,7 @@ async function cargarSucursales() {
       <strong>${escapeHtml(s.nombre)}</strong> (#${s.id})${s.activa ? '' : ' · inactiva'}<br>
       Dirección: ${s.direccion ? escapeHtml(s.direccion) : 'sin cargar (las facturas usan el domicilio por defecto)'}<br>
       Punto de venta: ${s.pto_vta ? escapeHtml(s.pto_vta) : 'sin cargar (no puede facturar)'}<br>
+      Cobra transferencias en: ${escapeHtml(s.cuenta_transferencia)}<br>
       <button type="button" class="btn-editar-sucursal" data-id="${s.id}">Editar</button>
       <button type="button" class="btn-toggle-sucursal" data-id="${s.id}">${s.activa ? 'Desactivar' : 'Reactivar'}</button>
     `;
@@ -57,6 +58,7 @@ async function cargarSucursales() {
       document.getElementById('nombre').value = s.nombre;
       document.getElementById('direccion').value = s.direccion || '';
       document.getElementById('pto_vta').value = s.pto_vta || '';
+      document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
       document.getElementById('activa').checked = s.activa;
       document.getElementById('titulo-formulario').textContent = `Editar sucursal #${s.id}`;
       document.getElementById('btn-guardar').textContent = 'Guardar cambios';
@@ -77,7 +79,7 @@ async function cargarSucursales() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, activa: !s.activa })
+        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, activa: !s.activa })
       });
 
       if (!respuesta.ok) {
@@ -134,6 +136,7 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
     nombre: document.getElementById('nombre').value,
     direccion: document.getElementById('direccion').value,
     pto_vta: document.getElementById('pto_vta').value,
+    cuenta_transferencia: document.getElementById('cuenta_transferencia').value,
     activa: document.getElementById('activa').checked
   };
 
@@ -172,3 +175,37 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
 });
 
 cargarSucursales();
+
+// ---- Condición frente al IVA (una sola para todo el negocio) ----
+async function cargarIva() {
+  const respuesta = await fetch(`${API_URL}/configuracion/iva`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
+  if (!respuesta.ok) return;
+  const iva = await respuesta.json();
+  document.getElementById('iva-condicion').value = iva.condicion;
+  document.getElementById('iva-alicuota').value = iva.alicuota;
+}
+
+document.getElementById('formulario-iva').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const mensaje = document.getElementById('mensaje-iva');
+  const condicion = document.getElementById('iva-condicion').value;
+
+  if (condicion === 'responsable_inscripto' && !confirm('Vas a pasar a trabajar con ventas netas de IVA en todo el dashboard. ¿Ya lo confirmaste con tu contador?')) return;
+
+  const respuesta = await fetch(`${API_URL}/configuracion/iva`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ condicion, alicuota: document.getElementById('iva-alicuota').value })
+  });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
+  const resultado = await respuesta.json().catch(() => ({}));
+  mensaje.textContent = respuesta.ok ? 'Condición frente al IVA guardada.' : (resultado.error || 'No se pudo guardar');
+  mensaje.classList.remove('oculto');
+});
+
+cargarIva();
