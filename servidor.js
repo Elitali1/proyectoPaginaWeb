@@ -8,10 +8,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 
-if (!process.env.JWT_SECRET) {
-  console.error('Falta la variable de entorno JWT_SECRET: el servidor no puede firmar ni validar sesiones.');
-  process.exit(1);
-}
+// Revisa las variables de entorno al arrancar: si falta una crítica, avisa cuál y no arranca.
+require('./src/config/entorno.js').validarEntorno();
 
 const pool = require('./src/config/db.js');
 const app = express();
