@@ -6,9 +6,38 @@ const { ErrorNegocio } = require('./errores.js');
 const PTO_VTA_MAXIMO = 99999;
 const FACTOR_MAXIMO = 10;
 
+// Número de WhatsApp del local. Se guardan solo los dígitos, con código de país (Argentina celular: 549 +
+// código de área + número, ej. 5491165838528), que es lo que pide el link wa.me.
+//  - no viene (undefined)  -> undefined: se conserva el que tenía;
+//  - vacío                 -> null: se borra;
+//  - con contenido         -> solo dígitos, entre 11 y 15 (se aceptan espacios, guiones y el + del principio).
+function validarWhatsapp(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null || String(valor).trim() === '') return null;
+  if (typeof valor !== 'string' && typeof valor !== 'number') throw new ErrorNegocio('El WhatsApp no es válido');
+
+  const texto = String(valor).trim();
+  if (!/^\+?[\d\s-]+$/.test(texto)) {
+    throw new ErrorNegocio('El WhatsApp solo puede tener números (ej. 5491165838528)');
+  }
+  const digitos = texto.replace(/\D/g, '');
+  if (digitos.length < 11 || digitos.length > 15) {
+    throw new ErrorNegocio('El WhatsApp tiene que incluir el código de país y de área, entre 11 y 15 dígitos (ej. 5491165838528)');
+  }
+  return digitos;
+}
+
+// Sucursal pedida en una consulta pública (?sucursal=2). Sin valor, devuelve null (se usa la sucursal por defecto).
+function leerSucursalDeConsulta(valor) {
+  if (valor === undefined || valor === null || String(valor).trim() === '') return null;
+  const id = Number(valor);
+  if (!Number.isInteger(id) || id <= 0) throw new ErrorNegocio('La sucursal no es válida');
+  return id;
+}
+
 // Datos de una sucursal: nombre (obligatorio), dirección y punto de venta (opcionales), activa.
 function validarDatosSucursal(body) {
-  const { nombre, direccion, pto_vta, activa, cuenta_transferencia } = body || {};
+  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp } = body || {};
 
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     throw new ErrorNegocio('El nombre de la sucursal es obligatorio');
@@ -47,7 +76,14 @@ function validarDatosSucursal(body) {
     cuentaTransferencia = cuenta_transferencia.trim();
   }
 
-  return { nombre: nombre.trim(), direccion: direccionLimpia, pto_vta: ptoVta, activa, cuenta_transferencia: cuentaTransferencia };
+  return {
+    nombre: nombre.trim(),
+    direccion: direccionLimpia,
+    pto_vta: ptoVta,
+    activa,
+    cuenta_transferencia: cuentaTransferencia,
+    whatsapp: validarWhatsapp(whatsapp)
+  };
 }
 
 // Opciones al crear una sucursal: de qué sucursal copiar productos e insumos, y con qué factor de precios.
@@ -96,4 +132,6 @@ function validarSucursalesDeProducto(body) {
   });
 }
 
-module.exports = { validarDatosSucursal, validarOpcionesDeCopia, validarSucursalesDeProducto };
+module.exports = {
+  validarWhatsapp,
+  leerSucursalDeConsulta, validarDatosSucursal, validarOpcionesDeCopia, validarSucursalesDeProducto };

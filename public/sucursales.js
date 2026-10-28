@@ -44,6 +44,9 @@ async function cargarSucursales() {
       Dirección: ${s.direccion ? escapeHtml(s.direccion) : 'sin cargar (las facturas usan el domicilio por defecto)'}<br>
       Punto de venta: ${s.pto_vta ? escapeHtml(s.pto_vta) : 'sin cargar (no puede facturar)'}<br>
       Cobra transferencias en: ${escapeHtml(s.cuenta_transferencia)}<br>
+      WhatsApp para pedidos: ${s.whatsapp ? escapeHtml(s.whatsapp) : 'sin cargar (el menú online no puede enviar pedidos)'}<br>
+      Menú online: <a href="pedir.html?sucursal=${s.id}" target="_blank" rel="noopener">${escapeHtml(`${window.location.origin}/pedir.html?sucursal=${s.id}`)}</a><br>
+      <button type="button" class="btn-copiar-menu" data-id="${s.id}">Copiar link del menú</button>
       <button type="button" class="btn-editar-sucursal" data-id="${s.id}">Editar</button>
       <button type="button" class="btn-toggle-sucursal" data-id="${s.id}">${s.activa ? 'Desactivar' : 'Reactivar'}</button>
     `;
@@ -59,12 +62,25 @@ async function cargarSucursales() {
       document.getElementById('direccion').value = s.direccion || '';
       document.getElementById('pto_vta').value = s.pto_vta || '';
       document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
+      document.getElementById('whatsapp').value = s.whatsapp || '';
       document.getElementById('activa').checked = s.activa;
       document.getElementById('titulo-formulario').textContent = `Editar sucursal #${s.id}`;
       document.getElementById('btn-guardar').textContent = 'Guardar cambios';
       document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
       document.getElementById('seccion-copiar').classList.add('oculto');
       window.scrollTo(0, 0);
+    });
+  });
+
+  document.querySelectorAll('.btn-copiar-menu').forEach(boton => {
+    boton.addEventListener('click', async () => {
+      const link = `${window.location.origin}/pedir.html?sucursal=${boton.dataset.id}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        boton.textContent = 'Link copiado';
+      } catch (e) {
+        window.prompt('Copiá el link del menú:', link);
+      }
     });
   });
 
@@ -79,7 +95,7 @@ async function cargarSucursales() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, activa: !s.activa })
+        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, whatsapp: s.whatsapp, activa: !s.activa })
       });
 
       if (!respuesta.ok) {
@@ -137,6 +153,7 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
     direccion: document.getElementById('direccion').value,
     pto_vta: document.getElementById('pto_vta').value,
     cuenta_transferencia: document.getElementById('cuenta_transferencia').value,
+    whatsapp: document.getElementById('whatsapp').value,
     activa: document.getElementById('activa').checked
   };
 

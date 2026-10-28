@@ -1,7 +1,9 @@
 const productosRepository = require('../repositories/productos.repository.js');
 const { ErrorNegocio, responderError } = require('../utils/errores.js');
 const { esTexto, esNumero, esEnteroPositivo } = require('../utils/validaciones.js');
-const { validarSucursalesDeProducto } = require('../utils/sucursales.js');
+const { validarSucursalesDeProducto, leerSucursalDeConsulta } = require('../utils/sucursales.js');
+const sucursalesRepository = require('../repositories/sucursales.repository.js');
+const categoriasRepository = require('../repositories/categorias.repository.js');
 
 // Valida y limpia los datos de un producto. Lanza ErrorNegocio si algo no cierra.
 function validarDatosProducto(body) {
@@ -102,11 +104,30 @@ async function eliminar(req, res) {
 
 async function listarPublico(req, res) {
   try {
-    // La landing muestra el menú de la sucursal 1.
-    const productos = await productosRepository.obtenerTodos(1);
+    // Sin ?sucursal= se muestra el menú de la sucursal 1 (así la landing sigue igual).
+    // Con ?sucursal=2 se muestra el de esa sucursal, con SUS precios y solo lo que se vende ahí.
+    const sucursalId = leerSucursalDeConsulta(req.query.sucursal) ?? 1;
+
+    // Una sucursal inactiva o inexistente no muestra menú.
+    const sucursal = await sucursalesRepository.obtener(sucursalId);
+    if (!sucursal.activa) throw new ErrorNegocio('Esa sucursal no está disponible', 404);
+
+    const productos = await productosRepository.obtenerTodos(sucursalId);
+    // Los productos de categorías marcadas como extras se ofrecen dentro de las pizzas, no como productos sueltos.
+    const categorias = await categoriasRepository.obtenerTodas();
+    const extraPorCategoria = new Map(categorias.map(c => [c.id, c.es_extra === true]));
     const disponibles = productos
       .filter(p => p.disponible)
-      .map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, imagen: p.imagen, categoria_nombre: p.categoria_nombre }));
+      .map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+        imagen: p.imagen,
+        categoria_nombre: p.categoria_nombre,
+        // Para que el armado de pedido sepa si hay que elegir masa (piedra / molde).
+        requiere_masa: Boolean(p.requiere_masa),
+        es_extra: extraPorCategoria.get(p.categoria_id) === true
+      }));
     res.json(disponibles);
   } catch (error) {
     responderError(res, error, 'Error al obtener el menú');

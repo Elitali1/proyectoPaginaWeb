@@ -79,6 +79,25 @@
    </div>
 </section>
 
+  <section id="seccion-categorias">
+    <h2 id="titulo-formulario-categoria">Agregar categoría</h2>
+    <form id="formulario-categoria" autocomplete="off">
+      <label>Nombre: <input type="text" id="categoria-nombre" maxlength="100" required placeholder="Ej: Canastitas"></label>
+      <label>
+        <input type="checkbox" id="categoria-requiere-masa">
+        Sus productos llevan masa (en el menú online se elige a la piedra o al molde, y las pizzas pueden ir mitad y mitad)
+      </label>
+      <label>
+        <input type="checkbox" id="categoria-es-extra">
+        Son extras (agregados como "Extra jamón": en el menú online se ofrecen dentro de cada pizza, cada uno con su precio)
+      </label>
+      <button type="submit" id="btn-guardar-categoria">Guardar categoría</button>
+      <button type="button" id="btn-cancelar-categoria" class="oculto">Cancelar</button>
+    </form>
+    <p><small>Una categoría se puede eliminar solo si no tiene productos. Después de crearla, elegila al cargar o editar un producto.</small></p>
+    <div id="contenedor-categorias"></div>
+  </section>
+
   <section>
     <h2>Catálogo</h2>
     <div id="contenedor-productos"></div>
@@ -86,5 +105,6 @@
 
   <script src="auth-helpers.js"></script>
   <script src="productos.js"></script>
+  <script src="categorias.js"></script>
 </body>
 </html>
