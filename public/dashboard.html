@@ -5,6 +5,7 @@
   <title>Donchichopizza - Dashboard</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
   <div class="barra-superior">
@@ -35,8 +36,14 @@
     <button type="button" id="btn-actualizar-dashboard">Actualizar</button>
   </section>
 
+  <section id="seccion-consolidado" class="oculto">
+    <h2>Todas las sucursales</h2>
+    <div id="cons-totales" class="grid-resumen"></div>
+    <div id="cons-locales" class="cons-locales"></div>
+  </section>
+
   <section id="seccion-resumen">
-    <h2>Resumen del período</h2>
+    <h2>Resumen de esta sucursal</h2>
     <div id="tarjetas-resumen" class="grid-resumen"></div>
   </section>
 

@@ -35,6 +35,9 @@ function obtenerRangoUltimoMes() {
 }
 
 async function cargarDashboard(desde, hasta) {
+  // El consolidado se pide aparte: si falla, el dashboard de esta sucursal se muestra igual.
+  cargarConsolidado(desde, hasta);
+
   const respuesta = await fetch(`${API_URL}/dashboard?desde=${desde}&hasta=${hasta}`, {
     credentials: 'include'
   });
@@ -200,6 +203,97 @@ function mostrarBalance(balance) {
       <p class="${claseResultado}"><strong>Ganancia neta: $${formatearPrecio(balance.gananciaNeta)}</strong></p>
     </div>
   `;
+}
+
+// ---- Comparativa entre sucursales (solo se muestra si hay más de una con movimiento) ----
+function formatearMargen(margen) {
+  return margen === null ? 'sin ventas' : `${margen}%`;
+}
+
+function crearTarjeta(label, valor, clase) {
+  const div = document.createElement('div');
+  div.className = 'tarjeta-metrica';
+  const l = document.createElement('p');
+  l.className = 'metrica-label';
+  l.textContent = label;
+  const v = document.createElement('p');
+  v.className = `metrica-valor ${clase || ''}`.trim();
+  v.textContent = valor;
+  div.appendChild(l);
+  div.appendChild(v);
+  return div;
+}
+
+function filaLocal(etiqueta, valor, clase) {
+  const p = document.createElement('p');
+  p.className = 'cons-fila';
+  const a = document.createElement('span');
+  a.textContent = etiqueta;
+  const b = document.createElement('strong');
+  b.textContent = valor;
+  if (clase) b.className = clase;
+  p.appendChild(a);
+  p.appendChild(b);
+  return p;
+}
+
+async function cargarConsolidado(desde, hasta) {
+  const seccion = document.getElementById('seccion-consolidado');
+  try {
+    const respuesta = await fetch(`${API_URL}/dashboard-consolidado?desde=${desde}&hasta=${hasta}`, { credentials: 'include' });
+    if (!respuesta.ok) {
+      seccion.classList.add('oculto');
+      return;
+    }
+    const datos = await respuesta.json();
+    if (datos.porSucursal.length < 2) {
+      seccion.classList.add('oculto');
+      return;
+    }
+    seccion.classList.remove('oculto');
+
+    const t = datos.total;
+    const totales = document.getElementById('cons-totales');
+    totales.innerHTML = '';
+    totales.appendChild(crearTarjeta('Ventas (todos los locales)', `$${formatearPrecio(t.ventas)}`));
+    totales.appendChild(crearTarjeta('Pedidos', String(t.pedidos)));
+    totales.appendChild(crearTarjeta('Compras', `-$${formatearPrecio(t.compras)}`));
+    totales.appendChild(crearTarjeta('Gastos', `-$${formatearPrecio(t.gastos)}`));
+    totales.appendChild(crearTarjeta(`Ganancia neta (${formatearMargen(t.margenPorcentual)})`, `$${formatearPrecio(t.ganancia)}`, t.ganancia >= 0 ? 'balance-positivo' : 'balance-negativo'));
+
+    const locales = document.getElementById('cons-locales');
+    locales.innerHTML = '';
+    datos.porSucursal.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'cons-local';
+
+      const titulo = document.createElement('h3');
+      titulo.textContent = s.activa ? s.nombre : `${s.nombre} (inactiva)`;
+      div.appendChild(titulo);
+
+      const barra = document.createElement('progress');
+      barra.max = 100;
+      barra.value = s.participacionPorcentual;
+      barra.title = `${s.participacionPorcentual}% de las ventas`;
+      div.appendChild(barra);
+      const part = document.createElement('p');
+      part.className = 'cons-participacion';
+      part.textContent = `${s.participacionPorcentual}% de las ventas`;
+      div.appendChild(part);
+
+      div.appendChild(filaLocal('Ventas', `$${formatearPrecio(s.ventas)}`));
+      div.appendChild(filaLocal('Pedidos', String(s.pedidos)));
+      div.appendChild(filaLocal('Ticket promedio', `$${formatearPrecio(s.ticketPromedio)}`));
+      div.appendChild(filaLocal('Efectivo', `$${formatearPrecio(s.efectivo)}`));
+      div.appendChild(filaLocal('MercadoPago', `$${formatearPrecio(s.transferencia)}`));
+      div.appendChild(filaLocal('Compras', `-$${formatearPrecio(s.compras)}`));
+      div.appendChild(filaLocal('Gastos', `-$${formatearPrecio(s.gastos)}`));
+      div.appendChild(filaLocal(`Ganancia (${formatearMargen(s.margenPorcentual)})`, `$${formatearPrecio(s.ganancia)}`, s.ganancia >= 0 ? 'balance-positivo' : 'balance-negativo'));
+      locales.appendChild(div);
+    });
+  } catch (error) {
+    seccion.classList.add('oculto');
+  }
 }
 
 document.getElementById('btn-actualizar-dashboard').addEventListener('click', () => {
