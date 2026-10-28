@@ -259,7 +259,7 @@
     $('grupo-mitad').classList.toggle('oculto', !conMasa || otros.length === 0);
     $('chk-mitad').checked = false;
     $('lbl-gusto2').classList.add('oculto');
-    $('txt-mitad').textContent = `Combinar dos gustos (mitad y mitad, +${precio(L.RECARGO_MITAD_Y_MITAD)})`;
+    $('txt-mitad').textContent = 'Mitad y mitad';
     const sel = $('sel-gusto2');
     sel.textContent = '';
     otros.forEach(p => {
