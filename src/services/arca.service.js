@@ -2,6 +2,7 @@ const { Arca } = require('@arcasdk/core');
 const fs = require('fs');
 const path = require('path');
 const { fechaDeEmision } = require('../utils/fechas.js');
+const { esProduccionArca, describirModoArca } = require('../utils/ambiente.js');
 
 const cert = process.env.ARCA_CERT
   ? process.env.ARCA_CERT
@@ -11,14 +12,18 @@ const key = process.env.ARCA_KEY
   ? process.env.ARCA_KEY
   : fs.readFileSync(path.join(__dirname, '..', '..', 'certificados-arca', 'arca.key'), 'utf8');
 
+// Solo se emite en producción (comprobantes reales) si ARCA_PRODUCTION vale EXACTAMENTE "true".
+// Cualquier otro valor, o no definirla, usa homologación: un error de tipeo en la variable nunca
+// puede emitir comprobantes reales. En Railway (producción) hay que definir ARCA_PRODUCTION=true.
 const arca = new Arca({
   cert,
   key,
   cuit: Number(process.env.ARCA_CUIT),
-  // Por defecto es producción (igual que antes). Poné ARCA_PRODUCTION=false para usar homologación
-  // con certificados de prueba y no emitir comprobantes reales desde tu PC.
-  production: process.env.ARCA_PRODUCTION !== 'false'
+  production: esProduccionArca(process.env.ARCA_PRODUCTION)
 });
+
+// Deja a la vista en el log, en cada arranque, en qué modo quedó ARCA.
+console.log(describirModoArca(process.env.ARCA_PRODUCTION));
 
 // Lock simple: encadena todas las emisiones una detrás de otra, para que
 // nunca dos peticiones consulten "el último comprobante" al mismo tiempo.
