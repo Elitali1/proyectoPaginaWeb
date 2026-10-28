@@ -18,7 +18,16 @@ async function listar() {
 
 // Lista completa para la pantalla de administración de sucursales (solo admin).
 async function listarCompleta() {
-  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa, cuenta_transferencia FROM sucursales ORDER BY id');
+  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp FROM sucursales ORDER BY id');
+  return resultado.rows;
+}
+
+// Lista PÚBLICA para el menú de pedidos: solo las sucursales activas y solo datos que el local quiere mostrar
+// (nombre, dirección y WhatsApp). Nada fiscal ni interno (punto de venta, cuenta de cobro).
+async function listarPublicas() {
+  const resultado = await pool.query(
+    'SELECT id, nombre, direccion, whatsapp FROM sucursales WHERE activa ORDER BY id'
+  );
   return resultado.rows;
 }
 
@@ -90,10 +99,10 @@ async function crear(datos, { copiarDe, factor }) {
     }
 
     const nueva = await db.query(
-      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa, cuenta_transferencia)
-       VALUES ($1, $2, $3, $4, COALESCE($5, 'MercadoPago'))
-       RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia`,
-      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true, datos.cuenta_transferencia ?? null]
+      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp)
+       VALUES ($1, $2, $3, $4, COALESCE($5, 'MercadoPago'), $6)
+       RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp`,
+      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true, datos.cuenta_transferencia ?? null, datos.whatsapp ?? null]
     );
     const sucursal = nueva.rows[0];
 
@@ -134,13 +143,15 @@ async function actualizar(id, datos) {
     const resultado = await db.query(
       `UPDATE sucursales
           SET nombre = $1, direccion = $2, pto_vta = $3, activa = $4,
-              cuenta_transferencia = COALESCE($6, cuenta_transferencia)
+              cuenta_transferencia = COALESCE($6, cuenta_transferencia),
+              whatsapp = CASE WHEN $7::boolean THEN $8 ELSE whatsapp END
         WHERE id = $5
-        RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia`,
-      [datos.nombre, datos.direccion, datos.pto_vta, activa, id, datos.cuenta_transferencia ?? null]
+        RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp`,
+      [datos.nombre, datos.direccion, datos.pto_vta, activa, id, datos.cuenta_transferencia ?? null,
+       datos.whatsapp !== undefined, datos.whatsapp ?? null]
     );
     return resultado.rows[0];
   });
 }
 
-module.exports = { obtener, listar, listarCompleta, ptoVtaDeEmision, crear, actualizar };
+module.exports = { obtener, listar, listarCompleta, listarPublicas, ptoVtaDeEmision, crear, actualizar };

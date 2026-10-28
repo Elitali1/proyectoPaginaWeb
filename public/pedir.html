@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Armá tu pedido - Donchichopizza</title>
+  <meta name="description" content="Elegí tus pizzas y empanadas, mirá el total y mandá el pedido por WhatsApp. Donchichopizza, pizzería de barrio.">
+  <meta name="theme-color" content="#7A2E28">
+  <link rel="icon" href="img/Logo.png">
+  <link rel="stylesheet" href="pedir.css">
+</head>
+<body class="pedir">
+
+  <header class="cabecera">
+    <div class="contenedor cabecera-fila">
+      <a class="marca" href="index.html">
+        <img class="logo" src="img/Logo.png" alt="" width="40" height="40">
+        <span>Donchichopizza</span>
+      </a>
+      <button type="button" id="btn-local" class="chip-local oculto" aria-haspopup="dialog">
+        <span id="local-nombre" class="chip-local-nombre"></span>
+        <span id="local-direccion" class="chip-local-direccion"></span>
+      </button>
+      <p id="local-fijo" class="chip-local sin-boton oculto">
+        <span id="local-fijo-nombre" class="chip-local-nombre"></span>
+        <span id="local-fijo-direccion" class="chip-local-direccion"></span>
+      </p>
+    </div>
+  </header>
+
+  <main class="contenedor principal">
+    <h1>Armá tu pedido</h1>
+    <p class="intro">Elegí lo que quieras, mirá el total y mandalo por WhatsApp. Lo confirmamos con vos antes de prepararlo.</p>
+
+    <nav id="categorias" class="categorias oculto" aria-label="Categorías del menú"></nav>
+
+    <div id="estado-menu" class="estado-menu" role="status" aria-live="polite">Cargando el menú...</div>
+    <div id="menu"></div>
+  </main>
+
+  <footer class="contenedor pie">
+    <a href="index.html">Volver al inicio</a>
+  </footer>
+
+  <div class="barra-pedido oculto" id="barra-pedido">
+    <button type="button" id="btn-ver-pedido" class="barra-pedido-boton">
+      <span class="barra-pedido-texto">Ver tu pedido <span id="barra-cantidad" class="barra-pedido-cantidad">0</span></span>
+      <span id="barra-total" class="mono"></span>
+    </button>
+  </div>
+
+  <div id="aviso" class="aviso oculto" role="status" aria-live="polite"></div>
+
+  <!-- Elegir masa, combinar gustos y aclaraciones de un producto -->
+  <dialog id="dlg-producto" class="hoja" aria-labelledby="prod-titulo">
+    <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">&times;</button>
+    <div id="prod-foto" class="prod-foto"></div>
+    <div class="hoja-cuerpo">
+      <h2 id="prod-titulo"></h2>
+      <p id="prod-precio-base" class="mono prod-precio-base"></p>
+
+      <fieldset id="grupo-masa" class="segmentos">
+        <legend>Masa</legend>
+        <label class="segmento"><input type="radio" name="masa" value="piedra" checked><span>A la piedra</span></label>
+        <label class="segmento"><input type="radio" name="masa" value="molde"><span>Al molde</span></label>
+      </fieldset>
+
+      <div id="grupo-mitad" class="grupo-mitad">
+        <label class="casilla"><input type="checkbox" id="chk-mitad"><span id="txt-mitad"></span></label>
+        <label id="lbl-gusto2" class="campo oculto">Segundo gusto
+          <select id="sel-gusto2"></select>
+        </label>
+      </div>
+
+      <label class="campo">Aclaraciones (opcional)
+        <input type="text" id="prod-aclaraciones" maxlength="120" placeholder="Ej: bien cocida, sin orégano" autocomplete="off">
+      </label>
+
+      <div class="fila-accion">
+        <div class="stepper" role="group" aria-label="Cantidad">
+          <button type="button" id="prod-menos" aria-label="Restar uno">&minus;</button>
+          <output id="prod-cantidad" aria-live="polite">1</output>
+          <button type="button" id="prod-mas" aria-label="Sumar uno">+</button>
+        </div>
+        <button type="button" id="prod-agregar" class="btn-principal">
+          <span>Agregar al pedido</span>
+          <span id="prod-total" class="mono"></span>
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Elegir otro local -->
+  <dialog id="dlg-local" class="hoja" aria-labelledby="local-titulo">
+    <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">&times;</button>
+    <div class="hoja-cuerpo">
+      <h2 id="local-titulo">¿En qué local pedís?</h2>
+      <p class="nota">Cada local tiene sus precios y su WhatsApp.</p>
+      <div id="lista-locales" class="lista-locales"></div>
+    </div>
+  </dialog>
+
+  <!-- El pedido, armado como una comanda -->
+  <dialog id="dlg-pedido" class="hoja hoja-pedido" aria-labelledby="ped-titulo">
+    <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">&times;</button>
+    <div class="hoja-cuerpo">
+      <h2 id="ped-titulo">Tu pedido</h2>
+      <p id="ped-local" class="nota"></p>
+
+      <div id="ped-vacio" class="oculto">
+        <p>Todavía no agregaste nada.</p>
+        <button type="button" class="btn-secundario" data-cerrar>Ver el menú</button>
+      </div>
+
+      <div id="ped-contenido">
+        <div class="comanda">
+          <ul id="ped-lineas" class="comanda-lineas"></ul>
+          <p class="comanda-total"><span>Total</span><span id="ped-total" class="mono"></span></p>
+          <p id="ped-nota-envio" class="comanda-nota oculto">El costo del envío te lo confirmamos por WhatsApp.</p>
+        </div>
+
+        <form id="form-pedido" class="form-pedido" novalidate>
+          <label class="campo">Tu nombre
+            <input type="text" id="ped-nombre" maxlength="60" autocomplete="name" required>
+          </label>
+
+          <fieldset class="segmentos">
+            <legend>Entrega</legend>
+            <label class="segmento"><input type="radio" name="entrega" value="retiro" checked><span>Retiro en el local</span></label>
+            <label class="segmento"><input type="radio" name="entrega" value="envio"><span>Envío a domicilio</span></label>
+          </fieldset>
+
+          <label id="lbl-direccion" class="campo oculto">Dirección de entrega
+            <input type="text" id="ped-direccion" maxlength="120" autocomplete="street-address" placeholder="Calle, número y entre calles">
+          </label>
+
+          <fieldset class="segmentos">
+            <legend>Forma de pago</legend>
+            <label class="segmento"><input type="radio" name="pago" value="efectivo" checked><span>Efectivo</span></label>
+            <label class="segmento"><input type="radio" name="pago" value="transferencia"><span>Transferencia</span></label>
+          </fieldset>
+
+          <label class="campo">Aclaraciones para todo el pedido (opcional)
+            <textarea id="ped-aclaraciones" rows="2" maxlength="200" placeholder="Ej: tocar timbre 2, pagar con $20.000"></textarea>
+          </label>
+
+          <p id="ped-error" class="error oculto" role="alert"></p>
+
+          <button type="submit" id="btn-enviar" class="btn-whatsapp">Enviar pedido por WhatsApp</button>
+          <p class="nota">Se abre WhatsApp con tu pedido listo para mandar. Todavía no está confirmado: lo confirmamos con vos por ahí.</p>
+        </form>
+
+        <div id="ped-enviado" class="enviado oculto">
+          <p class="enviado-titulo">Abrimos WhatsApp con tu pedido.</p>
+          <p>Mandá el mensaje y lo confirmamos con vos. Si no se abrió, volvé al pedido y probá de nuevo.</p>
+          <div class="enviado-acciones">
+            <button type="button" id="btn-volver-pedido" class="btn-secundario">Volver al pedido</button>
+            <button type="button" id="btn-nuevo-pedido" class="btn-secundario">Armar otro pedido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="pedido-logica.js"></script>
+  <script src="pedir.js"></script>
+</body>
+</html>

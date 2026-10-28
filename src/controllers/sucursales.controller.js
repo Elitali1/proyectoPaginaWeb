@@ -16,6 +16,15 @@ async function listar(req, res) {
   }
 }
 
+// Público (sin sesión): las sucursales activas para el menú de pedidos.
+async function listarPublico(req, res) {
+  try {
+    res.json(await sucursalesRepository.listarPublicas());
+  } catch (error) {
+    responderError(res, error, 'Error al obtener las sucursales');
+  }
+}
+
 async function crear(req, res) {
   try {
     const datos = validarDatosSucursal(req.body);
@@ -43,4 +52,4 @@ async function actualizar(req, res) {
   }
 }
 
-module.exports = { listar, crear, actualizar };
+module.exports = { listar, listarPublico, crear, actualizar };
