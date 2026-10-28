@@ -49,9 +49,9 @@ async function cargarInsumos() {
       <strong>${escapeHtml(insumo.nombre)}</strong> (${escapeHtml(insumo.unidad_medida)})
       ${insumo.activo ? '' : ' (inactivo)'}
       ${stockBajo ? ' <span class="balance-negativo">⚠ STOCK BAJO</span>' : ''}<br>
-      Stock actual: ${insumo.stock_actual} ${insumo.unidad_medida}<br>
-      Stock mínimo: ${insumo.stock_minimo} ${insumo.unidad_medida}<br>
-      Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${insumo.unidad_medida}
+      Stock actual: ${insumo.stock_actual} ${escapeHtml(insumo.unidad_medida)}<br>
+      Stock mínimo: ${insumo.stock_minimo} ${escapeHtml(insumo.unidad_medida)}<br>
+      Último costo: $${formatearPrecio(insumo.costo_unitario)} por ${escapeHtml(insumo.unidad_medida)}
       <button type="button" class="btn-editar-insumo" data-id="${insumo.id}" data-nombre="${escapeHtml(insumo.nombre)}" data-unidad="${escapeHtml(insumo.unidad_medida)}" data-minimo="${escapeHtml(insumo.stock_minimo)}">Editar</button>
       <button type="button" class="btn-ajustar-stock" data-id="${insumo.id}" data-nombre="${escapeHtml(insumo.nombre)}" data-unidad="${escapeHtml(insumo.unidad_medida)}">Ajustar stock</button>
       <button type="button" class="btn-toggle-activo" data-id="${insumo.id}" data-activo="${insumo.activo}">
