@@ -25,7 +25,7 @@ function validarDatosProducto(body) {
 
 async function listar(req, res) {
   try {
-    const productos = await productosRepository.obtenerTodos();
+    const productos = await productosRepository.obtenerTodos(req.sucursalId);
     res.json(productos);
   } catch (error) {
     responderError(res, error, 'Error al obtener productos');
@@ -35,7 +35,7 @@ async function listar(req, res) {
 async function obtenerUno(req, res) {
   try {
     const { id } = req.params;
-    const producto = await productosRepository.obtenerPorId(id);
+    const producto = await productosRepository.obtenerPorId(id, req.sucursalId);
 
     if (!producto) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -50,7 +50,7 @@ async function obtenerUno(req, res) {
 async function crear(req, res) {
   try {
     const datos = validarDatosProducto(req.body);
-    const nuevoProducto = await productosRepository.crear(datos);
+    const nuevoProducto = await productosRepository.crear(datos, req.sucursalId);
     res.status(201).json(nuevoProducto);
   } catch (error) {
     responderError(res, error, 'Error al crear producto');
@@ -64,12 +64,12 @@ async function actualizar(req, res) {
 
     // El PUT reemplaza todos los campos: si no llega `disponible` se conserva el valor actual.
     if (datos.disponible === undefined) {
-      const actual = await productosRepository.obtenerPorId(id);
+      const actual = await productosRepository.obtenerPorId(id, req.sucursalId);
       if (!actual) return res.status(404).json({ error: 'Producto no encontrado' });
       datos.disponible = actual.disponible;
     }
 
-    const productoActualizado = await productosRepository.actualizar(id, datos);
+    const productoActualizado = await productosRepository.actualizar(id, datos, req.sucursalId);
 
     if (!productoActualizado) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -84,7 +84,7 @@ async function actualizar(req, res) {
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
-    const productoEliminado = await productosRepository.eliminar(id);
+    const productoEliminado = await productosRepository.eliminar(id, req.sucursalId);
 
     if (!productoEliminado) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -101,7 +101,8 @@ async function eliminar(req, res) {
 
 async function listarPublico(req, res) {
   try {
-    const productos = await productosRepository.obtenerTodos();
+    // La landing muestra el menú de la sucursal 1.
+    const productos = await productosRepository.obtenerTodos(1);
     const disponibles = productos
       .filter(p => p.disponible)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, imagen: p.imagen, categoria_nombre: p.categoria_nombre }));
@@ -121,7 +122,7 @@ async function subirImagen(req, res) {
 
     const nombreArchivo = req.file.path;
 
-    const productoActualizado = await productosRepository.actualizarImagen(id, nombreArchivo);
+    const productoActualizado = await productosRepository.actualizarImagen(id, nombreArchivo, req.sucursalId);
 
     if (!productoActualizado) {
       return res.status(404).json({ error: 'Producto no encontrado' });

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const usuariosRepository = require('../repositories/usuarios.repository.js');
+const sucursalesRepository = require('../repositories/sucursales.repository.js');
 const crypto = require('crypto');
 const emailService = require('../services/email.service.js');
 const { ROLES } = require('../config/negocio.js');
@@ -38,12 +39,29 @@ function validarDatosUsuario({ nombre, email, rol }) {
   if (!ROLES.includes(rol)) throw new ErrorNegocio('Rol inválido');
 }
 
+// Lee la sucursal que manda el panel. Vacío = "no se indicó" (null). Si viene, tiene que ser un entero positivo.
+function leerSucursalId(valor) {
+  if (valor === undefined || valor === null || valor === '') return null;
+  const numero = Number(valor);
+  if (!Number.isInteger(numero) || numero <= 0) throw new ErrorNegocio('La sucursal no es válida');
+  return numero;
+}
+
 async function listar(req, res) {
   try {
     const usuarios = await usuariosRepository.obtenerTodos();
     res.json(usuarios);
   } catch (error) {
     responderError(res, error, 'Error al obtener usuarios');
+  }
+}
+
+// Sucursales disponibles para asignar a un usuario (selector del panel).
+async function listarSucursales(req, res) {
+  try {
+    res.json(await sucursalesRepository.listar());
+  } catch (error) {
+    responderError(res, error, 'Error al obtener sucursales');
   }
 }
 
@@ -57,13 +75,19 @@ async function crear(req, res) {
       throw new ErrorNegocio('La contraseña debe tener entre 8 y 72 caracteres');
     }
 
+    // Si no se indica sucursal, el usuario nuevo queda en la del administrador que lo crea.
+    const sucursal_id = leerSucursalId(req.body.sucursal_id) ?? req.sucursalId;
+
     const password_hash = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    const nuevoUsuario = await usuariosRepository.crear({ nombre: nombre.trim(), email: email.trim(), password_hash, rol });
+    const nuevoUsuario = await usuariosRepository.crear({ nombre: nombre.trim(), email: email.trim(), password_hash, rol, sucursal_id });
     res.status(201).json(nuevoUsuario);
   } catch (error) {
     if (error && error.code === '23505') {
       return res.status(409).json({ error: 'Ya existe un usuario con ese email' });
+    }
+    if (error && error.code === '23503') {
+      return res.status(400).json({ error: 'La sucursal indicada no existe' });
     }
     responderError(res, error, 'Error al crear usuario');
   }
@@ -142,8 +166,11 @@ async function login(req, res) {
     // success: reset failed attempts
     await usuariosRepository.resetFailedLogin(usuario.email);
 
+    // Sucursal donde trabaja el usuario. Si la base todavía no tiene la columna (o es NULL), se usa la 1.
+    const sucursalId = Number.isInteger(usuario.sucursal_id) ? usuario.sucursal_id : 1;
+
     const token = jwt.sign(
-      { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol },
+      { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId },
       process.env.JWT_SECRET,
       { expiresIn: '8h', algorithm: 'HS256' }
     );
@@ -151,11 +178,41 @@ async function login(req, res) {
     // Set httpOnly cookie as well
     res.cookie('auth_token', token, { ...COOKIE_OPTIONS, maxAge: 8 * 60 * 60 * 1000 });
 
+    // Nombre de la sucursal para mostrarlo arriba en el panel.
+    const sucursal = await sucursalesRepository.obtener(sucursalId);
+
     // El token también va en el cuerpo porque el agente de impresión y las pruebas por API lo usan
     // en el header Authorization. El navegador no lo necesita: usa la cookie httpOnly.
-    res.json({ token, usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol } });
+    res.json({
+      token,
+      usuario: { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, sucursal_id: sucursalId, sucursal_nombre: sucursal.nombre }
+    });
   } catch (error) {
     responderError(res, error, 'Error al iniciar sesión');
+  }
+}
+
+// El administrador puede trabajar en cualquier sucursal sin cerrar sesión: se emite un token nuevo con la
+// sucursal elegida. No cambia la sucursal guardada del usuario (al volver a entrar, vuelve a la suya).
+// El navegador no decide nada por su cuenta: la sucursal viaja firmada dentro del token.
+async function cambiarSucursal(req, res) {
+  try {
+    const sucursalId = leerSucursalId(req.body && req.body.sucursal_id);
+    if (sucursalId === null) throw new ErrorNegocio('Indicá la sucursal');
+
+    const sucursal = await sucursalesRepository.obtener(sucursalId);
+    if (!sucursal.activa) throw new ErrorNegocio('La sucursal no está activa', 409);
+
+    const { id, nombre, rol } = req.usuario;
+    const token = jwt.sign(
+      { id, nombre, rol, sucursal_id: sucursalId },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h', algorithm: 'HS256' }
+    );
+    res.cookie('auth_token', token, { ...COOKIE_OPTIONS, maxAge: 8 * 60 * 60 * 1000 });
+    res.json({ usuario: { id, nombre, rol, sucursal_id: sucursalId, sucursal_nombre: sucursal.nombre } });
+  } catch (error) {
+    responderError(res, error, 'Error al cambiar de sucursal');
   }
 }
 
@@ -165,6 +222,9 @@ async function actualizar(req, res) {
     const { nombre, email, rol, password } = req.body || {};
 
     validarDatosUsuario({ nombre, email, rol });
+
+    // Sin sucursal en el pedido = se mantiene la que ya tenía el usuario.
+    const sucursal_id = leerSucursalId(req.body.sucursal_id);
 
     let password_hash = null;
     if (password) {
@@ -187,7 +247,7 @@ async function actualizar(req, res) {
       }
     }
 
-    const usuarioActualizado = await usuariosRepository.actualizar(id, { nombre: nombre.trim(), email: email.trim(), rol, password_hash });
+    const usuarioActualizado = await usuariosRepository.actualizar(id, { nombre: nombre.trim(), email: email.trim(), rol, password_hash, sucursal_id });
 
     if (!usuarioActualizado) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -197,6 +257,9 @@ async function actualizar(req, res) {
   } catch (error) {
     if (error && error.code === '23505') {
       return res.status(409).json({ error: 'Ya existe un usuario con ese email' });
+    }
+    if (error && error.code === '23503') {
+      return res.status(400).json({ error: 'La sucursal indicada no existe' });
     }
     responderError(res, error, 'Error al actualizar usuario');
   }
@@ -272,4 +335,4 @@ async function logout(req, res) {
   res.json({ mensaje: 'Sesión finalizada' });
 }
 
-module.exports = { listar, crear, eliminar, login, actualizar, solicitarReset, confirmarReset, logout };
+module.exports = { listar, listarSucursales, cambiarSucursal, crear, eliminar, login, actualizar, solicitarReset, confirmarReset, logout };

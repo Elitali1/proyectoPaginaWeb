@@ -10,11 +10,11 @@ async function listar(req, res) {
       if (!esFechaISO(desde) || !esFechaISO(hasta)) {
         return res.status(400).json({ error: 'Las fechas deben tener el formato AAAA-MM-DD' });
       }
-      const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta);
+      const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
       return res.json(gastos);
     }
 
-    const gastos = await gastosRepository.obtenerTodos();
+    const gastos = await gastosRepository.obtenerTodos(req.sucursalId);
     res.json(gastos);
   } catch (error) {
     responderError(res, error, 'Error al obtener gastos');
@@ -34,7 +34,7 @@ async function crear(req, res) {
       categoria: textoOpcional(categoria, 100),
       monto: Number(monto),
       fecha
-    });
+    }, req.sucursalId);
     res.status(201).json(nuevoGasto);
   } catch (error) {
     responderError(res, error, 'Error al crear gasto');
@@ -44,7 +44,7 @@ async function crear(req, res) {
 async function eliminar(req, res) {
   try {
     const { id } = req.params;
-    const gastoEliminado = await gastosRepository.eliminar(id);
+    const gastoEliminado = await gastosRepository.eliminar(id, req.sucursalId);
 
     if (!gastoEliminado) {
       return res.status(404).json({ error: 'Gasto no encontrado' });

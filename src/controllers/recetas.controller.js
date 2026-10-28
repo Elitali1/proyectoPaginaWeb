@@ -6,7 +6,7 @@ const { esEnteroPositivo, esNumero } = require('../utils/validaciones.js');
 async function obtener(req, res) {
   try {
     const { productoId } = req.params;
-    const receta = await recetasRepository.obtenerPorProducto(productoId);
+    const receta = await recetasRepository.obtenerPorProducto(productoId, req.sucursalId);
     res.json(receta);
   } catch (error) {
     console.error(error);
@@ -30,7 +30,7 @@ async function guardar(req, res) {
       return { insumo_id: Number(item.insumo_id), cantidad: Number(item.cantidad) };
     });
 
-    const receta = await recetasRepository.reemplazarReceta(productoId, itemsValidos);
+    const receta = await recetasRepository.reemplazarReceta(productoId, itemsValidos, req.sucursalId);
     res.json(receta);
   } catch (error) {
     responderError(res, error, 'Error al guardar la receta');
@@ -41,12 +41,16 @@ async function obtenerCostoYMargen(req, res) {
   try {
     const { productoId } = req.params;
 
-    const producto = await productosRepository.obtenerPorId(productoId);
+    const producto = await productosRepository.obtenerPorId(productoId, req.sucursalId);
     if (!producto) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
+    // Sin precio en esta sucursal no hay margen que calcular.
+    if (producto.precio === null) {
+      return res.status(404).json({ error: 'El producto no se vende en esta sucursal' });
+    }
 
-    const costo = await recetasRepository.calcularCostoProducto(productoId);
+    const costo = await recetasRepository.calcularCostoProducto(productoId, req.sucursalId);
     const precioVenta = Number(producto.precio);
     const gananciaAbsoluta = precioVenta - costo;
     const margenPorcentual = costo > 0 ? ((gananciaAbsoluta / precioVenta) * 100) : null;

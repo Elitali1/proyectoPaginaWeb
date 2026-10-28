@@ -13,8 +13,8 @@ async function listar(req, res) {
     }
 
     const cierres = desde && hasta
-      ? await cierreCajaRepository.obtenerPorRangoFechas(desde, hasta)
-      : await cierreCajaRepository.obtenerTodos();
+      ? await cierreCajaRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId)
+      : await cierreCajaRepository.obtenerTodos(req.sucursalId);
 
     if (cierres.length === 0) {
       return res.json([]);
@@ -25,7 +25,7 @@ async function listar(req, res) {
     const ultimaFecha = fechas.reduce((max, f) => (f > max ? f : max));
 
     // Una sola consulta para todos los días (antes era una por cierre, en paralelo).
-    const ventasPorDia = await cierreCajaRepository.calcularVentasPorProductoEnRango(primeraFecha, ultimaFecha);
+    const ventasPorDia = await cierreCajaRepository.calcularVentasPorProductoEnRango(primeraFecha, ultimaFecha, req.sucursalId);
 
     const cierresConDetalle = cierres.map((cierre, i) => ({
       ...cierre,
@@ -49,14 +49,15 @@ async function crear(req, res) {
     // Quién cierra sale del token de la sesión, no de lo que mande el navegador.
     const cerrado_por = req.usuario.id;
 
-    const existente = await cierreCajaRepository.obtenerPorFecha(fecha);
+    // Cada sucursal tiene su propio cierre por día: se busca y se actualiza solo el de la sucursal del usuario.
+    const existente = await cierreCajaRepository.obtenerPorFecha(fecha, req.sucursalId);
 
     if (existente) {
-      const cierreActualizado = await cierreCajaRepository.actualizar(fecha, cerrado_por);
+      const cierreActualizado = await cierreCajaRepository.actualizar(fecha, cerrado_por, req.sucursalId);
       return res.json(cierreActualizado);
     }
 
-    const nuevoCierre = await cierreCajaRepository.crear(fecha, cerrado_por);
+    const nuevoCierre = await cierreCajaRepository.crear(fecha, cerrado_por, req.sucursalId);
     res.status(201).json(nuevoCierre);
   } catch (error) {
     responderError(res, error, 'Error al crear cierre de caja');
@@ -76,14 +77,14 @@ async function balance(req, res) {
     }
 
     // Filtra en la base en lugar de traer todos los cierres de la historia y filtrarlos acá.
-    const cierresEnRango = await cierreCajaRepository.obtenerPorRangoFechas(desde, hasta);
+    const cierresEnRango = await cierreCajaRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
 
     const ventas = cierresEnRango.reduce((suma, c) => suma + Number(c.total_general), 0);
 
-    const compras = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta);
+    const compras = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
     const totalCompras = compras.reduce((suma, c) => suma + Number(c.monto), 0);
 
-    const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta);
+    const gastos = await gastosRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
     const totalGastos = gastos.reduce((suma, g) => suma + Number(g.monto), 0);
 
     const gananciaNeta = ventas - totalCompras - totalGastos;

@@ -10,6 +10,8 @@ const loginLimiter = rateLimit({windowMs: 15 * 60 * 1000,max: 30,skipSuccessfulR
 const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5 });
 
 router.get('/', verificarToken, verificarRol('admin'), usuariosController.listar);
+router.get('/sucursales', verificarToken, verificarRol('admin'), usuariosController.listarSucursales);
+router.post('/cambiar-sucursal', verificarToken, verificarRol('admin'), usuariosController.cambiarSucursal);
 router.post('/', verificarToken, verificarRol('admin'), usuariosController.crear);
 router.post('/login', loginLimiter, usuariosController.login);
 router.post('/logout', usuariosController.logout);

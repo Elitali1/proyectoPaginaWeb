@@ -22,6 +22,7 @@ const arca = new Arca({
 
 // Lock simple: encadena todas las emisiones una detrás de otra, para que
 // nunca dos peticiones consulten "el último comprobante" al mismo tiempo.
+// Es una sola cola para todas las sucursales: el volumen es bajo y así es lo más seguro.
 let colaDeEmision = Promise.resolve();
 
 function encolarEmision(funcion) {
@@ -31,9 +32,17 @@ function encolarEmision(funcion) {
   return resultado;
 }
 
-async function emitirFactura({ monto, cuitReceptor }) {
+// El punto de venta lo decide quien llama (según la sucursal). Acá solo se exige que sea válido,
+// para que nunca se emita con un punto de venta indefinido.
+function validarPtoVta(ptoVta) {
+  if (!Number.isInteger(ptoVta) || ptoVta <= 0) {
+    throw new Error('Punto de venta de ARCA inválido: no se emite el comprobante');
+  }
+}
+
+async function emitirFactura({ monto, cuitReceptor, ptoVta }) {
+  validarPtoVta(ptoVta);
   return encolarEmision(async () => {
-    const ptoVta = Number(process.env.ARCA_PTO_VTA);
     const cbteTipo = Number(process.env.ARCA_CBTE_TIPO);
 
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipo);
@@ -74,9 +83,10 @@ async function emitirFactura({ monto, cuitReceptor }) {
   });
 }
 
-async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada }) {
+// La nota de crédito se emite con el mismo punto de venta de la factura que acredita.
+async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada, ptoVta }) {
+  validarPtoVta(ptoVta);
   return encolarEmision(async () => {
-    const ptoVta = Number(process.env.ARCA_PTO_VTA);
     const cbteTipoNC = 13;
 
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipoNC);

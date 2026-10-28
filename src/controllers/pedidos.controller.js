@@ -6,16 +6,19 @@ const clientesRepository = require('../repositories/clientes.repository.js');
 const { InvoicePdfGenerator } = require('@arcasdk/pdf');
 const comandaService = require('../services/comanda.service.js');
 const notasCreditoRepository = require('../repositories/notasCredito.repository.js');
+const sucursalesRepository = require('../repositories/sucursales.repository.js');
 const { ESTADOS_PEDIDO } = require('../config/negocio.js');
 const { responderError } = require('../utils/errores.js');
 const { esNumero, esFechaISO, textoOpcional, redondear2 } = require('../utils/validaciones.js');
 const { fechaDeComprobante } = require('../utils/fechas.js');
 
 // Datos fijos del emisor que van en los PDF de facturas y notas de crédito.
-function datosEmisor() {
+// El domicilio es el de la sucursal (el que tiene registrado su punto de venta en ARCA); si la
+// sucursal no lo tiene cargado se usa el del local original.
+function datosEmisor(direccionSucursal) {
   return {
     razonSocial: 'Donchichopizza',
-    domicilioComercial: 'General Villegas 4446,Lanús Buenos Aires',
+    domicilioComercial: direccionSucursal || 'General Villegas 4446,Lanús Buenos Aires',
     condicionIva: 'Responsable Monotributo',
     cuit: String(process.env.ARCA_CUIT),
     iibb: String(process.env.ARCA_CUIT),
@@ -44,7 +47,7 @@ async function conReintentos(operacion, intentos = 3) {
 async function listar(req, res) {
   try {
     const soloActivos = req.query.activos === '1' || req.query.activos === 'true';
-    const pedidos = await pedidosRepository.obtenerTodos({ soloActivos });
+    const pedidos = await pedidosRepository.obtenerTodos({ soloActivos, sucursalId: req.sucursalId });
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pedidos');
@@ -54,7 +57,7 @@ async function listar(req, res) {
 async function obtenerUno(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -77,7 +80,7 @@ async function crear(req, res) {
       clienteId = clienteVinculado.id;
     }
 
-    const nuevoPedido = await pedidosRepository.crear({ ...datos, cliente_id: clienteId });
+    const nuevoPedido = await pedidosRepository.crear({ ...datos, cliente_id: clienteId }, req.sucursalId);
 
     res.status(201).json(nuevoPedido);
   } catch (error) {
@@ -94,7 +97,7 @@ async function actualizarEstado(req, res) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
-    const pedidoActualizado = await pedidosRepository.actualizarEstado(id, estado);
+    const pedidoActualizado = await pedidosRepository.actualizarEstado(id, estado, req.sucursalId);
 
     if (!pedidoActualizado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -110,7 +113,7 @@ async function eliminar(req, res) {
   try {
     const { id } = req.params;
 
-    const pedidoEliminado = await pedidosRepository.eliminar(id);
+    const pedidoEliminado = await pedidosRepository.eliminar(id, req.sucursalId);
 
     if (!pedidoEliminado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -126,7 +129,7 @@ async function facturar(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -151,17 +154,23 @@ async function facturar(req, res) {
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
 
+    // Punto de venta de ARCA de la sucursal del pedido. Se resuelve ANTES de reservar la emisión:
+    // si la sucursal no tiene punto de venta, falla acá y no queda ninguna factura a medias.
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
+    const ptoVta = sucursalesRepository.ptoVtaDeEmision(sucursal);
+
     // Reserva atómica: si ya hay una factura emitida o en proceso lanza ErrorNegocio;
     // si quedó una anterior en error, la reutiliza para reintentar.
     const facturaNueva = await facturasVentaRepository.reservarEmision({
       pedido_id: id,
       tipo_comprobante: 'Factura C',
-      monto: total
+      monto: total,
+      pto_vta: ptoVta
     });
 
     let resultadoArca;
     try {
-      resultadoArca = await arcaService.emitirFactura({ monto: total, cuitReceptor });
+      resultadoArca = await arcaService.emitirFactura({ monto: total, cuitReceptor, ptoVta });
     } catch (errorArca) {
       console.error('Error al emitir en ARCA:', errorArca);
       try {
@@ -202,7 +211,7 @@ async function generarPdf(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -211,6 +220,8 @@ async function generarPdf(req, res) {
     if (!factura || factura.estado !== 'emitida') {
       return res.status(400).json({ error: 'Este pedido no tiene una factura emitida' });
     }
+
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
     const nombreReceptor = pedido.cliente || 'Consumidor Final';
@@ -248,7 +259,7 @@ async function generarPdf(req, res) {
 
     const generator = new InvoicePdfGenerator();
     const pdfBuffer = await generator.generate({
-      emisor: datosEmisor(),
+      emisor: datosEmisor(sucursal.direccion),
       receptor: {
         razonSocial: nombreReceptor,
         condicionIva: cuitReceptor ? 'Responsable Inscripto' : 'Consumidor Final',
@@ -257,7 +268,8 @@ async function generarPdf(req, res) {
       },
       cbteTipo: Number(process.env.ARCA_CBTE_TIPO),
       cbteLetra: 'C',
-      puntoVenta: Number(process.env.ARCA_PTO_VTA),
+      // Facturas viejas (anteriores a las sucursales) no tienen pto_vta guardado: se emitieron con la variable.
+      puntoVenta: Number(factura.pto_vta) || Number(process.env.ARCA_PTO_VTA),
       cbteDesde: Number(factura.numero_comprobante),
       cbteHasta: Number(factura.numero_comprobante),
       cbteFecha: fechaComprobante,
@@ -281,7 +293,7 @@ async function generarPdf(req, res) {
 async function verComanda(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -297,7 +309,7 @@ async function verComanda(req, res) {
 async function imprimirComandaFisica(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -305,7 +317,7 @@ async function imprimirComandaFisica(req, res) {
 
     // Si ya se había impreso y el pedido no se modificó desde entonces, no se vuelve a encolar
     // (evita mandar la misma comanda dos veces a la impresora).
-    const encolado = await pedidosRepository.marcarPendienteImpresion(id);
+    const encolado = await pedidosRepository.marcarPendienteImpresion(id, req.sucursalId);
     if (!encolado) {
       return res.status(409).json({ error: 'Esta comanda ya se imprimió. Si necesitás otra copia, modificá el pedido (aunque sea sin cambios reales) y volvé a intentar.' });
     }
@@ -322,7 +334,7 @@ async function modificarProductos(req, res) {
     // Ahora sí se leen también monto_efectivo y monto_transferencia (antes se perdían al editar un pago mixto).
     const datos = pedidosService.normalizarPedido(req.body);
 
-    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, datos);
+    const pedidoActualizado = await pedidosRepository.actualizarProductos(id, datos, req.sucursalId);
     if (!pedidoActualizado) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -334,7 +346,7 @@ async function modificarProductos(req, res) {
 }
 async function obtenerPendientesImpresion(req, res) {
   try {
-    const pedidos = await pedidosRepository.obtenerPendientesImpresion();
+    const pedidos = await pedidosRepository.obtenerPendientesImpresion(req.sucursalId);
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pendientes de impresión');
@@ -344,7 +356,7 @@ async function obtenerPendientesImpresion(req, res) {
 async function confirmarImpresion(req, res) {
   try {
     const { id } = req.params;
-    const pedido = await pedidosRepository.marcarImpresionCompleta(id);
+    const pedido = await pedidosRepository.marcarImpresionCompleta(id, req.sucursalId);
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -367,7 +379,7 @@ async function listarPorFecha(req, res) {
       return res.status(400).json({ error: 'La fecha debe tener el formato AAAA-MM-DD' });
     }
 
-    const pedidos = await pedidosRepository.obtenerPorFecha(fecha);
+    const pedidos = await pedidosRepository.obtenerPorFecha(fecha, req.sucursalId);
     res.json(pedidos);
   } catch (error) {
     responderError(res, error, 'Error al obtener pedidos por fecha');
@@ -385,11 +397,21 @@ async function anularFactura(req, res) {
     }
     const monto = redondear2(montoRecibido);
 
+    // Primero se confirma que el pedido es de esta sucursal, antes de tocar ARCA.
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
     const factura = await facturasVentaRepository.obtenerPorPedido(id);
 
     if (!factura || factura.estado !== 'emitida') {
       return res.status(400).json({ error: 'Este pedido no tiene una factura emitida para anular' });
     }
+
+    // La nota de crédito sale con el mismo punto de venta que la factura que acredita.
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
+    const ptoVta = Number(factura.pto_vta) || sucursalesRepository.ptoVtaDeEmision(sucursal);
 
     claveEnCurso = factura.id;
     if (notasCreditoEnCurso.has(claveEnCurso)) {
@@ -405,7 +427,6 @@ async function anularFactura(req, res) {
       return res.status(400).json({ error: 'El monto a acreditar supera el total de la factura' });
     }
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
 
     const fechaFactura = fechaDeComprobante(factura.creado_en).replace(/-/g, '');
@@ -413,6 +434,7 @@ async function anularFactura(req, res) {
     const resultadoArca = await arcaService.emitirNotaCredito({
       monto,
       cuitReceptor,
+      ptoVta,
       facturaAsociada: {
         tipoComprobante: Number(process.env.ARCA_CBTE_TIPO) || 11,
         numeroComprobante: factura.numero_comprobante,
@@ -428,7 +450,8 @@ async function anularFactura(req, res) {
         cae: resultadoArca.cae,
         vencimiento_cae: resultadoArca.caeFchVto,
         monto,
-        motivo: textoOpcional(motivo, 200)
+        motivo: textoOpcional(motivo, 200),
+        pto_vta: ptoVta
       }));
       res.json(notaCredito);
     } catch (errorGuardado) {
@@ -453,7 +476,7 @@ async function generarPdfNotaCredito(req, res) {
   try {
     const { id } = req.params;
 
-    const pedido = await pedidosRepository.obtenerConDetalle(id);
+    const pedido = await pedidosRepository.obtenerConDetalle(id, req.sucursalId);
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
@@ -469,6 +492,7 @@ async function generarPdfNotaCredito(req, res) {
     }
 
     const notaCredito = notasCredito[notasCredito.length - 1]; // la más reciente
+    const sucursal = await sucursalesRepository.obtener(pedido.sucursal_id);
 
     const cuitReceptor = pedido.cuit_receptor ? Number(pedido.cuit_receptor) : null;
     const nombreReceptor = pedido.cliente || 'Consumidor Final';
@@ -481,7 +505,7 @@ async function generarPdfNotaCredito(req, res) {
 
     const generator = new InvoicePdfGenerator();
     const pdfBuffer = await generator.generate({
-      emisor: datosEmisor(),
+      emisor: datosEmisor(sucursal.direccion),
       receptor: {
         razonSocial: nombreReceptor,
         condicionIva: cuitReceptor ? 'Responsable Inscripto' : 'Consumidor Final',
@@ -490,7 +514,7 @@ async function generarPdfNotaCredito(req, res) {
       },
       cbteTipo: 13,
       cbteLetra: 'C',
-      puntoVenta: Number(process.env.ARCA_PTO_VTA),
+      puntoVenta: Number(notaCredito.pto_vta) || Number(factura.pto_vta) || Number(process.env.ARCA_PTO_VTA),
       cbteDesde: Number(notaCredito.numero_comprobante),
       cbteHasta: Number(notaCredito.numero_comprobante),
       cbteFecha: fechaComprobante,

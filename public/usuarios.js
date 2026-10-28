@@ -21,6 +21,48 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 let editandoId = null;
 
+// Sucursales para el selector. Mientras haya una sola, el campo queda oculto y todo se ve como siempre.
+let sucursales = [];
+
+async function cargarSucursales() {
+  const respuesta = await fetch(`${API_URL}/usuarios/sucursales`, { credentials: 'include' });
+  if (manejarNoAutorizado(respuesta)) return;
+  if (!respuesta.ok) return; // sin lista, el panel sigue funcionando (el servidor asigna la sucursal por defecto)
+
+  sucursales = await respuesta.json();
+
+  const select = document.getElementById('sucursal');
+  select.innerHTML = '';
+  sucursales.forEach(s => {
+    const opcion = document.createElement('option');
+    opcion.value = s.id;
+    opcion.textContent = s.activa ? s.nombre : `${s.nombre} (inactiva)`;
+    select.appendChild(opcion);
+  });
+
+  document.getElementById('campo-sucursal').classList.toggle('oculto', sucursales.length <= 1);
+  elegirSucursalPorDefecto();
+}
+
+// Al crear un usuario nuevo, por defecto va a la sucursal del administrador que lo está creando.
+function elegirSucursalPorDefecto() {
+  const select = document.getElementById('sucursal');
+  if (usuario.sucursal_id && [...select.options].some(o => Number(o.value) === Number(usuario.sucursal_id))) {
+    select.value = String(usuario.sucursal_id);
+  }
+}
+
+function nombreDeSucursal(id) {
+  const encontrada = sucursales.find(s => Number(s.id) === Number(id));
+  return encontrada ? encontrada.nombre : `Sucursal ${id}`;
+}
+
+// Valor a enviar al servidor: solo si el selector tiene opciones (si no, no se manda y el servidor decide).
+function sucursalElegida() {
+  const select = document.getElementById('sucursal');
+  return select.options.length > 0 ? Number(select.value) : undefined;
+}
+
 async function cargarUsuarios() {
   const respuesta = await fetch(`${API_URL}/usuarios`, {
     credentials: 'include'
@@ -37,8 +79,8 @@ async function cargarUsuarios() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${escapeHtml(u.nombre)}</strong> - ${escapeHtml(u.email)} (${escapeHtml(u.rol)})
-      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${escapeHtml(u.nombre)}" data-email="${escapeHtml(u.email)}" data-rol="${escapeHtml(u.rol)}">Editar</button>
+      <strong>${escapeHtml(u.nombre)}</strong> - ${escapeHtml(u.email)} (${escapeHtml(u.rol)})${sucursales.length > 1 ? ` · ${escapeHtml(nombreDeSucursal(u.sucursal_id))}` : ''}
+      <button type="button" class="btn-editar-usuario" data-id="${u.id}" data-nombre="${escapeHtml(u.nombre)}" data-email="${escapeHtml(u.email)}" data-rol="${escapeHtml(u.rol)}" data-sucursal="${u.sucursal_id ?? ''}">Editar</button>
       <button type="button" class="btn-eliminar" data-id="${u.id}">Eliminar</button>
     `;
     contenedor.appendChild(div);
@@ -72,6 +114,7 @@ async function cargarUsuarios() {
       document.getElementById('nombre').value = boton.dataset.nombre;
       document.getElementById('email').value = boton.dataset.email;
       document.getElementById('rol').value = boton.dataset.rol;
+      if (boton.dataset.sucursal) document.getElementById('sucursal').value = boton.dataset.sucursal;
       document.getElementById('password').value = '';
       document.getElementById('titulo-formulario').textContent = 'Editar usuario';
       document.getElementById('btn-guardar').textContent = 'Guardar cambios';
@@ -84,6 +127,7 @@ async function cargarUsuarios() {
 document.getElementById('btn-cancelar-edicion').addEventListener('click', () => {
   editandoId = null;
   document.getElementById('formulario-usuario').reset();
+  elegirSucursalPorDefecto();
   document.getElementById('titulo-formulario').textContent = 'Crear nuevo usuario';
   document.getElementById('btn-guardar').textContent = 'Crear usuario';
   document.getElementById('etiqueta-password-opcional').textContent = '';
@@ -99,7 +143,7 @@ document.getElementById('formulario-usuario').addEventListener('submit', async (
   const rol = document.getElementById('rol').value;
 
   if (editandoId) {
-    const datosUsuario = { nombre, email, rol };
+    const datosUsuario = { nombre, email, rol, sucursal_id: sucursalElegida() };
     if (password) {
       datosUsuario.password = password;
     }
@@ -138,7 +182,7 @@ document.getElementById('formulario-usuario').addEventListener('submit', async (
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ nombre, email, password, rol })
+      body: JSON.stringify({ nombre, email, password, rol, sucursal_id: sucursalElegida() })
     });
 
     if (manejarNoAutorizado(respuesta)) return;
@@ -151,7 +195,9 @@ document.getElementById('formulario-usuario').addEventListener('submit', async (
   }
 
   document.getElementById('formulario-usuario').reset();
+  elegirSucursalPorDefecto();
   cargarUsuarios();
 });
 
-cargarUsuarios();
+// Primero las sucursales (para poder mostrar el nombre en la lista) y después los usuarios.
+cargarSucursales().catch(() => {}).then(cargarUsuarios);

@@ -42,6 +42,10 @@
           <option value="admin">Administrador</option>
         </select>
       </label>
+      <!-- Se muestra solo cuando hay más de una sucursal (mientras haya una, el panel se ve igual que siempre). -->
+      <label id="campo-sucursal" class="oculto">Sucursal:
+        <select id="sucursal"></select>
+      </label>
       <button type="submit" id="btn-guardar">Crear usuario</button>
       <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
     </form>

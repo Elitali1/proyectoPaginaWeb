@@ -10,11 +10,11 @@ async function listar(req, res) {
       if (!esFechaISO(desde) || !esFechaISO(hasta)) {
         return res.status(400).json({ error: 'Las fechas deben tener el formato AAAA-MM-DD' });
       }
-      const facturas = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta);
+      const facturas = await facturasCompraRepository.obtenerPorRangoFechas(desde, hasta, req.sucursalId);
       return res.json(facturas);
     }
 
-    const facturas = await facturasCompraRepository.obtenerTodas();
+    const facturas = await facturasCompraRepository.obtenerTodas(req.sucursalId);
     res.json(facturas);
   } catch (error) {
     responderError(res, error, 'Error al obtener facturas de compra');
@@ -24,7 +24,7 @@ async function listar(req, res) {
 async function obtenerUna(req, res) {
   try {
     const { id } = req.params;
-    const factura = await facturasCompraRepository.obtenerPorId(id);
+    const factura = await facturasCompraRepository.obtenerPorId(id, req.sucursalId);
 
     if (!factura) {
       return res.status(404).json({ error: 'Factura no encontrada' });
@@ -51,7 +51,8 @@ async function crear(req, res) {
       monto: Number(monto),
       fecha,
       archivo_url: archivo_url || null,
-      subido_por: req.usuario.id // sale del token, no de lo que mande el navegador
+      subido_por: req.usuario.id, // sale del token, no de lo que mande el navegador
+      sucursal_id: req.sucursalId // la compra pertenece a la sucursal del usuario
     });
     res.status(201).json(nuevaFactura);
   } catch (error) {
@@ -63,7 +64,7 @@ async function eliminar(req, res) {
   try {
     const { id } = req.params;
 
-    const facturaEliminada = await facturasCompraRepository.eliminarConReversion(id);
+    const facturaEliminada = await facturasCompraRepository.eliminarConReversion(id, req.sucursalId);
 
     if (!facturaEliminada) {
       return res.status(404).json({ error: 'Factura no encontrada' });
@@ -97,7 +98,7 @@ async function agregarDetalleFactura(req, res) {
 
     const alertas = [];
     for (const item of itemsValidos) {
-      const ultimoPrecio = await facturasCompraRepository.obtenerUltimoPrecioInsumo(item.insumo_id);
+      const ultimoPrecio = await facturasCompraRepository.obtenerUltimoPrecioInsumo(item.insumo_id, req.sucursalId);
       if (ultimoPrecio && Number(ultimoPrecio.precio_unitario) > 0) {
         const precioAnterior = Number(ultimoPrecio.precio_unitario);
         const precioNuevo = item.precio_unitario;
@@ -114,7 +115,7 @@ async function agregarDetalleFactura(req, res) {
       }
     }
 
-    const detalle = await facturasCompraRepository.agregarDetalle(id, itemsValidos);
+    const detalle = await facturasCompraRepository.agregarDetalle(id, itemsValidos, req.sucursalId);
 
     res.status(201).json({ detalle, alertas });
   } catch (error) {
@@ -125,7 +126,7 @@ async function agregarDetalleFactura(req, res) {
 async function obtenerDetalleDeFactura(req, res) {
   try {
     const { id } = req.params;
-    const detalle = await facturasCompraRepository.obtenerDetallePorFactura(id);
+    const detalle = await facturasCompraRepository.obtenerDetallePorFactura(id, req.sucursalId);
     res.json(detalle);
   } catch (error) {
     responderError(res, error, 'Error al obtener el detalle');

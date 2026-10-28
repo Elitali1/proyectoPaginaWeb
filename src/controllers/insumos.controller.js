@@ -4,7 +4,7 @@ const { esTexto, esNumero, textoOpcional } = require('../utils/validaciones.js')
 
 async function listar(req, res) {
   try {
-    const insumos = await insumosRepository.obtenerTodos();
+    const insumos = await insumosRepository.obtenerTodos(req.sucursalId);
     res.json(insumos);
   } catch (error) {
     responderError(res, error, 'Error al obtener insumos');
@@ -29,7 +29,7 @@ async function crear(req, res) {
   try {
     const datos = validarDatosInsumo(req.body);
     const stock_minimo = validarStockMinimo(req.body.stock_minimo);
-    const nuevoInsumo = await insumosRepository.crear({ ...datos, stock_minimo });
+    const nuevoInsumo = await insumosRepository.crear({ ...datos, stock_minimo }, req.sucursalId);
     res.status(201).json(nuevoInsumo);
   } catch (error) {
     responderError(res, error, 'Error al crear insumo');
@@ -46,10 +46,10 @@ async function ajustarStockManual(req, res) {
     }
 
     const delta = Number(cantidad);
-    const insumoActualizado = await insumosRepository.ajustarStockManual(id, delta);
+    const insumoActualizado = await insumosRepository.ajustarStockManual(id, delta, req.sucursalId);
 
     if (!insumoActualizado) {
-      const existente = await insumosRepository.obtenerPorId(id);
+      const existente = await insumosRepository.obtenerPorId(id, req.sucursalId);
       if (!existente) return res.status(404).json({ error: 'Insumo no encontrado' });
       return res.status(400).json({ error: `No se puede descontar ${Math.abs(delta)}: el stock actual es ${existente.stock_actual}` });
     }
@@ -70,7 +70,7 @@ async function alternarActivo(req, res) {
       return res.status(400).json({ error: 'El campo activo debe ser verdadero o falso' });
     }
 
-    const insumoActualizado = await insumosRepository.alternarActivo(id, activo);
+    const insumoActualizado = await insumosRepository.alternarActivo(id, activo, req.sucursalId);
 
     if (!insumoActualizado) {
       return res.status(404).json({ error: 'Insumo no encontrado' });
@@ -86,7 +86,7 @@ async function actualizarStockMinimo(req, res) {
     const { id } = req.params;
     const stock_minimo = validarStockMinimo(req.body.stock_minimo);
 
-    const insumoActualizado = await insumosRepository.actualizarStockMinimo(id, stock_minimo);
+    const insumoActualizado = await insumosRepository.actualizarStockMinimo(id, stock_minimo, req.sucursalId);
 
     if (!insumoActualizado) {
       return res.status(404).json({ error: 'Insumo no encontrado' });
@@ -103,7 +103,7 @@ async function actualizar(req, res) {
     const { id } = req.params;
     const datos = validarDatosInsumo(req.body);
 
-    const insumoActualizado = await insumosRepository.actualizar(id, datos);
+    const insumoActualizado = await insumosRepository.actualizar(id, datos, req.sucursalId);
 
     if (!insumoActualizado) {
       return res.status(404).json({ error: 'Insumo no encontrado' });

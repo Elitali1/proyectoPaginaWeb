@@ -1,7 +1,7 @@
 const pool = require('../config/db.js');
 const { diaComercial } = require('./sqlFechas.js');
 
-async function calcularTotalesDelDia(fecha) {
+async function calcularTotalesDelDia(fecha, sucursalId) {
   const resultado = await pool.query(
     `SELECT
        COALESCE(SUM(
@@ -24,14 +24,15 @@ async function calcularTotalesDelDia(fecha) {
        FROM pedidos p
        JOIN pedido_detalle pd ON pd.pedido_id = p.id
        WHERE ${diaComercial('p.creado_en')} = $1
+         AND p.sucursal_id = $2
          AND p.estado != 'cancelado'
        GROUP BY p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia
      ) AS totales_por_pedido`,
-    [fecha]
+    [fecha, sucursalId]
   );
   return resultado.rows[0];
 }
-async function calcularVentasPorProducto(fecha) {
+async function calcularVentasPorProducto(fecha, sucursalId) {
   const resultado = await pool.query(
     `SELECT
        c.nombre AS categoria_nombre,
@@ -42,17 +43,18 @@ async function calcularVentasPorProducto(fecha) {
      JOIN productos p ON p.id = pd.producto_id
      LEFT JOIN categorias c ON c.id = p.categoria_id
      WHERE ${diaComercial('ped.creado_en')} = $1
+       AND ped.sucursal_id = $2
        AND ped.estado != 'cancelado'
      GROUP BY c.nombre, CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END
      ORDER BY c.nombre, producto_nombre`,
-    [fecha]
+    [fecha, sucursalId]
   );
   return resultado.rows;
 }
 
 // Ventas por producto de todos los días de un rango con UNA sola consulta (antes se hacía una por día).
 // Devuelve un objeto { 'AAAA-MM-DD': [filas...] }.
-async function calcularVentasPorProductoEnRango(desde, hasta) {
+async function calcularVentasPorProductoEnRango(desde, hasta, sucursalId) {
   const resultado = await pool.query(
     `SELECT
        to_char(${diaComercial('ped.creado_en')}, 'YYYY-MM-DD') AS dia,
@@ -64,10 +66,11 @@ async function calcularVentasPorProductoEnRango(desde, hasta) {
      JOIN productos p ON p.id = pd.producto_id
      LEFT JOIN categorias c ON c.id = p.categoria_id
      WHERE ${diaComercial('ped.creado_en')} BETWEEN $1 AND $2
+       AND ped.sucursal_id = $3
        AND ped.estado != 'cancelado'
      GROUP BY dia, c.nombre, CASE WHEN c.nombre = 'Pizzas' THEN 'Pizzas' ELSE p.nombre END
      ORDER BY c.nombre, producto_nombre`,
-    [desde, hasta]
+    [desde, hasta, sucursalId]
   );
 
   const porDia = {};
@@ -78,50 +81,50 @@ async function calcularVentasPorProductoEnRango(desde, hasta) {
   return porDia;
 }
 
-async function crear(fecha, cerrado_por) {
-  const totales = await calcularTotalesDelDia(fecha);
+async function crear(fecha, cerrado_por, sucursalId) {
+  const totales = await calcularTotalesDelDia(fecha, sucursalId);
   const total_general = Number(totales.total_efectivo) + Number(totales.total_transferencia);
 
   const resultado = await pool.query(
-    `INSERT INTO cierre_caja (fecha, total_efectivo, total_transferencia, total_general, cerrado_por)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO cierre_caja (fecha, total_efectivo, total_transferencia, total_general, cerrado_por, sucursal_id)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [fecha, totales.total_efectivo, totales.total_transferencia, total_general, cerrado_por]
+    [fecha, totales.total_efectivo, totales.total_transferencia, total_general, cerrado_por, sucursalId]
   );
   return resultado.rows[0];
 }
 
-async function obtenerTodos() {
-  const resultado = await pool.query('SELECT * FROM cierre_caja ORDER BY fecha DESC');
+async function obtenerTodos(sucursalId) {
+  const resultado = await pool.query('SELECT * FROM cierre_caja WHERE sucursal_id = $1 ORDER BY fecha DESC', [sucursalId]);
   return resultado.rows;
 }
 
-async function obtenerPorFecha(fecha) {
-  const resultado = await pool.query('SELECT * FROM cierre_caja WHERE fecha = $1', [fecha]);
+async function obtenerPorFecha(fecha, sucursalId) {
+  const resultado = await pool.query('SELECT * FROM cierre_caja WHERE fecha = $1 AND sucursal_id = $2', [fecha, sucursalId]);
   return resultado.rows[0];
 }
 
-async function actualizar(fecha, cerrado_por) {
-  const totales = await calcularTotalesDelDia(fecha);
+async function actualizar(fecha, cerrado_por, sucursalId) {
+  const totales = await calcularTotalesDelDia(fecha, sucursalId);
   const total_general = Number(totales.total_efectivo) + Number(totales.total_transferencia);
 
   const resultado = await pool.query(
     `UPDATE cierre_caja
      SET total_efectivo = $1, total_transferencia = $2, total_general = $3, cerrado_por = $4, creado_en = NOW()
-     WHERE fecha = $5
+     WHERE fecha = $5 AND sucursal_id = $6
      RETURNING *`,
-    [totales.total_efectivo, totales.total_transferencia, total_general, cerrado_por, fecha]
+    [totales.total_efectivo, totales.total_transferencia, total_general, cerrado_por, fecha, sucursalId]
   );
   return resultado.rows[0];
 }
-async function obtenerPorRangoFechas(desde, hasta) {
+async function obtenerPorRangoFechas(desde, hasta, sucursalId) {
   const resultado = await pool.query(
-    'SELECT * FROM cierre_caja WHERE fecha BETWEEN $1 AND $2 ORDER BY fecha DESC',
-    [desde, hasta]
+    'SELECT * FROM cierre_caja WHERE fecha BETWEEN $1 AND $2 AND sucursal_id = $3 ORDER BY fecha DESC',
+    [desde, hasta, sucursalId]
   );
   return resultado.rows;
 }
-async function calcularResumenPeriodo(desde, hasta) {
+async function calcularResumenPeriodo(desde, hasta, sucursalId) {
   const resumen = await pool.query(
     `SELECT
        COUNT(DISTINCT p.id) AS cantidad_pedidos,
@@ -129,8 +132,9 @@ async function calcularResumenPeriodo(desde, hasta) {
      FROM pedidos p
      JOIN pedido_detalle pd ON pd.pedido_id = p.id
      WHERE ${diaComercial('p.creado_en')} BETWEEN $1 AND $2
+       AND p.sucursal_id = $3
        AND p.estado != 'cancelado'`,
-    [desde, hasta]
+    [desde, hasta, sucursalId]
   );
 
   // A diferencia de calcularVentasPorProducto/calcularVentasPorProductoEnRango (que se usan en el
@@ -146,10 +150,11 @@ async function calcularResumenPeriodo(desde, hasta) {
      JOIN productos p ON p.id = pd.producto_id
      LEFT JOIN categorias c ON c.id = p.categoria_id
      WHERE ${diaComercial('ped.creado_en')} BETWEEN $1 AND $2
+       AND ped.sucursal_id = $3
        AND ped.estado != 'cancelado'
      GROUP BY c.nombre, p.nombre
      ORDER BY c.nombre, cantidad_vendida DESC`,
-    [desde, hasta]
+    [desde, hasta, sucursalId]
   );
 
   const cantidadPedidos = Number(resumen.rows[0].cantidad_pedidos);
@@ -165,7 +170,7 @@ async function calcularResumenPeriodo(desde, hasta) {
 
 // Total cobrado en efectivo vs. transferencia/MercadoPago en todo el período (no depende de que
 // cada día tenga un cierre de caja cargado, a diferencia de sumar filas de cierre_caja).
-async function calcularTotalesPorMedioPago(desde, hasta) {
+async function calcularTotalesPorMedioPago(desde, hasta, sucursalId) {
   const resultado = await pool.query(
     `SELECT
        COALESCE(SUM(
@@ -188,10 +193,11 @@ async function calcularTotalesPorMedioPago(desde, hasta) {
        FROM pedidos p
        JOIN pedido_detalle pd ON pd.pedido_id = p.id
        WHERE ${diaComercial('p.creado_en')} BETWEEN $1 AND $2
+         AND p.sucursal_id = $3
          AND p.estado != 'cancelado'
        GROUP BY p.id, p.medio_pago, p.monto_efectivo, p.monto_transferencia
      ) AS totales_por_pedido`,
-    [desde, hasta]
+    [desde, hasta, sucursalId]
   );
   return resultado.rows[0];
 }
