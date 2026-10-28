@@ -13,6 +13,7 @@ ocultarSiNoEsAdmin([
   "link-compras",
   "link-caja",
   "link-usuarios",
+  "link-sucursales",
   "link-clientes",
   "link-dashboard",
 ]);

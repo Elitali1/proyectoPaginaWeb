@@ -1,5 +1,6 @@
 const pool = require('../config/db.js');
 const { conTransaccion } = require('../config/transaccion.js');
+const { ErrorNegocio } = require('../utils/errores.js');
 
 // El catálogo (nombre, imagen, categoría) es compartido entre sucursales.
 // El precio y la disponibilidad son de cada sucursal y viven en productos_sucursal.
@@ -128,4 +129,81 @@ async function actualizarImagen(id, imagen, sucursalId) {
   return leerProducto(pool, id, sucursalId);
 }
 
-module.exports = { obtenerTodos, obtenerPorId, crear, actualizar, eliminar, actualizarImagen };
+// En qué sucursales activas se vende el producto, y a qué precio. `db` puede ser el pool o un cliente
+// dentro de una transacción.
+async function leerSucursalesDeProducto(db, id) {
+  const resultado = await db.query(`
+    SELECT s.id AS sucursal_id, s.nombre,
+           (ps.producto_id IS NOT NULL) AS en_sucursal,
+           ps.precio, COALESCE(ps.disponible, false) AS disponible
+    FROM sucursales s
+    LEFT JOIN productos_sucursal ps ON ps.sucursal_id = s.id AND ps.producto_id = $1
+    WHERE s.activa
+    ORDER BY s.id
+  `, [id]);
+  return resultado.rows;
+}
+
+async function obtenerSucursalesDeProducto(id) {
+  const existe = await pool.query('SELECT 1 FROM productos WHERE id = $1', [id]);
+  if (existe.rows.length === 0) return undefined;
+  return leerSucursalesDeProducto(pool, id);
+}
+
+// Deja el producto vendiéndose EXACTAMENTE en las sucursales de la lista (con el precio de cada una):
+//  - las de la lista se agregan o se les actualiza el precio (la disponibilidad actual se respeta;
+//    si el producto es nuevo en esa sucursal, queda disponible);
+//  - las sucursales activas que no están en la lista dejan de ofrecerlo.
+// Es todo o nada: si algo falla, no se cambia nada.
+async function guardarSucursalesDeProducto(id, lista) {
+  return conTransaccion(async (db) => {
+    const existe = await db.query('SELECT 1 FROM productos WHERE id = $1', [id]);
+    if (existe.rows.length === 0) return undefined;
+
+    const activas = await db.query('SELECT id FROM sucursales WHERE activa');
+    const idsActivas = new Set(activas.rows.map(fila => Number(fila.id)));
+
+    for (const item of lista) {
+      if (!idsActivas.has(item.sucursal_id)) {
+        throw new ErrorNegocio('Hay una sucursal que no existe o está inactiva', 400);
+      }
+    }
+
+    const elegidas = new Set(lista.map(item => item.sucursal_id));
+
+    for (const item of lista) {
+      const guardado = await db.query(
+        `INSERT INTO productos_sucursal (producto_id, sucursal_id, precio, disponible)
+         VALUES ($1, $2, $3, true)
+         ON CONFLICT (producto_id, sucursal_id)
+         DO UPDATE SET precio = EXCLUDED.precio
+         RETURNING precio, disponible`,
+        [id, item.sucursal_id, item.precio]
+      );
+
+      // TEMPORAL (igual que en actualizar): la sucursal 1 también se copia a las columnas viejas.
+      if (item.sucursal_id === SUCURSAL_PRINCIPAL) {
+        await db.query(
+          'UPDATE productos SET precio = $1, disponible = $2 WHERE id = $3',
+          [guardado.rows[0].precio, guardado.rows[0].disponible, id]
+        );
+      }
+    }
+
+    for (const sucursalId of idsActivas) {
+      if (!elegidas.has(sucursalId)) {
+        await db.query(
+          'DELETE FROM productos_sucursal WHERE producto_id = $1 AND sucursal_id = $2',
+          [id, sucursalId]
+        );
+      }
+    }
+
+    return leerSucursalesDeProducto(db, id);
+  });
+}
+
+module.exports = {
+  obtenerTodos, obtenerPorId, crear, actualizar, eliminar, actualizarImagen,
+  obtenerSucursalesDeProducto, guardarSucursalesDeProducto
+};

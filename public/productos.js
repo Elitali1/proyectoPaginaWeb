@@ -8,7 +8,7 @@ if (!usuario) {
 }
 
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-clientes', 'link-dashboard']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-caja', 'link-usuarios', 'link-sucursales', 'link-clientes', 'link-dashboard']);
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await fetch(`${API_URL}/usuarios/logout`, { method: 'POST', credentials: 'include' });
@@ -66,14 +66,14 @@ async function cargarProductos() {
     const div = document.createElement('div');
     div.className = 'pedido';
     div.innerHTML = `
-      <strong>${escapeHtml(producto.nombre)}</strong> - $${formatearPrecio(producto.precio)}
+      <strong>${escapeHtml(producto.nombre)}</strong>${producto.en_sucursal ? ` - $${formatearPrecio(producto.precio)}` : ' - no se vende en esta sucursal'}
       ${producto.categoria_nombre ? ` (${escapeHtml(producto.categoria_nombre)})` : ''}
-      ${producto.disponible ? '' : ' (no disponible)'}
+      ${producto.en_sucursal && !producto.disponible ? ' (no disponible)' : ''}
       ${producto.imagen ? `<br><small>Imagen: ${escapeHtml(producto.imagen)}</small>` : ''}
       <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${escapeHtml(producto.nombre)}" data-precio="${escapeHtml(producto.precio)}" data-disponible="${producto.disponible}" data-imagen="${escapeHtml(producto.imagen)}" data-categoria="${producto.categoria_id || ''}">Editar</button>
-      <button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
+      ${producto.en_sucursal ? `<button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
         ${producto.disponible ? 'Marcar no disponible' : 'Reactivar'}
-      </button>
+      </button>` : ''}
     `;
     contenedor.appendChild(div);
   });
@@ -117,6 +117,7 @@ async function cargarProductos() {
       document.getElementById('seccion-receta').classList.remove('oculto');
 
       await cargarRecetaDeProducto(editandoId);
+      await cargarSucursalesDeProducto(editandoId);
     });
   });
 }
@@ -221,6 +222,7 @@ document.getElementById('btn-cancelar-edicion').addEventListener('click', () => 
   document.getElementById('btn-cancelar-edicion').classList.add('oculto');
   document.getElementById('seccion-subir-foto').classList.add('oculto');
   document.getElementById('seccion-receta').classList.add('oculto');
+  document.getElementById('seccion-sucursales').classList.add('oculto');
   document.getElementById('lista-receta').innerHTML = '';
   document.getElementById('resultado-costo').innerHTML = '';
 });
@@ -249,6 +251,7 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
     document.getElementById('btn-guardar').textContent = 'Guardar';
     document.getElementById('btn-cancelar-edicion').classList.add('oculto');
     document.getElementById('seccion-receta').classList.add('oculto');
+    document.getElementById('seccion-sucursales').classList.add('oculto');
   } else {
   const respuesta = await fetch(`${API_URL}/productos`, {
     method: 'POST',
@@ -265,6 +268,7 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
   document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
   document.getElementById('seccion-subir-foto').classList.remove('oculto');
   document.getElementById('seccion-receta').classList.remove('oculto');
+  cargarSucursalesDeProducto(editandoId);
 
   cargarProductos();
   return;
@@ -308,6 +312,104 @@ document.getElementById('btn-subir-foto').addEventListener('click', async () => 
   document.getElementById('imagen').value = productoActualizado.imagen;
   mensaje.textContent = '¡Foto subida!';
   cargarProductos();
+});
+
+// ---- Dónde se vende el producto (sucursales y precio de cada una) ----
+// Solo aparece al editar un producto y cuando hay más de una sucursal activa. El precio y la
+// disponibilidad del formulario de arriba son los de la sucursal en la que estás trabajando;
+// acá se decide en qué sucursales se vende y a qué precio en cada una.
+let sucursalesDelProducto = [];
+
+async function cargarSucursalesDeProducto(productoId) {
+  const seccion = document.getElementById('seccion-sucursales');
+
+  const respuesta = await fetch(`${API_URL}/productos/${productoId}/sucursales`, { credentials: 'include' });
+  if (!respuesta.ok) {
+    seccion.classList.add('oculto');
+    return;
+  }
+  sucursalesDelProducto = await respuesta.json();
+
+  // Con una sola sucursal no hay nada que elegir: el panel se ve como siempre.
+  if (sucursalesDelProducto.length <= 1) {
+    seccion.classList.add('oculto');
+    return;
+  }
+
+  const lista = document.getElementById('lista-sucursales-producto');
+  lista.innerHTML = '';
+
+  sucursalesDelProducto.forEach(s => {
+    const fila = document.createElement('div');
+    fila.innerHTML = `
+      <label>
+        <input type="checkbox" class="chk-sucursal" data-id="${s.sucursal_id}" ${s.en_sucursal ? 'checked' : ''}>
+        ${escapeHtml(s.nombre)}
+      </label>
+      <label>Precio: <input type="number" class="precio-sucursal" data-id="${s.sucursal_id}" min="0" step="any" value="${s.en_sucursal ? escapeHtml(s.precio) : ''}"></label>
+    `;
+    lista.appendChild(fila);
+  });
+
+  // Al tildar una sucursal sin precio, se sugiere el que está cargado arriba en el formulario.
+  document.querySelectorAll('.chk-sucursal').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const campo = document.querySelector(`.precio-sucursal[data-id="${chk.dataset.id}"]`);
+      if (chk.checked && campo.value === '') {
+        campo.value = document.getElementById('precio').value;
+      }
+    });
+  });
+
+  seccion.classList.remove('oculto');
+}
+
+document.getElementById('btn-guardar-sucursales').addEventListener('click', async () => {
+  if (!editandoId) {
+    alert('Primero seleccioná un producto para editar');
+    return;
+  }
+
+  const elegidas = [];
+  for (const chk of document.querySelectorAll('.chk-sucursal')) {
+    if (!chk.checked) continue;
+    const campo = document.querySelector(`.precio-sucursal[data-id="${chk.dataset.id}"]`);
+    if (campo.value === '' || Number(campo.value) < 0) {
+      alert('Poné el precio de cada sucursal que tengas tildada');
+      return;
+    }
+    elegidas.push({ sucursal_id: Number(chk.dataset.id), precio: Number(campo.value) });
+  }
+
+  if (elegidas.length === 0) {
+    alert('El producto tiene que venderse en al menos una sucursal');
+    return;
+  }
+
+  // Si se destilda una sucursal donde hoy se vende, se pide confirmación.
+  const idsElegidos = elegidas.map(e => e.sucursal_id);
+  const quitadas = sucursalesDelProducto.filter(s => s.en_sucursal && !idsElegidos.includes(Number(s.sucursal_id)));
+  if (quitadas.length > 0) {
+    const nombres = quitadas.map(s => s.nombre).join(', ');
+    if (!confirm(`Vas a dejar de vender este producto en: ${nombres}. ¿Seguro?`)) return;
+  }
+
+  const respuesta = await fetch(`${API_URL}/productos/${editandoId}/sucursales`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ sucursales: elegidas })
+  });
+
+  if (!respuesta.ok) {
+    const error = await respuesta.json().catch(() => ({}));
+    alert(error.error || 'No se pudieron guardar las sucursales');
+    return;
+  }
+
+  await cargarSucursalesDeProducto(editandoId);
+  await cargarProductos();
+  alert('Sucursales guardadas');
 });
 
 cargarCategorias();

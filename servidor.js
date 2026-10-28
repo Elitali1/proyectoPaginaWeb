@@ -31,6 +31,7 @@ const insumosRoutes = require('./src/routes/insumos.routes.js');
 const recetasRoutes = require('./src/routes/recetas.routes.js');
 const dashboardRoutes = require('./src/routes/dashboard.routes.js');
 const contactoRoutes = require('./src/routes/contacto.routes.js');
+const sucursalesRoutes = require('./src/routes/sucursales.routes.js');
 
 // Security headers
 app.use(helmet({
@@ -84,6 +85,7 @@ app.use('/pedidos', pedidosRoutes);
 app.use('/clientes', clientesRoutes);
 app.use('/productos', productosRoutes);
 app.use('/usuarios', usuariosRoutes);
+app.use('/sucursales', sucursalesRoutes);
 app.use('/cierre-caja', cierreCajaRoutes);
 app.use('/facturas-compra', facturasCompraRoutes);
 app.use('/facturas-venta', facturasVentaRoutes);
