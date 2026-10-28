@@ -8,7 +8,7 @@ if (!usuario) {
 }
 
 document.getElementById('info-usuario').textContent = `Sesión: ${usuario.nombre} (${usuario.rol})`;
-ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-clientes', 'link-caja', 'link-usuarios', 'link-dashboard']);
+ocultarSiNoEsAdmin(['link-productos', 'link-insumos', 'link-compras', 'link-clientes', 'link-caja', 'link-usuarios', 'link-sucursales', 'link-dashboard']);
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
   await fetch(`${API_URL}/usuarios/logout`, {

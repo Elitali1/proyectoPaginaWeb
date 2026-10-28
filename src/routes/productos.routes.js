@@ -12,5 +12,7 @@ router.post('/', verificarToken, verificarRol('admin'), productosController.crea
 router.put('/:id', verificarToken, verificarRol('admin'), productosController.actualizar);
 router.delete('/:id', verificarToken, verificarRol('admin'), productosController.eliminar);
 router.post('/:id/imagen', verificarToken, verificarRol('admin'), upload.single('imagen'), productosController.subirImagen);
+router.get('/:id/sucursales', verificarToken, verificarRol('admin'), productosController.listarSucursalesDeProducto);
+router.put('/:id/sucursales', verificarToken, verificarRol('admin'), productosController.guardarSucursalesDeProducto);
 
 module.exports = router;

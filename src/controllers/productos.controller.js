@@ -1,6 +1,7 @@
 const productosRepository = require('../repositories/productos.repository.js');
 const { ErrorNegocio, responderError } = require('../utils/errores.js');
 const { esTexto, esNumero, esEnteroPositivo } = require('../utils/validaciones.js');
+const { validarSucursalesDeProducto } = require('../utils/sucursales.js');
 
 // Valida y limpia los datos de un producto. Lanza ErrorNegocio si algo no cierra.
 function validarDatosProducto(body) {
@@ -134,4 +135,29 @@ async function subirImagen(req, res) {
   }
 }
 
-module.exports = { listar, obtenerUno, crear, actualizar, eliminar, listarPublico, subirImagen };
+// En qué sucursales se vende un producto (y a qué precio). Solo admin: ve todas las sucursales activas.
+async function listarSucursalesDeProducto(req, res) {
+  try {
+    const sucursales = await productosRepository.obtenerSucursalesDeProducto(req.params.id);
+    if (!sucursales) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json(sucursales);
+  } catch (error) {
+    responderError(res, error, 'Error al obtener las sucursales del producto');
+  }
+}
+
+async function guardarSucursalesDeProducto(req, res) {
+  try {
+    const lista = validarSucursalesDeProducto(req.body);
+    const sucursales = await productosRepository.guardarSucursalesDeProducto(req.params.id, lista);
+    if (!sucursales) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json(sucursales);
+  } catch (error) {
+    responderError(res, error, 'Error al guardar las sucursales del producto');
+  }
+}
+
+module.exports = {
+  listar, obtenerUno, crear, actualizar, eliminar, listarPublico, subirImagen,
+  listarSucursalesDeProducto, guardarSucursalesDeProducto
+};

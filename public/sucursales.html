@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Donchichopizza - Sucursales</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="marca">
+    <img src="img/Logo.png" alt="Don Chicho" class="logo">
+    <h1>Sucursales</h1>
+  </div>
+  <div class="barra-superior">
+
+    <nav>
+      <a href="pedidos.html">Pedidos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
+      <a href="insumos.html" id="link-insumos">Insumos</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a> <a href="sucursales.html" id="link-sucursales">Sucursales</a>
+      <a href="sucursales.html" id="link-sucursales">Sucursales</a>
+      <a href="historial.html">Historial</a>
+      <a href="clientes.html" id="link-clientes">Clientes</a>
+      <a href="dashboard.html" id="link-dashboard">Dashboard</a>
+    </nav>
+    <div>
+      <p id="info-usuario"></p>
+      <button id="btn-logout">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <section>
+    <h2 id="titulo-formulario">Agregar sucursal</h2>
+    <form id="formulario-sucursal" autocomplete="off">
+      <label>Nombre: <input type="text" id="nombre" maxlength="100" required></label>
+      <label>Dirección (se imprime en las facturas de esta sucursal): <input type="text" id="direccion" maxlength="200"></label>
+      <label>Punto de venta de ARCA: <input type="number" id="pto_vta" min="1" step="1"></label>
+      <label>
+        <input type="checkbox" id="activa" checked>
+        Activa
+      </label>
+
+      <!-- Solo al crear: copia los productos (con precios) y los insumos de otra sucursal. El stock empieza en 0. -->
+      <div id="seccion-copiar">
+        <label>Copiar productos e insumos de:
+          <select id="copiar_de"></select>
+        </label>
+        <label>Factor de precios (1 = mismos precios, 1.10 = 10% más caros): <input type="number" id="factor" value="1" min="0.01" max="10" step="0.01"></label>
+      </div>
+
+      <button type="submit" id="btn-guardar">Crear sucursal</button>
+      <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
+    </form>
+    <p><small>Una sucursal sin punto de venta no puede emitir facturas. El punto de venta no se puede repetir entre sucursales ni cambiar una vez que la sucursal emitió facturas. Las sucursales no se borran: se desactivan.</small></p>
+  </section>
+
+  <section>
+    <h2>Sucursales</h2>
+    <div id="contenedor-sucursales"></div>
+  </section>
+
+  <script src="auth-helpers.js"></script>
+  <script src="sucursales.js"></script>
+</body>
+</html>
