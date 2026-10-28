@@ -29,19 +29,19 @@ async function existeNombre(nombre, excluirId = null) {
 }
 
 async function crear(datos) {
-  const { nombre, requiere_masa } = datos;
+  const { nombre, requiere_masa, es_extra } = datos;
   const resultado = await pool.query(
-    `INSERT INTO categorias (nombre, requiere_masa) VALUES ($1, $2) RETURNING *`,
-    [nombre, requiere_masa ?? false]
+    `INSERT INTO categorias (nombre, requiere_masa, es_extra) VALUES ($1, $2, $3) RETURNING *`,
+    [nombre, requiere_masa ?? false, es_extra ?? false]
   );
   return resultado.rows[0];
 }
 
 async function actualizar(id, datos) {
-  const { nombre, requiere_masa } = datos;
+  const { nombre, requiere_masa, es_extra } = datos;
   const resultado = await pool.query(
-    `UPDATE categorias SET nombre = $1, requiere_masa = $2 WHERE id = $3 RETURNING *`,
-    [nombre, requiere_masa ?? false, id]
+    `UPDATE categorias SET nombre = $1, requiere_masa = $2, es_extra = $3 WHERE id = $4 RETURNING *`,
+    [nombre, requiere_masa ?? false, es_extra ?? false, id]
   );
   return resultado.rows[0];
 }

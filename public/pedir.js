@@ -171,7 +171,8 @@
   // ---- Menú ----
   function renderMenu() {
     const grupos = new Map();
-    estado.productos.forEach(p => {
+    // Los extras (agregados) no salen como productos sueltos: se ofrecen dentro de cada pizza.
+    estado.productos.filter(p => !p.es_extra).forEach(p => {
       const cat = p.categoria_nombre || 'Otros';
       if (!grupos.has(cat)) grupos.set(cat, []);
       grupos.get(cat).push(p);
@@ -259,7 +260,6 @@
     const sinMitad = (p) => /fugazzeta\s+rellena/i.test(p.nombre);
     const otros = estado.productos.filter(p => p.requiere_masa && p.id !== producto.id && !sinMitad(p));
     $('grupo-mitad').classList.toggle('oculto', !conMasa || sinMitad(producto) || otros.length === 0);
-    $('grupo-mitad').classList.toggle('oculto', !conMasa || otros.length === 0);
     $('chk-mitad').checked = false;
     $('lbl-gusto2').classList.add('oculto');
     $('txt-mitad').textContent = 'Mitad y mitad';
@@ -272,6 +272,20 @@
       sel.appendChild(op);
     });
 
+    const extras = conMasa ? estado.productos.filter(p => p.es_extra) : [];
+    $('grupo-extras').classList.toggle('oculto', extras.length === 0);
+    const listaExtras = $('lista-extras');
+    listaExtras.textContent = '';
+    extras.forEach(e => {
+      const fila = crear('label', 'extra');
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.value = String(e.id);
+      fila.append(chk, crear('span', 'extra-nombre', e.nombre), crear('span', 'extra-precio', `+${precio(e.precio)}`));
+      listaExtras.appendChild(fila);
+    });
+
+    $('prod-aclaraciones').value = '';
     $('prod-aclaraciones').placeholder = conMasa ? 'Ej: bien cocida, sin orégano' : '';
     refrescarHoja();
     abrir($('dlg-producto'));
@@ -282,10 +296,16 @@
     return estado.catalogo[Number($('sel-gusto2').value)] || null;
   }
 
+  // Ids de los extras tildados en la hoja del producto.
+  function extrasElegidos() {
+    return [...document.querySelectorAll('#lista-extras input:checked')].map(c => Number(c.value));
+  }
+
   function refrescarHoja() {
     const p2 = segundoGusto();
+    const extras = extrasElegidos().map(id => estado.catalogo[id]).filter(Boolean);
     $('prod-cantidad').textContent = String(estado.cantidadEdicion);
-    $('prod-total').textContent = precio(L.precioUnitario(estado.editando, p2) * estado.cantidadEdicion);
+    $('prod-total').textContent = precio(L.precioUnitario(estado.editando, p2, extras) * estado.cantidadEdicion);
   }
 
   function agregarDesdeHoja() {
@@ -294,6 +314,7 @@
     estado.items = L.agregarItem(estado.items, {
       producto_id: p.id,
       producto_id_2: p2 ? p2.id : undefined,
+      extras: extrasElegidos(),
       cantidad: estado.cantidadEdicion,
       tipo_masa: p.requiere_masa ? (document.querySelector('input[name="masa"]:checked') || {}).value : undefined,
       aclaraciones: $('prod-aclaraciones').value
@@ -322,7 +343,7 @@
 
       const centro = crear('div');
       centro.appendChild(crear('div', 'linea-nombre', d.nombre));
-      const detalle = [d.masa, d.aclaraciones].filter(Boolean).join(' · ');
+      const detalle = [d.masa, ...d.extras.map(e => `+ ${e.nombre}`), d.aclaraciones].filter(Boolean).join(' · ');
       if (detalle) centro.appendChild(crear('div', 'linea-detalle', detalle));
       const ctl = crear('div', 'linea-ctl');
       const menos = crear('button', '', '−');
@@ -422,6 +443,7 @@
     $('prod-mas').addEventListener('click', () => { estado.cantidadEdicion = Math.min(L.CANTIDAD_MAXIMA, estado.cantidadEdicion + 1); refrescarHoja(); });
     $('chk-mitad').addEventListener('change', () => { $('lbl-gusto2').classList.toggle('oculto', !$('chk-mitad').checked); refrescarHoja(); });
     $('sel-gusto2').addEventListener('change', refrescarHoja);
+    $('lista-extras').addEventListener('change', refrescarHoja);
     $('prod-agregar').addEventListener('click', agregarDesdeHoja);
 
     $('ped-lineas').addEventListener('click', (e) => {

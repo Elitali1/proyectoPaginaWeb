@@ -5,7 +5,9 @@ const L = require('../public/pedido-logica.js');
 const catalogo = {
   1: { id: 1, nombre: 'Muzzarella', precio: 8500, requiere_masa: true },
   2: { id: 2, nombre: 'Napolitana', precio: 9500, requiere_masa: true },
-  3: { id: 3, nombre: 'Coca 1.5L', precio: 3000, requiere_masa: false }
+  3: { id: 3, nombre: 'Coca 1.5L', precio: 3000, requiere_masa: false },
+  10: { id: 10, nombre: 'Extra muzzarella', precio: 1500, requiere_masa: false, es_extra: true },
+  11: { id: 11, nombre: 'Extra jamón', precio: 2200, requiere_masa: false, es_extra: true }
 };
 
 test('precio: producto simple y mitad y mitad (mitad + mitad + recargo)', () => {
@@ -117,4 +119,47 @@ test('link de WhatsApp: codifica el texto y rechaza números inválidos', () => 
   assert.strictEqual(decodeURIComponent(link.split('?text=')[1]), 'Hola! 2 x Pizza\nTotal: $5.000 & más');
   assert.strictEqual(L.linkWhatsapp('123', 'x'), null);
   assert.strictEqual(L.linkWhatsapp(null, 'x'), null);
+});
+
+test('extras: cada uno suma su propio precio, por cada unidad de la línea', () => {
+  assert.strictEqual(L.precioUnitario(catalogo[1], null, [catalogo[10], catalogo[11]]), 8500 + 1500 + 2200);
+  assert.strictEqual(L.precioUnitario(catalogo[1], catalogo[2], [catalogo[11]]), 8500 / 2 + 9500 / 2 + 1000 + 2200);
+  const items = L.agregarItem([], { producto_id: 1, cantidad: 2, tipo_masa: 'piedra', extras: [11, 10] });
+  assert.strictEqual(L.totalPedido(items, catalogo), 2 * (8500 + 1500 + 2200));
+});
+
+test('extras: mismos extras en otro orden son la misma línea; distintos extras, líneas aparte', () => {
+  let items = L.agregarItem([], { producto_id: 1, cantidad: 1, tipo_masa: 'piedra', extras: [10, 11] });
+  items = L.agregarItem(items, { producto_id: 1, cantidad: 1, tipo_masa: 'piedra', extras: ['11', 10, 10] });
+  assert.strictEqual(items.length, 1);
+  assert.strictEqual(items[0].cantidad, 2);
+  assert.deepStrictEqual(items[0].extras, [10, 11]);
+  items = L.agregarItem(items, { producto_id: 1, cantidad: 1, tipo_masa: 'piedra' });
+  items = L.agregarItem(items, { producto_id: 1, cantidad: 1, tipo_masa: 'piedra', extras: [10] });
+  assert.strictEqual(items.length, 3);
+  assert.strictEqual(items[1].extras, undefined);
+});
+
+test('extras: basura en la lista de extras se descarta', () => {
+  const [a] = L.agregarItem([], { producto_id: 1, cantidad: 1, extras: ['x', -3, 0, 1.5, null, 10] });
+  assert.deepStrictEqual(a.extras, [10]);
+  const [b] = L.agregarItem([], { producto_id: 1, cantidad: 1, extras: 'nada' });
+  assert.strictEqual(b.extras, undefined);
+});
+
+test('extras: reconciliar saca el extra que ya no se vende pero conserva la pizza', () => {
+  const items = [{ producto_id: 1, cantidad: 1, extras: [10, 99] }, { producto_id: 1, cantidad: 1, extras: [99] }];
+  const r = L.reconciliar(items, catalogo);
+  assert.deepStrictEqual(r.items.map(i => i.extras), [[10], undefined]);
+  assert.strictEqual(r.quitados.length, 2);
+});
+
+test('extras: describirItem y el mensaje de WhatsApp los muestran en líneas aparte con su precio', () => {
+  const items = [{ producto_id: 1, cantidad: 2, tipo_masa: 'piedra', extras: [10, 11] }];
+  const d = L.describirItem(items[0], catalogo);
+  assert.deepStrictEqual(d.extras.map(e => e.nombre), ['Extra muzzarella', 'Extra jamón']);
+  assert.strictEqual(d.subtotal, 2 * (8500 + 1500 + 2200));
+  const texto = L.armarMensaje({ local: 'Local', items, catalogoPorId: catalogo, entrega: 'retiro', pago: 'efectivo', nombre: 'Ana' });
+  assert.ok(texto.includes('2 x Muzzarella - A la piedra - $17.000\n   + 2 x Extra muzzarella - $3.000\n   + 2 x Extra jamón - $4.400'));
+  assert.ok(texto.includes('Total: $24.400\n'));
 });

@@ -3,7 +3,9 @@
 // tal cual en el navegador (pedir.js las toma de window.PedidoLogica).
 //
 // Un ítem del carrito guarda solo REFERENCIAS, no precios:
-//   { producto_id, producto_id_2?, cantidad, tipo_masa?, aclaraciones? }
+//   { producto_id, producto_id_2?, extras?: [ids], cantidad, tipo_masa?, aclaraciones? }
+// Los extras (agregados como "Extra jamón") son productos de una categoría marcada como extras; cada uno
+// tiene su precio y se cobra por cada unidad de la línea (2 pizzas con extra jamón = 2 extras).
 // Los precios y nombres se calculan siempre contra el menú actual, así un precio viejo guardado en el
 // celular del cliente nunca llega al mensaje.
 (function (raiz) {
@@ -17,10 +19,19 @@
     return Number(numero).toLocaleString('es-AR');
   }
 
-  // Precio de UNA unidad: el del producto, o (mitad de uno + mitad del otro + recargo) si es mitad y mitad.
-  function precioUnitario(producto, producto2) {
-    if (!producto2) return Number(producto.precio);
-    return Number(producto.precio) / 2 + Number(producto2.precio) / 2 + RECARGO_MITAD_Y_MITAD;
+  // Precio de UNA unidad: el del producto, o (mitad de uno + mitad del otro + recargo) si es mitad y mitad,
+  // más el precio de cada extra elegido.
+  function precioUnitario(producto, producto2, extras) {
+    const base = !producto2
+      ? Number(producto.precio)
+      : Number(producto.precio) / 2 + Number(producto2.precio) / 2 + RECARGO_MITAD_Y_MITAD;
+    return base + (extras || []).reduce((suma, extra) => suma + Number(extra.precio), 0);
+  }
+
+  // Ids de extras: enteros positivos, sin repetir y ordenados (así el mismo pedido da siempre la misma clave).
+  function normalizarExtras(lista) {
+    const ids = (Array.isArray(lista) ? lista : []).map(Number).filter(n => Number.isInteger(n) && n > 0);
+    return [...new Set(ids)].sort((a, b) => a - b);
   }
 
   function limpiarTexto(texto, maximo) {
@@ -31,13 +42,15 @@
 
   // Dos ítems iguales (mismo producto, masa y aclaración) se suman en una sola línea.
   function claveItem(item) {
-    return [item.producto_id, item.producto_id_2 || '', item.tipo_masa || '', (item.aclaraciones || '').toLowerCase()].join('|');
+    return [item.producto_id, item.producto_id_2 || '', item.tipo_masa || '', normalizarExtras(item.extras).join(','), (item.aclaraciones || '').toLowerCase()].join('|');
   }
 
   function agregarItem(items, nuevo) {
+    const extras = normalizarExtras(nuevo.extras);
     const item = {
       producto_id: Number(nuevo.producto_id),
       producto_id_2: nuevo.producto_id_2 ? Number(nuevo.producto_id_2) : undefined,
+      extras: extras.length ? extras : undefined,
       cantidad: Math.min(Math.max(Math.floor(Number(nuevo.cantidad) || 1), 1), CANTIDAD_MAXIMA),
       tipo_masa: nuevo.tipo_masa === 'piedra' || nuevo.tipo_masa === 'molde' ? nuevo.tipo_masa : undefined,
       aclaraciones: limpiarTexto(nuevo.aclaraciones, 120) || undefined
@@ -73,7 +86,12 @@
         quitados.push(p1 ? p1.nombre : 'Un producto');
         continue;
       }
-      vigentes.push(item);
+      // Un extra que ya no se vende se saca de la línea, pero la pizza se conserva.
+      const extrasVigentes = normalizarExtras(item.extras).filter(id => catalogoPorId[id]);
+      if (extrasVigentes.length !== normalizarExtras(item.extras).length) quitados.push('Un extra');
+      vigentes.push(extrasVigentes.length === normalizarExtras(item.extras).length
+        ? item
+        : { ...item, extras: extrasVigentes.length ? extrasVigentes : undefined });
     }
     return { items: vigentes, quitados };
   }
@@ -83,9 +101,11 @@
     const p1 = catalogoPorId[item.producto_id];
     const p2 = item.producto_id_2 ? catalogoPorId[item.producto_id_2] : null;
     const nombre = p2 ? `Mitad ${p1.nombre} / Mitad ${p2.nombre}` : p1.nombre;
-    const unitario = precioUnitario(p1, p2);
+    const extras = normalizarExtras(item.extras).map(id => catalogoPorId[id]).filter(Boolean);
+    const unitario = precioUnitario(p1, p2, extras);
     return {
       nombre,
+      extras: extras.map(e => ({ nombre: e.nombre, cantidad: item.cantidad, subtotal: Number(e.precio) * item.cantidad })),
       masa: item.tipo_masa ? NOMBRES_MASA[item.tipo_masa] : null,
       aclaraciones: item.aclaraciones || null,
       cantidad: item.cantidad,
@@ -111,11 +131,17 @@
   // El mismo formato "2 x Muzzarella - A la piedra (bien cocida)" que se ve en la pantalla de Pedidos del local,
   // para que quien lo recibe lo pase al sistema sin interpretar nada.
   function armarMensaje({ local, items, catalogoPorId, entrega, direccion, pago, nombre, aclaraciones }) {
-    const lineas = items.map(item => {
+    // Cada extra va en su propia línea, debajo de la pizza a la que pertenece, con su precio: así quien atiende
+    // puede cargarlo en Pedidos como un producto más y el total del pedido cierra con lo que ve el cliente.
+    const lineas = items.flatMap(item => {
       const d = describirItem(item, catalogoPorId);
       const masa = d.masa ? ` - ${d.masa}` : '';
       const nota = d.aclaraciones ? ` (${d.aclaraciones})` : '';
-      return `${d.cantidad} x ${d.nombre}${masa}${nota} - $${formatearPrecio(d.subtotal)}`;
+      const subtotalSinExtras = d.subtotal - d.extras.reduce((suma, e) => suma + e.subtotal, 0);
+      return [
+        `${d.cantidad} x ${d.nombre}${masa}${nota} - $${formatearPrecio(subtotalSinExtras)}`,
+        ...d.extras.map(e => `   + ${e.cantidad} x ${e.nombre} - $${formatearPrecio(e.subtotal)}`)
+      ];
     });
 
     const partes = [
@@ -140,7 +166,7 @@
 
   const api = {
     RECARGO_MITAD_Y_MITAD, CANTIDAD_MAXIMA, NOMBRES_MASA,
-    formatearPrecio, precioUnitario, limpiarTexto, claveItem, agregarItem, cambiarCantidad, cantidadDeProducto,
+    formatearPrecio, precioUnitario, normalizarExtras, limpiarTexto, claveItem, agregarItem, cambiarCantidad, cantidadDeProducto,
     reconciliar, describirItem, totalPedido, cantidadTotal, limpiarTelefono, armarMensaje, linkWhatsapp
   };
 

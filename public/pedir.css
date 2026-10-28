@@ -115,6 +115,16 @@ fieldset.segmentos legend { font-weight: 600; font-size: 0.9rem; padding: 0; mar
 .casilla { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
 .casilla input { width: 20px; height: 20px; accent-color: var(--primary); }
 
+/* Extras: tildes con su precio, dentro de la hoja de la pizza */
+fieldset.extras { border: 0; padding: 0; margin: 0 0 14px; }
+fieldset.extras legend { font-weight: 600; font-size: 0.9rem; padding: 0; margin-bottom: 6px; }
+.extra { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; cursor: pointer; background: #fff; font-size: 0.92rem; }
+.extra input { width: 20px; height: 20px; accent-color: var(--primary); flex: none; }
+.extra-nombre { flex: 1; font-weight: 600; }
+.extra-precio { font-family: var(--mono); font-weight: 600; color: var(--primary-dark); }
+.extra:has(input:checked) { border-color: var(--primary); background: #FBF3E6; }
+.extra:has(input:focus-visible) { outline: 3px solid rgba(232, 163, 61, 0.6); outline-offset: 1px; }
+
 /* Acciones */
 .fila-accion { display: flex; gap: 10px; align-items: stretch; margin-top: 6px; }
 .stepper { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; }

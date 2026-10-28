@@ -3,6 +3,7 @@ const { ErrorNegocio, responderError } = require('../utils/errores.js');
 const { esTexto, esNumero, esEnteroPositivo } = require('../utils/validaciones.js');
 const { validarSucursalesDeProducto, leerSucursalDeConsulta } = require('../utils/sucursales.js');
 const sucursalesRepository = require('../repositories/sucursales.repository.js');
+const categoriasRepository = require('../repositories/categorias.repository.js');
 
 // Valida y limpia los datos de un producto. Lanza ErrorNegocio si algo no cierra.
 function validarDatosProducto(body) {
@@ -112,6 +113,9 @@ async function listarPublico(req, res) {
     if (!sucursal.activa) throw new ErrorNegocio('Esa sucursal no está disponible', 404);
 
     const productos = await productosRepository.obtenerTodos(sucursalId);
+    // Los productos de categorías marcadas como extras se ofrecen dentro de las pizzas, no como productos sueltos.
+    const categorias = await categoriasRepository.obtenerTodas();
+    const extraPorCategoria = new Map(categorias.map(c => [c.id, c.es_extra === true]));
     const disponibles = productos
       .filter(p => p.disponible)
       .map(p => ({
@@ -121,7 +125,8 @@ async function listarPublico(req, res) {
         imagen: p.imagen,
         categoria_nombre: p.categoria_nombre,
         // Para que el armado de pedido sepa si hay que elegir masa (piedra / molde).
-        requiere_masa: Boolean(p.requiere_masa)
+        requiere_masa: Boolean(p.requiere_masa),
+        es_extra: extraPorCategoria.get(p.categoria_id) === true
       }));
     res.json(disponibles);
   } catch (error) {

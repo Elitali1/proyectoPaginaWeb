@@ -20,7 +20,7 @@ async function cargarListaCategorias() {
     div.className = 'pedido';
     div.innerHTML = `
       <strong>${escapeHtml(c.nombre)}</strong>
-      ${c.requiere_masa ? ' · lleva masa' : ''}
+      ${c.requiere_masa ? ' · lleva masa' : ''}${c.es_extra ? ' · extras' : ''}
       · ${n} producto${n === 1 ? '' : 's'}
       <button type="button" class="btn-comanda btn-editar-categoria" data-id="${c.id}">Editar</button>
       <button type="button" class="btn-cancelar btn-borrar-categoria" data-id="${c.id}">Eliminar</button>
@@ -58,6 +58,7 @@ document.getElementById('contenedor-categorias').addEventListener('click', async
     categoriaEditandoId = categoria.id;
     document.getElementById('categoria-nombre').value = categoria.nombre;
     document.getElementById('categoria-requiere-masa').checked = Boolean(categoria.requiere_masa);
+    document.getElementById('categoria-es-extra').checked = Boolean(categoria.es_extra);
     document.getElementById('titulo-formulario-categoria').textContent = `Editar categoría "${categoria.nombre}"`;
     document.getElementById('btn-guardar-categoria').textContent = 'Guardar cambios';
     document.getElementById('btn-cancelar-categoria').classList.remove('oculto');
@@ -86,7 +87,8 @@ document.getElementById('formulario-categoria').addEventListener('submit', async
 
   const datos = {
     nombre: document.getElementById('categoria-nombre').value,
-    requiere_masa: document.getElementById('categoria-requiere-masa').checked
+    requiere_masa: document.getElementById('categoria-requiere-masa').checked,
+    es_extra: document.getElementById('categoria-es-extra').checked
   };
 
   // Cambiar si lleva masa cambia cómo se arma el pedido de todos sus productos en el menú online.
@@ -115,3 +117,11 @@ document.getElementById('formulario-categoria').addEventListener('submit', async
 });
 
 cargarListaCategorias();
+
+// Una categoría de extras no lleva masa: al tildar uno se destilda el otro.
+document.getElementById('categoria-es-extra').addEventListener('change', (e) => {
+  if (e.target.checked) document.getElementById('categoria-requiere-masa').checked = false;
+});
+document.getElementById('categoria-requiere-masa').addEventListener('change', (e) => {
+  if (e.target.checked) document.getElementById('categoria-es-extra').checked = false;
+});
