@@ -2,44 +2,54 @@
 // Es una función pura (no toca la base): por eso se puede testear sin conexión.
 //
 // Cada item de entrada:
-// { sucursal: {id, nombre, activa}, resumen: {cantidadPedidos, ventasTotales, topProductos},
-//   pagos: {efectivo, transferencia}, compras, gastos }
+// { sucursal: {id, nombre, activa, cuenta_transferencia},
+//   resumen: {cantidadPedidos, ventasTotales, topProductos},
+//   pagos: {efectivo, transferencia},
+//   compras,                      // total de facturas de compra del período
+//   gastos: {fijos, variables, directos, sinClasificar},   // ver clasificarGastos
+//   iva: {condicion, alicuota} }
+
+const { armarEstadoResultados, sumarEntradas } = require('./estadoResultados.js');
 
 function redondear(n) {
   return Math.round(Number(n) * 100) / 100;
 }
 
+const totalGastos = g => g.fijos + g.variables + g.directos + g.sinClasificar;
+
 function armarConsolidado(items) {
   // Una sucursal inactiva sin ningún movimiento en el período no aporta nada: se oculta.
-  const visibles = items.filter(i => i.sucursal.activa || i.resumen.cantidadPedidos > 0 || i.compras > 0 || i.gastos > 0);
+  const visibles = items.filter(i =>
+    i.sucursal.activa || i.resumen.cantidadPedidos > 0 || i.compras > 0 || totalGastos(i.gastos) > 0
+  );
 
-  const porSucursal = visibles.map(i => {
+  const entradas = visibles.map(i => ({
+    ventas: Number(i.resumen.ventasTotales),
+    compras: Number(i.compras),
+    gastos: i.gastos,
+    iva: i.iva
+  }));
+
+  const porSucursal = visibles.map((i, indice) => {
     const ventas = Number(i.resumen.ventasTotales);
     const pedidos = Number(i.resumen.cantidadPedidos);
-    const compras = Number(i.compras);
-    const gastos = Number(i.gastos);
-    const ganancia = ventas - compras - gastos;
     return {
       sucursalId: i.sucursal.id,
       nombre: i.sucursal.nombre,
       activa: i.sucursal.activa,
+      cuentaTransferencia: i.sucursal.cuenta_transferencia || 'MercadoPago',
       pedidos,
       ventas: redondear(ventas),
       ticketPromedio: pedidos > 0 ? redondear(ventas / pedidos) : 0,
       efectivo: redondear(i.pagos.efectivo),
       transferencia: redondear(i.pagos.transferencia),
-      compras: redondear(compras),
-      gastos: redondear(gastos),
-      ganancia: redondear(ganancia),
-      // Margen sobre ventas; sin ventas no se puede calcular (null en vez de inventar un 0).
-      margenPorcentual: ventas > 0 ? redondear((ganancia / ventas) * 100) : null
+      estado: armarEstadoResultados(entradas[indice])
     };
   });
 
   const suma = campo => redondear(porSucursal.reduce((acc, s) => acc + s[campo], 0));
   const ventas = suma('ventas');
   const pedidos = suma('pedidos');
-  const ganancia = suma('ganancia');
 
   // Participación de cada local en las ventas totales (para la barra del panel).
   porSucursal.forEach(s => {
@@ -67,10 +77,8 @@ function armarConsolidado(items) {
       ticketPromedio: pedidos > 0 ? redondear(ventas / pedidos) : 0,
       efectivo: suma('efectivo'),
       transferencia: suma('transferencia'),
-      compras: suma('compras'),
-      gastos: suma('gastos'),
-      ganancia,
-      margenPorcentual: ventas > 0 ? redondear((ganancia / ventas) * 100) : null
+      // El estado de resultados total se arma sumando las entradas (no sumando porcentajes).
+      estado: armarEstadoResultados(sumarEntradas(entradas))
     },
     topProductos
   };

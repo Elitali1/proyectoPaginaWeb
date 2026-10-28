@@ -4,8 +4,12 @@ const recetasRepository = require('../repositories/recetas.repository.js');
 const insumosRepository = require('../repositories/insumos.repository.js');
 const facturasCompraRepository = require('../repositories/facturasCompra.repository.js');
 const gastosRepository = require('../repositories/gastos.repository.js');
+const sucursalesRepository = require('../repositories/sucursales.repository.js');
+const configuracionRepository = require('../repositories/configuracion.repository.js');
 const { responderError } = require('../utils/errores.js');
 const { esFechaISO } = require('../utils/validaciones.js');
+const { clasificarGastos } = require('../utils/gastos.js');
+const { armarEstadoResultados } = require('../utils/estadoResultados.js');
 
 async function obtenerDashboard(req, res) {
   try {
@@ -36,6 +40,16 @@ async function obtenerDashboard(req, res) {
 
     const gananciaNeta = resumen.ventasTotales - totalCompras - totalGastos;
 
+    // Estado de resultados con costos fijos y variables (ver utils/estadoResultados.js).
+    const sucursal = await sucursalesRepository.obtener(req.sucursalId);
+    const iva = await configuracionRepository.obtenerIva();
+    const estadoResultados = armarEstadoResultados({
+      ventas: resumen.ventasTotales,
+      compras: totalCompras,
+      gastos: clasificarGastos(gastos),
+      iva
+    });
+
     res.json({
       periodo: { desde, hasta },
       resumen: {
@@ -43,11 +57,13 @@ async function obtenerDashboard(req, res) {
         ventasTotales: resumen.ventasTotales,
         ticketPromedio: resumen.ticketPromedio
       },
-      // "mercadopago" es como en el local se le dice a todo lo que se cobra por transferencia/link de pago.
+      // Antes se llamaba "mercadopago" a todo lo cobrado por transferencia; ahora cada sucursal indica
+      // en qué cuenta cobra (cuentaTransferencia). La clave "mercadopago" se mantiene por compatibilidad.
       pagos: {
         efectivo: Number(totalesPorMedioPago.total_efectivo),
         mercadopago: Number(totalesPorMedioPago.total_transferencia)
       },
+      cuentaTransferencia: sucursal.cuenta_transferencia || 'MercadoPago',
       topProductos: resumen.topProductos,
       clientesRecurrentes,
       mejoresMargenes,
@@ -57,7 +73,8 @@ async function obtenerDashboard(req, res) {
         compras: totalCompras,
         gastos: totalGastos,
         gananciaNeta
-      }
+      },
+      estadoResultados
     });
   } catch (error) {
     responderError(res, error, 'Error al generar el dashboard');

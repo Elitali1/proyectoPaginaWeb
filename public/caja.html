@@ -48,13 +48,23 @@
   
   <section>
   <h2>Cargar gasto</h2>
+  <p><small><strong>Fijo</strong>: no depende de lo que vendés (sueldos, alquiler, luz, agua, gas, internet, tasas). <strong>Variable</strong>: sube y baja con las ventas (packaging, comisiones, delivery). La mercadería que comprás para vender (ej. empanadas) va como categoría "Mercadería".</small></p>
   <form id="formulario-gasto">
     <label>Concepto: <input type="text" id="gasto-concepto" placeholder="Ej: Sueldo Juan, Alquiler agosto" required></label>
-    <label>Categoría (opcional): <input type="text" id="gasto-categoria" placeholder="Ej: sueldo, alquiler, servicios"></label>
+    <label>Categoría: <input type="text" id="gasto-categoria" list="lista-categorias" placeholder="Ej: Sueldos, Alquiler, Luz, Mercadería"></label>
+    <datalist id="lista-categorias"></datalist>
+    <label>Tipo:
+      <select id="gasto-tipo">
+        <option value="">Elegir...</option>
+        <option value="fijo">Fijo</option>
+        <option value="variable">Variable</option>
+      </select>
+    </label>
     <label>Monto: <input type="number" id="gasto-monto" required></label>
     <label>Fecha: <input type="date" id="gasto-fecha" required></label>
     <button type="submit">Guardar gasto</button>
   </form>
+  <p id="mensaje-gasto" class="oculto"></p>
 
   <h3>Gastos cargados</h3>
   <label>Desde: <input type="date" id="gastos-desde"></label>
@@ -62,6 +72,29 @@
   <button type="button" id="btn-filtrar-gastos">Filtrar</button>
   <div id="contenedor-gastos"></div>
 </section>
+
+  <section>
+    <h2>Gastos que se repiten todos los meses</h2>
+    <p><small>Cargá una vez el alquiler, la luz, el internet, los sueldos fijos, etc. de esta sucursal. Después, cada mes, un botón los convierte en gastos sin tipear todo de nuevo. Si ya cargaste uno en ese mes, no se duplica.</small></p>
+    <form id="formulario-recurrente">
+      <label>Concepto: <input type="text" id="recurrente-concepto" placeholder="Ej: Alquiler local" required></label>
+      <label>Categoría: <input type="text" id="recurrente-categoria" list="lista-categorias" placeholder="Ej: Alquiler"></label>
+      <label>Tipo:
+        <select id="recurrente-tipo">
+          <option value="">Elegir...</option>
+          <option value="fijo">Fijo</option>
+          <option value="variable">Variable</option>
+        </select>
+      </label>
+      <label>Monto mensual: <input type="number" id="recurrente-monto" required></label>
+      <button type="submit">Agregar</button>
+    </form>
+    <p id="mensaje-recurrente" class="oculto"></p>
+    <div id="contenedor-recurrentes"></div>
+
+    <label>Cargar los gastos del mes con fecha: <input type="date" id="recurrentes-fecha"></label>
+    <button type="button" id="btn-cargar-recurrentes">Cargar gastos del mes</button>
+  </section>
 
   <section>
     <h2>Balance del período</h2>

@@ -9,7 +9,7 @@ const {
 
 test('sucursal: datos válidos se limpian (espacios, vacíos a null)', () => {
   const datos = validarDatosSucursal({ nombre: '  Donchichopizza Av. 25 de Mayo  ', direccion: ' Av. 25 de Mayo 1645 ', pto_vta: '3', activa: true });
-  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true });
+  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined });
 
   const sinOpcionales = validarDatosSucursal({ nombre: 'Local', direccion: '', pto_vta: '' });
   assert.strictEqual(sinOpcionales.direccion, null);
@@ -67,4 +67,12 @@ test('producto en sucursales: vacía, repetida o con precio inválido se rechaza
   for (const body of malos) {
     assert.throws(() => validarSucursalesDeProducto(body), ErrorNegocio, JSON.stringify(body));
   }
+});
+
+test('sucursal: la cuenta de cobro es opcional, se limpia y tiene tope', () => {
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local' }).cuenta_transferencia, undefined);
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local', cuenta_transferencia: '  Banco Galicia  ' }).cuenta_transferencia, 'Banco Galicia');
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local', cuenta_transferencia: '   ' }).cuenta_transferencia, undefined);
+  assert.throws(() => validarDatosSucursal({ nombre: 'Local', cuenta_transferencia: 'x'.repeat(101) }), ErrorNegocio);
+  assert.throws(() => validarDatosSucursal({ nombre: 'Local', cuenta_transferencia: 5 }), ErrorNegocio);
 });

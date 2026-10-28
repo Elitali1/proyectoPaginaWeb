@@ -19,3 +19,13 @@
   gap: 8px;
   margin: 4px 0;
 }
+
+.cons-destacada { border-top: 1px solid rgba(128, 128, 128, 0.35); padding-top: 6px; margin-top: 8px; }
+.cons-sangria { padding-left: 14px; opacity: 0.9; }
+.cons-estado { max-width: 560px; }
+.cons-aviso {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(200, 120, 0, 0.6);
+}

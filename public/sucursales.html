@@ -19,7 +19,7 @@
       <a href="insumos.html" id="link-insumos">Insumos</a>
       <a href="compras.html" id="link-compras">Compras</a>
       <a href="caja.html" id="link-caja">Cierre de caja</a>
-      <a href="usuarios.html" id="link-usuarios">Usuarios</a> <a href="sucursales.html" id="link-sucursales">Sucursales</a>
+      <a href="usuarios.html" id="link-usuarios">Usuarios</a>
       <a href="sucursales.html" id="link-sucursales">Sucursales</a>
       <a href="historial.html">Historial</a>
       <a href="clientes.html" id="link-clientes">Clientes</a>
@@ -37,6 +37,7 @@
       <label>Nombre: <input type="text" id="nombre" maxlength="100" required></label>
       <label>Dirección (se imprime en las facturas de esta sucursal): <input type="text" id="direccion" maxlength="200"></label>
       <label>Punto de venta de ARCA: <input type="number" id="pto_vta" min="1" step="1"></label>
+      <label>Cuenta donde cobra las transferencias (ej. MercadoPago, Banco Galicia): <input type="text" id="cuenta_transferencia" maxlength="100" placeholder="MercadoPago"></label>
       <label>
         <input type="checkbox" id="activa" checked>
         Activa
@@ -54,6 +55,22 @@
       <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
     </form>
     <p><small>Una sucursal sin punto de venta no puede emitir facturas. El punto de venta no se puede repetir entre sucursales ni cambiar una vez que la sucursal emitió facturas. Las sucursales no se borran: se desactivan.</small></p>
+  </section>
+
+  <section>
+    <h2>Impuestos: condición frente al IVA</h2>
+    <form id="formulario-iva" autocomplete="off">
+      <label>Condición:
+        <select id="iva-condicion">
+          <option value="monotributo">Monotributista (las ventas se toman tal cual)</option>
+          <option value="responsable_inscripto">Responsable Inscripto (el precio incluye IVA)</option>
+        </select>
+      </label>
+      <label>Alícuota de IVA (%): <input type="number" id="iva-alicuota" value="21" min="0" max="50" step="0.5"></label>
+      <button type="submit">Guardar</button>
+    </form>
+    <p><small>Es una sola configuración para todas las sucursales (comparten CUIT). Como Responsable Inscripto, el dashboard muestra las ventas netas de IVA, porque el IVA no es ganancia. Antes de cambiarlo, confirmalo con tu contador.</small></p>
+    <p id="mensaje-iva" class="oculto"></p>
   </section>
 
   <section>

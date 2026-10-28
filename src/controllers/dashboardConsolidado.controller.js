@@ -2,8 +2,10 @@ const cierreCajaRepository = require('../repositories/cierreCaja.repository.js')
 const facturasCompraRepository = require('../repositories/facturasCompra.repository.js');
 const gastosRepository = require('../repositories/gastos.repository.js');
 const sucursalesRepository = require('../repositories/sucursales.repository.js');
+const configuracionRepository = require('../repositories/configuracion.repository.js');
 const { responderError } = require('../utils/errores.js');
 const { esFechaISO } = require('../utils/validaciones.js');
+const { clasificarGastos } = require('../utils/gastos.js');
 const { armarConsolidado } = require('../utils/consolidado.js');
 
 const sumarMontos = filas => filas.reduce((suma, f) => suma + Number(f.monto), 0);
@@ -21,7 +23,8 @@ async function obtenerConsolidado(req, res) {
       return res.status(400).json({ error: 'Las fechas deben tener el formato AAAA-MM-DD' });
     }
 
-    const sucursales = await sucursalesRepository.listar();
+    const sucursales = await sucursalesRepository.listarCompleta();
+    const iva = await configuracionRepository.obtenerIva();
 
     const items = await Promise.all(sucursales.map(async (sucursal) => {
       const [resumen, pagos, compras, gastos] = await Promise.all([
@@ -35,7 +38,8 @@ async function obtenerConsolidado(req, res) {
         resumen,
         pagos: { efectivo: Number(pagos.total_efectivo), transferencia: Number(pagos.total_transferencia) },
         compras: sumarMontos(compras),
-        gastos: sumarMontos(gastos)
+        gastos: clasificarGastos(gastos),
+        iva
       };
     }));
 

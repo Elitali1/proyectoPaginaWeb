@@ -33,6 +33,7 @@ const dashboardRoutes = require('./src/routes/dashboard.routes.js');
 const contactoRoutes = require('./src/routes/contacto.routes.js');
 const sucursalesRoutes = require('./src/routes/sucursales.routes.js');
 const dashboardConsolidadoRoutes = require('./src/routes/dashboardConsolidado.routes.js');
+const configuracionRoutes = require('./src/routes/configuracion.routes.js');
 
 // Security headers
 app.use(helmet({
@@ -97,6 +98,7 @@ app.use('/recetas', recetasRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/contacto', contactoRoutes);
 app.use('/dashboard-consolidado', dashboardConsolidadoRoutes);
+app.use('/configuracion', configuracionRoutes);
 // Manejo de errores que no atrapó ningún controller (JSON mal formado, archivo inválido, etc.).
 // Siempre responde JSON y nunca filtra detalles internos en errores 500.
 app.use((error, req, res, next) => {
