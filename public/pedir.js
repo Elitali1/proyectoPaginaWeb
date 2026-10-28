@@ -255,7 +255,10 @@
     $('grupo-masa').querySelector('input[value="piedra"]').checked = true;
 
     // Mitad y mitad solo entre productos que llevan masa (pizzas), igual que en el local.
-    const otros = estado.productos.filter(p => p.requiere_masa && p.id !== producto.id);
+    // La fugazzeta rellena se vende entera o por porción: ni se combina ni se le puede combinar otra.
+    const sinMitad = (p) => /fugazzeta\s+rellena/i.test(p.nombre);
+    const otros = estado.productos.filter(p => p.requiere_masa && p.id !== producto.id && !sinMitad(p));
+    $('grupo-mitad').classList.toggle('oculto', !conMasa || sinMitad(producto) || otros.length === 0);
     $('grupo-mitad').classList.toggle('oculto', !conMasa || otros.length === 0);
     $('chk-mitad').checked = false;
     $('lbl-gusto2').classList.add('oculto');
@@ -269,7 +272,7 @@
       sel.appendChild(op);
     });
 
-    $('prod-aclaraciones').value = '';
+    $('prod-aclaraciones').placeholder = conMasa ? 'Ej: bien cocida, sin orégano' : '';
     refrescarHoja();
     abrir($('dlg-producto'));
   }
