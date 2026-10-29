@@ -750,7 +750,7 @@ body.publico .menu-item .precio { color: var(--h-bordo-osc); }
 
 /* ---------- Visitanos y contacto ---------- */
 body.publico .local-horario {
-  margin: 0;
+  margin-top: 0;
   margin-bottom: 0;
   font-size: 1.02rem;
   font-weight: 700;
