@@ -102,7 +102,8 @@
     const buscar = (id) => estado.sucursales.find(s => s.id === id);
     const elegida = buscar(pedida) || (estado.sucursales.length === 1 ? estado.sucursales[0] : null) || (!pedida ? buscar(recordada) : null);
 
-    estado.localFijo = Boolean(buscar(pedida));
+    // Una vez adentro del menú de un local no se ofrece saltar al otro: el cliente ve solo los precios del que eligió.
+    estado.localFijo = true;
     renderLocales();
     if (elegida) {
       await elegirLocal(elegida);
