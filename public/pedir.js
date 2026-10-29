@@ -97,10 +97,12 @@
       return;
     }
 
-    const pedida = Number(new URLSearchParams(location.search).get('sucursal'));
+    const params = new URLSearchParams(location.search);
+    const pedida = Number(params.get('sucursal'));
+    const forzarElegir = params.get('elegir') === '1'; // viene del botón del hero: siempre preguntar el local
     const recordada = Number(leer('pedido:ultimo-local'));
     const buscar = (id) => estado.sucursales.find(s => s.id === id);
-    const elegida = buscar(pedida) || (estado.sucursales.length === 1 ? estado.sucursales[0] : null) || (!pedida ? buscar(recordada) : null);
+    const elegida = buscar(pedida) || (estado.sucursales.length === 1 ? estado.sucursales[0] : null) || (!pedida && !forzarElegir ? buscar(recordada) : null);
 
     // Una vez adentro del menú de un local no se ofrece saltar al otro: el cliente ve solo los precios del que eligió.
     estado.localFijo = true;
