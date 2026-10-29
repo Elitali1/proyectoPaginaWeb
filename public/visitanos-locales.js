@@ -1,7 +1,6 @@
 // Página "Visitanos": una tarjeta por cada local activo (nombre, dirección, cómo llegar, pedir y WhatsApp).
 // Sale de /sucursales/publico, así que un local nuevo aparece solo cuando se da de alta y desaparece si se
-// desactiva. No hay precios acá. "Cómo llegar" se arma con la dirección cargada en Sucursales, para no
-// guardar un link de Maps por local.
+// desactiva. No hay precios acá. "Cómo llegar" usa el link de Maps de cada local (reseñas incluidas).
 (function () {
   const contenedor = document.getElementById('visitanos-locales');
   if (!contenedor) return; // otra página
@@ -55,7 +54,11 @@
 
         const acciones = document.createElement('div');
         acciones.className = 'local-acciones';
-        if (s.direccion) {
+        // El link de Maps del local (cargado en Sucursales) abre el lugar con ubicación y reseñas.
+        // Si ese local todavía no lo tiene, se busca por la dirección.
+        if (s.link_mapa) {
+          acciones.appendChild(enlace('primario', 'Cómo llegar', s.link_mapa, true));
+        } else if (s.direccion) {
           const consulta = encodeURIComponent(`${s.direccion}, Buenos Aires, Argentina`);
           acciones.appendChild(enlace('primario', 'Cómo llegar', `https://www.google.com/maps/search/?api=1&query=${consulta}`, true));
         }

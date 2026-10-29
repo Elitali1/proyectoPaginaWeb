@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=Nunito:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
 :root {
   --color-bg: #F3E8D3;
-  --color-surface: #FFFFFF;
+  --color-surface: #FFFCF6;
+  --color-ink: #2B0F0C;          /* tinta de bordes y sombras "pegadas" (la misma de la landing) */
   --color-primary: #7A2E28;
   --color-primary-dark: #5C221D;
   --color-secondary: #E8A33D;
@@ -10,12 +11,12 @@
   --color-warning: #C97A1A;
   --color-danger: #B03A2E;
   --color-text: #2B211C;
-  --color-text-muted: #8A7A66;
+  --color-text-muted: #6B5B49;
   --color-border: #E3D3B4;
   --radius: 10px;
   --shadow: 0 2px 10px rgba(122, 46, 40, 0.10);
   --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-body: 'Nunito', 'Inter', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -41,19 +42,20 @@ h1, h2, h3 {
 
 h1 {
   font-size: 3.1rem;
-  font-weight: 700;
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 h2 {
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   border-bottom: 2px solid var(--color-bg);
   padding-bottom: 6px;
 }
 
 h3 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--color-primary-dark);
 }
 
@@ -412,27 +414,30 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Sucursal 2: azul */
+/* Sucursal 2: azul (mismo carácter que la landing, en tonos azules) */
 html[data-sucursal="2"] {
-  --color-bg: #E4EEF5;
-  --color-primary: #1F5C8A;
-  --color-primary-dark: #163F5E;
-  --color-secondary: #5FB3A1;
-  --color-text-muted: #5E7384;
-  --color-border: #C5D6E3;
-  --shadow: 0 2px 10px rgba(31, 92, 138, 0.12);
+  --color-bg: #DDEBF5;
+  --color-surface: #FBFDFF;
+  --color-primary: #1D5A8E;
+  --color-primary-dark: #12406A;
+  --color-secondary: #4FC3B0;
+  --color-ink: #0E2A43;
+  --color-text: #14283A;
+  --color-text-muted: #4B667C;
+  --color-border: #B7D0E4;
+  --shadow: 0 2px 10px rgba(29, 90, 142, 0.14);
 }
 
 html[data-sucursal="2"] form input:focus,
 html[data-sucursal="2"] form select:focus {
-  box-shadow: 0 0 0 2px rgba(31, 92, 138, 0.18);
+  box-shadow: 0 0 0 2px rgba(29, 90, 142, 0.2);
 }
 
 html[data-sucursal="2"] .btn-comanda:hover,
 html[data-sucursal="2"] .btn-modificar:hover,
 html[data-sucursal="2"] .btn-editar:hover,
 html[data-sucursal="2"] .btn-toggle:hover {
-  background-color: #4A9A88;
+  background-color: #3AAE9B;
 }
 
 /* Banda de ambiente de pruebas */
@@ -446,6 +451,73 @@ html[data-sucursal="2"] .btn-toggle:hover {
   margin: -20px -20px 14px -20px;
   letter-spacing: 0.03em;
 }
+/* ============================================================================
+   LOOK "LANDING" PARA EL SISTEMA INTERNO
+   Bordes de tinta, esquinas redondeadas y sombra "pegada", como la landing.
+   Solo aplica a las páginas SIN body.landing: las públicas (menú, quiénes somos,
+   procesos, visitanos) llevan esa clase y no se tocan acá.
+   Todo sale de los colores de :root, así que la sucursal 2 (azul) lo hereda sola.
+   ============================================================================ */
+body:not(.landing) section {
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  box-shadow: 0 5px 0 var(--color-ink);
+  margin-bottom: 26px;
+}
+
+body:not(.landing) button {
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--color-ink);
+  font-weight: 800;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+
+body:not(.landing) button:hover:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 var(--color-ink);
+}
+
+body:not(.landing) button:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--color-ink);
+}
+
+body:not(.landing) button:disabled {
+  border-color: #CFC4B4;
+  box-shadow: none;
+}
+
+/* secundarios y salir: planos, sin sombra */
+body:not(.landing) .btn-cancelar,
+body:not(.landing) #btn-cancelar-edicion,
+body:not(.landing) #btn-cancelar-edicion-pedido,
+body:not(.landing) #btn-logout {
+  box-shadow: none;
+}
+
+body:not(.landing) form input,
+body:not(.landing) form select,
+body:not(.landing) form textarea {
+  border-width: 2px;
+  border-radius: 10px;
+}
+
+body:not(.landing) .pedido,
+body:not(.landing) .categoria-top-productos {
+  border-radius: 12px;
+}
+
+body:not(.landing) .tarjeta-metrica {
+  border: 2px solid var(--color-ink);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--color-ink);
+}
+
+.badge-sucursal {
+  border: 2px solid var(--color-ink);
+}
+
 /* ---- Responsive: celular ---- */
 @media (max-width: 600px) {
   body {

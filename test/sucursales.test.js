@@ -6,12 +6,13 @@ const {
   validarOpcionesDeCopia,
   validarSucursalesDeProducto,
   validarWhatsapp,
+  validarLinkMapa,
   leerSucursalDeConsulta
 } = require('../src/utils/sucursales.js');
 
 test('sucursal: datos válidos se limpian (espacios, vacíos a null)', () => {
   const datos = validarDatosSucursal({ nombre: '  Donchichopizza Av. 25 de Mayo  ', direccion: ' Av. 25 de Mayo 1645 ', pto_vta: '3', activa: true });
-  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined });
+  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined, link_mapa: undefined });
 
   const sinOpcionales = validarDatosSucursal({ nombre: 'Local', direccion: '', pto_vta: '' });
   assert.strictEqual(sinOpcionales.direccion, null);
@@ -108,4 +109,27 @@ test('sucursal de una consulta pública: vacía = por defecto, inválida se rech
   for (const malo of ['x', '0', '-1', '1.5', '1; DROP TABLE']) {
     assert.throws(() => leerSucursalDeConsulta(malo), ErrorNegocio, malo);
   }
+});
+
+test('link del mapa: undefined conserva, vacío borra, y solo acepta https de Google Maps', () => {
+  assert.strictEqual(validarLinkMapa(undefined), undefined);
+  assert.strictEqual(validarLinkMapa(''), null);
+  assert.strictEqual(validarLinkMapa('   '), null);
+  assert.strictEqual(validarLinkMapa(' https://maps.app.goo.gl/DToFTcv5CEoBoqmR8 '), 'https://maps.app.goo.gl/DToFTcv5CEoBoqmR8');
+  assert.strictEqual(validarLinkMapa('https://www.google.com/maps/place/Don+Chicho+Pizza'), 'https://www.google.com/maps/place/Don+Chicho+Pizza');
+});
+
+test('link del mapa: rechaza otros esquemas, otros sitios, parecidos y texto suelto', () => {
+  assert.throws(() => validarLinkMapa('javascript:alert(1)'), ErrorNegocio);
+  assert.throws(() => validarLinkMapa('http://maps.app.goo.gl/abc'), ErrorNegocio);
+  assert.throws(() => validarLinkMapa('https://evil.com/maps'), ErrorNegocio);
+  assert.throws(() => validarLinkMapa('https://maps.app.goo.gl.evil.com/abc'), ErrorNegocio);
+  assert.throws(() => validarLinkMapa('Av. 25 de Mayo 1645'), ErrorNegocio);
+  assert.throws(() => validarLinkMapa('https://www.google.com/' + 'a'.repeat(500)), ErrorNegocio);
+});
+
+test('datos de sucursal incluyen el link del mapa validado', () => {
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local', link_mapa: 'https://maps.app.goo.gl/x' }).link_mapa, 'https://maps.app.goo.gl/x');
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local' }).link_mapa, undefined);
+  assert.throws(() => validarDatosSucursal({ nombre: 'Local', link_mapa: 'https://evil.com' }), ErrorNegocio);
 });
