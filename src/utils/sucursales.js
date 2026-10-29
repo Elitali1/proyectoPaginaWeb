@@ -27,6 +27,33 @@ function validarWhatsapp(valor) {
   return digitos;
 }
 
+// Link de Google Maps del local. Se muestra como enlace en la página pública, por eso solo se aceptan
+// links https de los dominios de Google Maps (así no se puede guardar un "javascript:" ni un sitio ajeno).
+//  - no viene (undefined)  -> undefined: se conserva el que tenía;
+//  - vacío                 -> null: se borra;
+//  - con contenido         -> el link, sin espacios, si es de Google Maps.
+const DOMINIOS_MAPA = ['maps.app.goo.gl', 'goo.gl', 'g.page', 'maps.google.com', 'google.com', 'www.google.com'];
+
+function validarLinkMapa(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null || String(valor).trim() === '') return null;
+  if (typeof valor !== 'string') throw new ErrorNegocio('El link del mapa no es válido');
+
+  const texto = valor.trim();
+  if (texto.length > 500) throw new ErrorNegocio('El link del mapa es demasiado largo (máximo 500 caracteres)');
+
+  let url;
+  try {
+    url = new URL(texto);
+  } catch (e) {
+    throw new ErrorNegocio('El link del mapa no es válido: pegá el link completo que da Google Maps en "Compartir"');
+  }
+  if (url.protocol !== 'https:' || !DOMINIOS_MAPA.includes(url.hostname)) {
+    throw new ErrorNegocio('El link del mapa tiene que ser de Google Maps (empieza con https://maps.app.goo.gl o https://www.google.com/maps)');
+  }
+  return texto;
+}
+
 // Sucursal pedida en una consulta pública (?sucursal=2). Sin valor, devuelve null (se usa la sucursal por defecto).
 function leerSucursalDeConsulta(valor) {
   if (valor === undefined || valor === null || String(valor).trim() === '') return null;
@@ -37,7 +64,7 @@ function leerSucursalDeConsulta(valor) {
 
 // Datos de una sucursal: nombre (obligatorio), dirección y punto de venta (opcionales), activa.
 function validarDatosSucursal(body) {
-  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp } = body || {};
+  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa } = body || {};
 
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     throw new ErrorNegocio('El nombre de la sucursal es obligatorio');
@@ -82,7 +109,8 @@ function validarDatosSucursal(body) {
     pto_vta: ptoVta,
     activa,
     cuenta_transferencia: cuentaTransferencia,
-    whatsapp: validarWhatsapp(whatsapp)
+    whatsapp: validarWhatsapp(whatsapp),
+    link_mapa: validarLinkMapa(link_mapa)
   };
 }
 
@@ -133,5 +161,5 @@ function validarSucursalesDeProducto(body) {
 }
 
 module.exports = {
-  validarWhatsapp,
+  validarWhatsapp, validarLinkMapa,
   leerSucursalDeConsulta, validarDatosSucursal, validarOpcionesDeCopia, validarSucursalesDeProducto };

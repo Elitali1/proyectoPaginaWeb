@@ -1,0 +1,27 @@
+/* Selector de local de la página Menú (se carga después de landing.css) */
+.selector-local {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 20px;
+}
+
+.selector-local-btn {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+}
+
+.selector-local-btn:hover { background: var(--color-bg); }
+
+.selector-local-btn[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: #fff;
+}

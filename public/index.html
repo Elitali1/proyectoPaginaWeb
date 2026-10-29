@@ -4,85 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Donchichopizza - Pizzería de barrio en Lanús Oeste</title>
-  <meta name="description" content="Pizzería de barrio en Lanús Oeste desde 2023. Pizza a la piedra y al molde, empanadas caseras. Pedidos por WhatsApp.">
+  <meta name="description" content="Pizzería de barrio en Lanús Oeste desde 2023. Pizza a la piedra y al molde, empanadas caseras. Armá tu pedido online.">
 
   <meta property="og:title" content="Donchichopizza - Pizza de barrio, hecha como se debe">
-  <meta property="og:description" content="Pizzería de barrio en Lanús Oeste desde 2023. Pedidos por WhatsApp.">
+  <meta property="og:description" content="Pizzería de barrio en Lanús Oeste desde 2023. Armá tu pedido online.">
   <meta property="og:image" content="https://www.donchichopizza.com.ar/img/fachada.jpg">
   <meta property="og:url" content="https://www.donchichopizza.com.ar">
   <meta property="og:type" content="website">
 
   <link rel="icon" href="img/Logo.png">
+  <!-- Tipografías del diseño nuevo (Fraunces en peso 900 para los títulos, Nunito para el texto) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Nunito:wght@500;600;700;800&display=swap">
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="locales.css">
+  <!-- Estilo de las páginas públicas (todo va bajo body.publico; el sistema interno no se toca) -->
+  <link rel="stylesheet" href="publico.css">
 </head>
-<body class="landing">
+<body class="landing publico">
 
   <header class="landing-header">
-  <div class="marca">
-    <img src="img/Logo.png" alt="Don Chicho" class="logo">
-    <span>Donchichopizza</span>
-  </div>
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <span>Donchichopizza</span>
+    </div>
 
-  <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+    <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
 
-  <div class="menu-movil" id="menu-movil">
-    <nav class="nav-landing">
-      <a href="index.html">Inicio</a>
-      <a href="quienes-somos.html">Quiénes somos</a>
-      <a href="menu.html">Menú</a>
-      <a href="procesos.html">Nuestros procesos</a>
-      <a href="visitanos.html">Visitanos</a>
-    </nav>
-    <a href="login.html" class="link-ingresar">Ingresar</a>
-  </div>
-</header>
+    <div class="menu-movil" id="menu-movil">
+      <nav class="nav-landing">
+        <a href="index.html" class="activo">Inicio</a>
+        <a href="quienes-somos.html">Quiénes somos</a>
+        <a href="menu.html">Menú</a>
+        <a href="procesos.html">Nuestros procesos</a>
+        <a href="visitanos.html">Visitanos</a>
+      </nav>
+      <a href="login.html" class="link-ingresar">Ingresar</a>
+    </div>
+  </header>
 
   <section class="hero">
     <div class="hero-texto">
-      <h1>Pizza de barrio, hecha como se debe.</h1>
+      <h1>Pizza de barrio, <span class="resaltado">hecha como se debe.</span></h1>
       <p>
         Muzzarella, napolitana y todo lo bueno de Lanús Oeste. Buena mercadería,
-        precio amigable, y la garantía de que el dueño está siempre atrás del mostrador.
+        precio amigable y el dueño siempre atrás del mostrador.
       </p>
       <div class="hero-cta">
-        <a href="https://wa.me/5491165838528?text=Hola!%20Quiero%20hacer%20un%20pedido" class="btn-hero primario" target="_blank" rel="noopener">
-          Pedir por WhatsApp
-        </a>
-        <a href="menu.html" class="btn-hero secundario">Ver el menú</a>
+        <a href="pedir.html?elegir=1" class="h-btn ambar">Armá tu pedido</a>
+        <a href="#locales" class="h-btn linea">Ver los locales</a>
       </div>
     </div>
-    <div class="hero-foto">
-      <img src="img/fachada.jpg" alt="Fachada de Donchichopizza">
-      <div class="sello">Desde<br>2023<br>Lanús Oeste</div>
+
+    <!-- Pizza ilustrada con CSS. Cuando haya una foto buena del producto se cambia este bloque por un <img> -->
+    <div class="hero-pizza" aria-hidden="true">
+      <div class="pizza">
+        <div class="pizza-tabla"></div>
+        <div class="pizza-cuerpo"></div>
+        <div class="pizza-cortes"></div>
+        <div class="sello-hero">Desde<br>2023<br>en Lanús</div>
+      </div>
     </div>
   </section>
 
-  <section class="seccion animar-al-scroll">
-    <h2 class="seccion-titulo">Conocenos un poco más</h2>
-    <p class="seccion-intro">Historia, procesos, y todo lo que hace a Donchichopizza.</p>
-    <div class="tarjetas-navegacion">
-      <a href="quienes-somos.html" class="tarjeta-nav animar-al-scroll">
-        <h3>Quiénes somos</h3>
-        <p>De dónde salió Donchichopizza, y por qué lo hacemos así.</p>
-      </a>
-      <a href="menu.html" class="tarjeta-nav animar-al-scroll">
-        <h3>Nuestro menú</h3>
-        <p>Pizzas, empanadas, y todo lo que tenemos para vos.</p>
-      </a>
-      <a href="procesos.html" class="tarjeta-nav animar-al-scroll">
-        <h3>Nuestros procesos</h3>
-        <p>Cómo se hace, paso a paso, cada pizza que sale del horno.</p>
-      </a>
+  <!-- Cinta de productos: el único movimiento de la página (se frena si el usuario pidió menos animaciones) -->
+  <div class="cinta-wrap" aria-hidden="true">
+    <div class="cinta">
+      <div class="cinta-grupo">
+        <span>Pizza a la piedra</span><i>✦</i><span>Pizza al molde</span><i>✦</i><span>Mitad y mitad</span><i>✦</i><span>Fugazzeta rellena</span><i>✦</i><span>Empanadas caseras</span><i>✦</i>
+      </div>
+      <div class="cinta-grupo">
+        <span>Pizza a la piedra</span><i>✦</i><span>Pizza al molde</span><i>✦</i><span>Mitad y mitad</span><i>✦</i><span>Fugazzeta rellena</span><i>✦</i><span>Empanadas caseras</span><i>✦</i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Las tarjetas las arma locales.js con /sucursales/publico; con menos de 2 locales activos la sección queda oculta -->
+  <section class="seccion oculto" id="locales">
+    <h2 class="seccion-titulo">¿Desde qué local pedís?</h2>
+    <p class="seccion-intro">Cada local tiene su propio menú. Elegí el más cercano y armá tu pedido.</p>
+    <div id="locales-grid" class="locales-grid"></div>
+  </section>
+
+  <section class="seccion">
+    <h2 class="seccion-titulo">Lo que sale del horno</h2>
+    <div class="horno-grid">
+      <div class="horno-card rojo">
+        <h3>Pizza a la piedra</h3>
+        <p>Fina, bien cocida, de las de toda la vida.</p>
+      </div>
+      <div class="horno-card verde">
+        <h3>Pizza al molde</h3>
+        <p>Alta y esponjosa. También mitad y mitad.</p>
+      </div>
+      <div class="horno-card ambar">
+        <h3>Empanadas caseras</h3>
+        <p>Hechas en el local, para sumar o llevar solas.</p>
+      </div>
     </div>
   </section>
 
-  <section class="seccion animar-al-scroll" id="galeria">
+  <section class="seccion" id="galeria">
     <h2 class="seccion-titulo">Un vistazo a lo nuestro</h2>
     <p class="seccion-intro">Así salen de nuestro horno.</p>
     <div id="galeria-grid"></div>
+  </section>
+
+  <section class="seccion">
+    <div class="banda-procesos">
+      <div>
+        <h2>Cómo hacemos cada pizza</h2>
+        <p>De la masa al horno, paso a paso. Mirá cómo trabajamos antes de pedir.</p>
+      </div>
+      <a href="procesos.html" class="h-btn ambar">Ver nuestros procesos</a>
+    </div>
   </section>
 
   <div id="lightbox" class="lightbox oculto">
@@ -91,17 +130,20 @@
   </div>
 
   <footer class="landing-footer">
-    <div class="footer-redes">
-      <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
-      <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+    <div class="footer-card">
+      <div class="footer-redes">
+        <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+        <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+      </div>
+      <p class="footer-marca">Donchichopizza · Lanús Oeste, Buenos Aires</p>
+      <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
+      <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
     </div>
-    <p>Donchichopizza · Lanús Oeste, Buenos Aires · <a href="https://wa.me/5491165838528" target="_blank" rel="noopener">+54 9 11 6583-8528</a></p>
-    <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
-    <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
   </footer>
 
   <script src="animaciones-scroll.js"></script>
   <script src="landing.js"></script>
   <script src="menu-movil.js"></script>
+  <script src="locales.js"></script>
 </body>
 </html>
