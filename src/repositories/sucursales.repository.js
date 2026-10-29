@@ -18,15 +18,15 @@ async function listar() {
 
 // Lista completa para la pantalla de administración de sucursales (solo admin).
 async function listarCompleta() {
-  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa FROM sucursales ORDER BY id');
+  const resultado = await pool.query('SELECT id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario FROM sucursales ORDER BY id');
   return resultado.rows;
 }
 
 // Lista PÚBLICA para el menú de pedidos: solo las sucursales activas y solo datos que el local quiere mostrar
-// (nombre, dirección, WhatsApp y link del mapa). Nada fiscal ni interno (punto de venta, cuenta de cobro).
+// (nombre, dirección, WhatsApp, link del mapa y horario). Nada fiscal ni interno (punto de venta, cuenta de cobro).
 async function listarPublicas() {
   const resultado = await pool.query(
-    'SELECT id, nombre, direccion, whatsapp, link_mapa FROM sucursales WHERE activa ORDER BY id'
+    'SELECT id, nombre, direccion, whatsapp, link_mapa, horario FROM sucursales WHERE activa ORDER BY id'
   );
   return resultado.rows;
 }
@@ -99,10 +99,10 @@ async function crear(datos, { copiarDe, factor }) {
     }
 
     const nueva = await db.query(
-      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa)
-       VALUES ($1, $2, $3, $4, COALESCE($5, 'MercadoPago'), $6, $7)
-       RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa`,
-      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true, datos.cuenta_transferencia ?? null, datos.whatsapp ?? null, datos.link_mapa ?? null]
+      `INSERT INTO sucursales (nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario)
+       VALUES ($1, $2, $3, $4, COALESCE($5, 'MercadoPago'), $6, $7, $8)
+       RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario`,
+      [datos.nombre, datos.direccion, datos.pto_vta, datos.activa ?? true, datos.cuenta_transferencia ?? null, datos.whatsapp ?? null, datos.link_mapa ?? null, datos.horario ?? null]
     );
     const sucursal = nueva.rows[0];
 
@@ -145,12 +145,14 @@ async function actualizar(id, datos) {
           SET nombre = $1, direccion = $2, pto_vta = $3, activa = $4,
               cuenta_transferencia = COALESCE($6, cuenta_transferencia),
               whatsapp = CASE WHEN $7::boolean THEN $8 ELSE whatsapp END,
-              link_mapa = CASE WHEN $9::boolean THEN $10 ELSE link_mapa END
+              link_mapa = CASE WHEN $9::boolean THEN $10 ELSE link_mapa END,
+              horario = CASE WHEN $11::boolean THEN $12 ELSE horario END
         WHERE id = $5
-        RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa`,
+        RETURNING id, nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario`,
       [datos.nombre, datos.direccion, datos.pto_vta, activa, id, datos.cuenta_transferencia ?? null,
        datos.whatsapp !== undefined, datos.whatsapp ?? null,
-       datos.link_mapa !== undefined, datos.link_mapa ?? null]
+       datos.link_mapa !== undefined, datos.link_mapa ?? null,
+       datos.horario !== undefined, datos.horario ?? null]
     );
     return resultado.rows[0];
   });

@@ -7,12 +7,13 @@ const {
   validarSucursalesDeProducto,
   validarWhatsapp,
   validarLinkMapa,
+  validarHorario,
   leerSucursalDeConsulta
 } = require('../src/utils/sucursales.js');
 
 test('sucursal: datos válidos se limpian (espacios, vacíos a null)', () => {
   const datos = validarDatosSucursal({ nombre: '  Donchichopizza Av. 25 de Mayo  ', direccion: ' Av. 25 de Mayo 1645 ', pto_vta: '3', activa: true });
-  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined, link_mapa: undefined });
+  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined, link_mapa: undefined, horario: undefined });
 
   const sinOpcionales = validarDatosSucursal({ nombre: 'Local', direccion: '', pto_vta: '' });
   assert.strictEqual(sinOpcionales.direccion, null);
@@ -132,4 +133,18 @@ test('datos de sucursal incluyen el link del mapa validado', () => {
   assert.strictEqual(validarDatosSucursal({ nombre: 'Local', link_mapa: 'https://maps.app.goo.gl/x' }).link_mapa, 'https://maps.app.goo.gl/x');
   assert.strictEqual(validarDatosSucursal({ nombre: 'Local' }).link_mapa, undefined);
   assert.throws(() => validarDatosSucursal({ nombre: 'Local', link_mapa: 'https://evil.com' }), ErrorNegocio);
+});
+
+test('horario: undefined conserva, vacío borra, texto se limpia y no pasa de 200 caracteres', () => {
+  assert.strictEqual(validarHorario(undefined), undefined);
+  assert.strictEqual(validarHorario(''), null);
+  assert.strictEqual(validarHorario('   '), null);
+  assert.strictEqual(validarHorario('  Miércoles a domingos de 19:30 a 00:00 '), 'Miércoles a domingos de 19:30 a 00:00');
+  assert.throws(() => validarHorario('a'.repeat(201)), ErrorNegocio);
+  assert.throws(() => validarHorario(123), ErrorNegocio);
+});
+
+test('datos de sucursal incluyen el horario validado', () => {
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local', horario: ' Vie a dom 20 a 00 ' }).horario, 'Vie a dom 20 a 00');
+  assert.strictEqual(validarDatosSucursal({ nombre: 'Local' }).horario, undefined);
 });

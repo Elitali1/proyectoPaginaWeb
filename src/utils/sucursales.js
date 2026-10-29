@@ -54,6 +54,19 @@ function validarLinkMapa(valor) {
   return texto;
 }
 
+// Días y horario de atención del local: texto libre que se muestra tal cual en la página Visitanos.
+//  - no viene (undefined)  -> undefined: se conserva el que tenía;
+//  - vacío                 -> null: se borra;
+//  - con contenido         -> el texto sin espacios de más (máximo 200 caracteres).
+function validarHorario(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null || String(valor).trim() === '') return null;
+  if (typeof valor !== 'string') throw new ErrorNegocio('El horario no es válido');
+  const texto = valor.trim();
+  if (texto.length > 200) throw new ErrorNegocio('El horario es demasiado largo (máximo 200 caracteres)');
+  return texto;
+}
+
 // Sucursal pedida en una consulta pública (?sucursal=2). Sin valor, devuelve null (se usa la sucursal por defecto).
 function leerSucursalDeConsulta(valor) {
   if (valor === undefined || valor === null || String(valor).trim() === '') return null;
@@ -64,7 +77,7 @@ function leerSucursalDeConsulta(valor) {
 
 // Datos de una sucursal: nombre (obligatorio), dirección y punto de venta (opcionales), activa.
 function validarDatosSucursal(body) {
-  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa } = body || {};
+  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario } = body || {};
 
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     throw new ErrorNegocio('El nombre de la sucursal es obligatorio');
@@ -110,7 +123,8 @@ function validarDatosSucursal(body) {
     activa,
     cuenta_transferencia: cuentaTransferencia,
     whatsapp: validarWhatsapp(whatsapp),
-    link_mapa: validarLinkMapa(link_mapa)
+    link_mapa: validarLinkMapa(link_mapa),
+    horario: validarHorario(horario)
   };
 }
 
@@ -161,5 +175,5 @@ function validarSucursalesDeProducto(body) {
 }
 
 module.exports = {
-  validarWhatsapp, validarLinkMapa,
+  validarWhatsapp, validarLinkMapa, validarHorario,
   leerSucursalDeConsulta, validarDatosSucursal, validarOpcionesDeCopia, validarSucursalesDeProducto };

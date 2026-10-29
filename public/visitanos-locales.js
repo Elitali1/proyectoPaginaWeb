@@ -52,6 +52,14 @@
           tarjeta.appendChild(direccion);
         }
 
+        // Días y horario de ese local (texto libre cargado en Sucursales). Sin horario, no se muestra nada.
+        if (s.horario) {
+          const horario = document.createElement('p');
+          horario.className = 'local-horario';
+          horario.textContent = s.horario;
+          tarjeta.appendChild(horario);
+        }
+
         const acciones = document.createElement('div');
         acciones.className = 'local-acciones';
         // El link de Maps del local (cargado en Sucursales) abre el lugar con ubicación y reseñas.

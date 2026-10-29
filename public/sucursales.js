@@ -45,6 +45,7 @@ async function cargarSucursales() {
       Punto de venta: ${s.pto_vta ? escapeHtml(s.pto_vta) : 'sin cargar (no puede facturar)'}<br>
       Cobra transferencias en: ${escapeHtml(s.cuenta_transferencia)}<br>
       WhatsApp para pedidos: ${s.whatsapp ? escapeHtml(s.whatsapp) : 'sin cargar (el menú online no puede enviar pedidos)'}<br>
+      Horario: ${s.horario ? escapeHtml(s.horario) : 'sin cargar (Visitanos no muestra horario)'}<br>
       Link de Google Maps: ${s.link_mapa ? `<a href="${escapeHtml(s.link_mapa)}" target="_blank" rel="noopener">ver en Maps</a>` : 'sin cargar (Visitanos usa la búsqueda por dirección)'}<br>
       Menú online: <a href="pedir.html?sucursal=${s.id}" target="_blank" rel="noopener">${escapeHtml(`${window.location.origin}/pedir.html?sucursal=${s.id}`)}</a><br>
       <button type="button" class="btn-copiar-menu" data-id="${s.id}">Copiar link del menú</button>
@@ -65,6 +66,7 @@ async function cargarSucursales() {
       document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
       document.getElementById('whatsapp').value = s.whatsapp || '';
       document.getElementById('link_mapa').value = s.link_mapa || '';
+      document.getElementById('horario').value = s.horario || '';
       document.getElementById('activa').checked = s.activa;
       document.getElementById('titulo-formulario').textContent = `Editar sucursal #${s.id}`;
       document.getElementById('btn-guardar').textContent = 'Guardar cambios';
@@ -97,7 +99,7 @@ async function cargarSucursales() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, whatsapp: s.whatsapp, link_mapa: s.link_mapa, activa: !s.activa })
+        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, whatsapp: s.whatsapp, link_mapa: s.link_mapa, horario: s.horario, activa: !s.activa })
       });
 
       if (!respuesta.ok) {
@@ -157,6 +159,7 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
     cuenta_transferencia: document.getElementById('cuenta_transferencia').value,
     whatsapp: document.getElementById('whatsapp').value,
     link_mapa: document.getElementById('link_mapa').value,
+    horario: document.getElementById('horario').value,
     activa: document.getElementById('activa').checked
   };
 

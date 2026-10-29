@@ -749,6 +749,13 @@ body.publico .menu-item .nombre { font-weight: 700; }
 body.publico .menu-item .precio { color: var(--h-bordo-osc); }
 
 /* ---------- Visitanos y contacto ---------- */
+body.publico .local-horario {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--h-bordo-osc);
+}
+
 body.publico .form-contacto {
   max-width: 520px;
   margin: 0;
