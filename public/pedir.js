@@ -11,6 +11,9 @@
     productos: [],
     catalogo: {},
     items: [],
+    // Si el cliente entró con el link de un local (?sucursal=ID) no se le ofrece cambiar al otro:
+    // ve solo los precios de ese local. Sin link, elige en el selector y ahí sí puede cambiar.
+    localFijo: false,
     editando: null,
     cantidadEdicion: 1
   };
@@ -99,6 +102,7 @@
     const buscar = (id) => estado.sucursales.find(s => s.id === id);
     const elegida = buscar(pedida) || (estado.sucursales.length === 1 ? estado.sucursales[0] : null) || (!pedida ? buscar(recordada) : null);
 
+    estado.localFijo = Boolean(buscar(pedida));
     renderLocales();
     if (elegida) {
       await elegirLocal(elegida);
@@ -143,7 +147,7 @@
   // ---- Cabecera y locales ----
   function renderCabeceraLocal() {
     const s = estado.sucursal;
-    const varios = estado.sucursales.length > 1;
+    const varios = estado.sucursales.length > 1 && !estado.localFijo;
     $('btn-local').classList.toggle('oculto', !varios);
     $('local-fijo').classList.toggle('oculto', varios);
     $('local-nombre').textContent = nombreCorto(s);
