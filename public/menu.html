@@ -9,35 +9,38 @@
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="landing.css">
   <link rel="stylesheet" href="menu-publico.css">
+  <link rel="stylesheet" href="publico.css">
 </head>
-<body class="landing">
+<body class="landing publico">
 
   <header class="landing-header">
-  <div class="marca">
-    <img src="img/Logo.png" alt="Don Chicho" class="logo">
-    <span>Donchichopizza</span>
-  </div>
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <span>Donchichopizza</span>
+    </div>
 
-  <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+    <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
 
-  <div class="menu-movil" id="menu-movil">
-    <nav class="nav-landing">
+    <div class="menu-movil" id="menu-movil">
+      <nav class="nav-landing">
       <a href="index.html">Inicio</a>
       <a href="quienes-somos.html">Quiénes somos</a>
       <a href="menu.html" class="activo">Menú</a>
       <a href="procesos.html">Nuestros procesos</a>
       <a href="visitanos.html">Visitanos</a>
-    </nav>
-    <a href="login.html" class="link-ingresar">Ingresar</a>
+      </nav>
+      <a href="login.html" class="link-ingresar">Ingresar</a>
+    </div>
+  </header>
+
+  <div class="pagina-cabecera">
+    <h1>El menú</h1>
+    <p>Cada local tiene su propio menú y sus precios. Elegí el tuyo.</p>
   </div>
-</header>
 
-  <section class="seccion animar-al-scroll" id="menu">
-    <h2 class="seccion-titulo">El menú</h2>
-    <p class="seccion-intro">Cada local tiene su propio menú y sus precios. Elegí el tuyo.</p>
-
+  <section class="seccion" id="menu">
     <!-- Los botones de cada local los arma menu-publico.js; con un solo local activo no se muestran -->
     <div id="selector-local" class="selector-local oculto" role="group" aria-label="Elegí el local"></div>
 
@@ -52,20 +55,21 @@
     </div>
 
     <!-- "Armá tu pedido" y WhatsApp del local elegido, los completa menu-publico.js -->
-    <div id="menu-acciones" class="hero-cta oculto" style="justify-content: center; margin-top: 24px;"></div>
+    <div id="menu-acciones" class="hero-cta oculto" style="justify-content: center; margin-top: 32px;"></div>
   </section>
 
   <footer class="landing-footer">
-    <div class="footer-redes">
-      <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
-      <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+    <div class="footer-card">
+      <div class="footer-redes">
+        <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+        <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+      </div>
+      <p class="footer-marca">Donchichopizza · Lanús Oeste, Buenos Aires</p>
+      <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
+      <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
     </div>
-    <p>Donchichopizza · Lanús Oeste, Buenos Aires</p>
-    <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
-    <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
   </footer>
 
-  <script src="animaciones-scroll.js"></script>
   <script src="menu-publico.js"></script>
   <script src="menu-movil.js"></script>
 </body>

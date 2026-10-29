@@ -9,43 +9,48 @@
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="landing.css">
   <link rel="stylesheet" href="locales.css">
+  <link rel="stylesheet" href="publico.css">
 </head>
-<body class="landing">
+<body class="landing publico">
 
   <header class="landing-header">
-  <div class="marca">
-    <img src="img/Logo.png" alt="Don Chicho" class="logo">
-    <span>Donchichopizza</span>
-  </div>
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <span>Donchichopizza</span>
+    </div>
 
-  <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+    <button type="button" id="btn-menu-movil" class="btn-menu-movil" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
 
-  <div class="menu-movil" id="menu-movil">
-    <nav class="nav-landing">
+    <div class="menu-movil" id="menu-movil">
+      <nav class="nav-landing">
       <a href="index.html">Inicio</a>
       <a href="quienes-somos.html">Quiénes somos</a>
       <a href="menu.html">Menú</a>
       <a href="procesos.html">Nuestros procesos</a>
       <a href="visitanos.html" class="activo">Visitanos</a>
-    </nav>
-    <a href="login.html" class="link-ingresar">Ingresar</a>
+      </nav>
+      <a href="login.html" class="link-ingresar">Ingresar</a>
+    </div>
+  </header>
+
+  <div class="pagina-cabecera">
+    <h1>Visitanos</h1>
+    <p>Pasá por el local más cercano o pedí por WhatsApp y lo llevamos hasta tu casa.</p>
+    <p id="estado-horario" class="estado-horario"></p>
   </div>
-</header>
 
-  <section class="seccion visitanos animar-al-scroll" id="visitanos">
-    <h2 class="seccion-titulo">Visitanos</h2>
-    <p class="seccion-intro">Pasá por el local más cercano o pedí por WhatsApp y lo llevamos hasta tu casa.</p>
-    <p id="estado-horario" class="estado-horario" style="margin-bottom: 24px;"></p>
-
+  <section class="seccion" id="visitanos">
+    <h2 class="seccion-titulo">Nuestros locales</h2>
+    <p class="seccion-intro">Elegí el más cercano. Cada uno tiene su propio mapa y su propio menú.</p>
     <!-- Una tarjeta por local activo: la arma visitanos-locales.js con /sucursales/publico -->
     <div id="visitanos-locales" class="locales-grid">
       <p class="menu-loading">Cargando los locales...</p>
     </div>
   </section>
 
-  <section class="seccion animar-al-scroll">
+  <section class="seccion">
     <h2 class="seccion-titulo">Contactanos</h2>
     <p class="seccion-intro">Para consultas, eventos o propuestas — para pedidos, mejor por WhatsApp.</p>
     <form id="formulario-contacto" class="form-contacto">
@@ -58,16 +63,17 @@
   </section>
 
   <footer class="landing-footer">
-    <div class="footer-redes">
-      <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
-      <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+    <div class="footer-card">
+      <div class="footer-redes">
+        <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+        <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
+      </div>
+      <p class="footer-marca">Donchichopizza · Lanús Oeste, Buenos Aires</p>
+      <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
+      <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
     </div>
-    <p>Donchichopizza · Lanús Oeste, Buenos Aires</p>
-    <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
-    <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
   </footer>
 
-  <script src="animaciones-scroll.js"></script>
   <script src="visitanos.js"></script>
   <script src="visitanos-locales.js"></script>
   <script src="menu-movil.js"></script>

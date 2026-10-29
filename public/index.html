@@ -20,10 +20,10 @@
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="landing.css">
   <link rel="stylesheet" href="locales.css">
-  <!-- Solo para esta página: todo va bajo body.landing-home, así las demás páginas que usan landing.css no cambian -->
-  <link rel="stylesheet" href="landing-home.css">
+  <!-- Estilo de las páginas públicas (todo va bajo body.publico; el sistema interno no se toca) -->
+  <link rel="stylesheet" href="publico.css">
 </head>
-<body class="landing landing-home">
+<body class="landing publico">
 
   <header class="landing-header">
     <div class="marca">
@@ -37,11 +37,11 @@
 
     <div class="menu-movil" id="menu-movil">
       <nav class="nav-landing">
+        <a href="index.html" class="activo">Inicio</a>
         <a href="quienes-somos.html">Quiénes somos</a>
         <a href="menu.html">Menú</a>
         <a href="procesos.html">Nuestros procesos</a>
         <a href="visitanos.html">Visitanos</a>
-        <a href="#locales">Locales</a>
       </nav>
       <a href="login.html" class="link-ingresar">Ingresar</a>
     </div>
@@ -55,8 +55,8 @@
         precio amigable y el dueño siempre atrás del mostrador.
       </p>
       <div class="hero-cta">
-          <a href="pedir.html?elegir=1" class="h-btn ambar">Armá tu pedido</a>
-          <a href="#locales" class="h-btn linea">Ver los locales</a>
+        <a href="pedir.html?elegir=1" class="h-btn ambar">Armá tu pedido</a>
+        <a href="#locales" class="h-btn linea">Ver los locales</a>
       </div>
     </div>
 
