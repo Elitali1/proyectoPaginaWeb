@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Menú - Donchichopizza</title>
-  <meta name="description" content="Menú completo de Donchichopizza: pizzas a la piedra y al molde, empanadas caseras. Pedidos por WhatsApp.">
+  <meta name="description" content="Menú de Donchichopizza: pizzas a la piedra y al molde, empanadas caseras. Elegí tu local y armá tu pedido.">
   <link rel="icon" href="img/Logo.png">
   <link rel="stylesheet" href="estilos.css">
   <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="menu-publico.css">
 </head>
 <body class="landing">
 
@@ -35,21 +36,23 @@
 
   <section class="seccion animar-al-scroll" id="menu">
     <h2 class="seccion-titulo">El menú</h2>
-    <p class="seccion-intro">Se actualiza solo, directo desde la cocina.</p>
+    <p class="seccion-intro">Cada local tiene su propio menú y sus precios. Elegí el tuyo.</p>
+
+    <!-- Los botones de cada local los arma menu-publico.js; con un solo local activo no se muestran -->
+    <div id="selector-local" class="selector-local oculto" role="group" aria-label="Elegí el local"></div>
+
     <div class="menu-comanda">
       <div class="menu-comanda-header">
         <strong>DONCHICHOPIZZA</strong>
-        <p>Lanús Oeste · Pedidos por WhatsApp</p>
+        <p id="menu-sub">Lanús Oeste</p>
       </div>
       <div id="lista-menu">
         <p class="menu-loading">Cargando el menú...</p>
       </div>
     </div>
-    <div class="hero-cta" style="justify-content: center; margin-top: 24px;">
-      <a href="https://wa.me/5491165838528?text=Hola!%20Quiero%20hacer%20un%20pedido" class="btn-hero primario" target="_blank" rel="noopener">
-        Pedir por WhatsApp
-      </a>
-    </div>
+
+    <!-- "Armá tu pedido" y WhatsApp del local elegido, los completa menu-publico.js -->
+    <div id="menu-acciones" class="hero-cta oculto" style="justify-content: center; margin-top: 24px;"></div>
   </section>
 
   <footer class="landing-footer">
@@ -57,13 +60,13 @@
       <a href="https://www.instagram.com/donchichopizza?stkn=dm5ic3ZtcThsNXc0&utm_source=qr" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
       <a href="https://www.facebook.com/share/19fgTqmM6d/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a>
     </div>
-    <p>Donchichopizza · Lanús Oeste, Buenos Aires · <a href="https://wa.me/5491165838528" target="_blank" rel="noopener">+54 9 11 6583-8528</a></p>
+    <p>Donchichopizza · Lanús Oeste, Buenos Aires</p>
     <p>&copy; 2023 Donchichopizza. Todos los derechos reservados.</p>
     <p>Diseñado por <a href="https://www.linkedin.com/in/elias-aguirre-966379240/" target="_blank" rel="noopener">Elias Aguirre</a></p>
   </footer>
 
   <script src="animaciones-scroll.js"></script>
-  <script src="landing.js"></script>
+  <script src="menu-publico.js"></script>
   <script src="menu-movil.js"></script>
 </body>
 </html>
