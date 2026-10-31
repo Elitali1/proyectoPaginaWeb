@@ -180,7 +180,7 @@ body.publico .h-btn.linea {
 
 body.publico .h-btn.linea:hover { background: rgba(243, 232, 211, .14); }
 
-/* Pizza ilustrada */
+/* Logo de Don Chicho sobre la tabla de madera (el mismo plato de antes, con el logo en lugar de la pizza dibujada) */
 body.publico .hero-pizza { display: flex; justify-content: center; }
 
 body.publico .pizza {
@@ -199,28 +199,23 @@ body.publico .pizza-tabla {
   box-shadow: 0 10px 0 var(--h-tinta);
 }
 
-body.publico .pizza-cuerpo {
+/* el disco crema es del mismo tono que el fondo del logo, así la imagen se funde y solo se ve el emblema */
+body.publico .pizza-logo {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   border: 3px solid var(--h-tinta);
-  background:
-    radial-gradient(circle at 34% 38%, #F8DA7C 0 9%, transparent 10%),
-    radial-gradient(circle at 64% 30%, #F8DA7C 0 8%, transparent 9%),
-    radial-gradient(circle at 58% 66%, #F8DA7C 0 10%, transparent 11%),
-    radial-gradient(circle at 27% 66%, #F8DA7C 0 7%, transparent 8%),
-    radial-gradient(circle at 74% 54%, #F8DA7C 0 6%, transparent 7%),
-    radial-gradient(circle at 70% 78%, #2F6B3A 0 3%, transparent 4%),
-    radial-gradient(circle at 44% 52%, #2F6B3A 0 3%, transparent 4%),
-    radial-gradient(circle at 48% 22%, #2F6B3A 0 3%, transparent 4%),
-    radial-gradient(circle at 50% 50%, #C8321F 0 82%, #E8B56A 83% 100%);
+  background: #F8E8CF;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-body.publico .pizza-cortes {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, transparent 0 44deg, rgba(43, 15, 12, .55) 44deg 45deg);
+body.publico .pizza-logo img {
+  display: block;
+  width: 92%;                        /* un poco menos que el disco: la porción de pizza del logo sobresale y no tiene que tocar el borde */
+  height: auto;
 }
 
 body.publico .sello-hero {
