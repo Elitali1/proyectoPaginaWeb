@@ -224,16 +224,15 @@ function dibujarEstadoResultados(contenedor, e) {
   }
   contenedor.appendChild(filaEstado(e.condicionIva === 'responsable_inscripto' ? 'Ventas netas' : 'Ventas', `$${formatearPrecio(e.ventasNetas)}`, { destacada: true }));
 
-  contenedor.appendChild(filaEstado('Compras de insumos', `-$${formatearPrecio(e.compras)}`, { sangria: true }));
-  if (e.gastosDirectos > 0) {
-    contenedor.appendChild(filaEstado('Mercadería cargada como gasto (ej. empanadas)', `-$${formatearPrecio(e.gastosDirectos)}`, { sangria: true }));
-  }
-  contenedor.appendChild(filaEstado(`Ganancia bruta (${formatearPorcentaje(e.margenBrutoPorcentual)})`, `$${formatearPrecio(e.gananciaBruta)}`, { destacada: true, clase: claseSegunSigno(e.gananciaBruta) }));
-
+  // Gastos variables: la materia prima (compras de insumos) más lo que se cargó como variable (materia prima, papelería).
   contenedor.appendChild(filaEstado('Gastos variables', `-$${formatearPrecio(e.gastosVariables)}`, { sangria: true }));
+  const detalleVariables = document.createElement('p');
+  detalleVariables.className = 'cons-participacion';
+  detalleVariables.textContent = `Compras de insumos: $${formatearPrecio(e.compras)} · Otros gastos variables: $${formatearPrecio(e.otrosVariables)}`;
+  contenedor.appendChild(detalleVariables);
   contenedor.appendChild(filaEstado(`Margen de contribución (${formatearPorcentaje(e.margenContribucionPorcentual)})`, `$${formatearPrecio(e.margenContribucion)}`, { destacada: true, clase: claseSegunSigno(e.margenContribucion) }));
 
-  contenedor.appendChild(filaEstado('Gastos fijos (sueldos, alquiler, servicios)', `-$${formatearPrecio(e.gastosFijos)}`, { sangria: true }));
+  contenedor.appendChild(filaEstado('Gastos fijos', `-$${formatearPrecio(e.gastosFijos)}`, { sangria: true }));
   if (e.gastosSinClasificar > 0) {
     contenedor.appendChild(filaEstado('Gastos sin clasificar', `-$${formatearPrecio(e.gastosSinClasificar)}`, { sangria: true, clase: 'balance-negativo' }));
   }
@@ -276,9 +275,9 @@ function mostrarBalance(estado, balanceViejo) {
   contenedor.innerHTML = `
     <div class="pedido">
       <p>Ventas: $${formatearPrecio(balanceViejo.ventas)}</p>
-      <p>Compras de mercadería: -$${formatearPrecio(balanceViejo.compras)}</p>
+      <p>Compras de insumos (materia prima): -$${formatearPrecio(balanceViejo.compras)}</p>
       <p>Gastos: -$${formatearPrecio(balanceViejo.gastos)}</p>
-      <p class="${claseResultado}"><strong>Ganancia neta: $${formatearPrecio(balanceViejo.gananciaNeta)}</strong></p>
+      <p class="${claseResultado}"><strong>Resultado neto: $${formatearPrecio(balanceViejo.gananciaNeta)}</strong></p>
     </div>
   `;
 }
@@ -319,7 +318,7 @@ async function cargarConsolidado(desde, hasta) {
     totales.innerHTML = '';
     totales.appendChild(crearTarjeta('Ventas (todos los locales)', `$${formatearPrecio(t.ventas)}`));
     totales.appendChild(crearTarjeta('Pedidos', String(t.pedidos)));
-    totales.appendChild(crearTarjeta(`Ganancia bruta (${formatearPorcentaje(e.margenBrutoPorcentual)})`, `$${formatearPrecio(e.gananciaBruta)}`, claseSegunSigno(e.gananciaBruta)));
+    totales.appendChild(crearTarjeta('Gastos variables', `-$${formatearPrecio(e.gastosVariables)}`));
     totales.appendChild(crearTarjeta('Gastos fijos', `-$${formatearPrecio(e.gastosFijos)}`));
     totales.appendChild(crearTarjeta(`Resultado neto (${formatearPorcentaje(e.margenNetoPorcentual)})`, `$${formatearPrecio(e.resultadoNeto)}`, claseSegunSigno(e.resultadoNeto)));
 
@@ -349,7 +348,6 @@ async function cargarConsolidado(desde, hasta) {
       div.appendChild(filaEstado('Ticket promedio', `$${formatearPrecio(s.ticketPromedio)}`));
       div.appendChild(filaEstado('Efectivo', `$${formatearPrecio(s.efectivo)}`));
       div.appendChild(filaEstado(s.cuentaTransferencia, `$${formatearPrecio(s.transferencia)}`));
-      div.appendChild(filaEstado(`Ganancia bruta (${formatearPorcentaje(est.margenBrutoPorcentual)})`, `$${formatearPrecio(est.gananciaBruta)}`, { clase: claseSegunSigno(est.gananciaBruta) }));
       div.appendChild(filaEstado('Gastos variables', `-$${formatearPrecio(est.gastosVariables)}`));
       div.appendChild(filaEstado('Gastos fijos', `-$${formatearPrecio(est.gastosFijos)}`));
       if (est.gastosSinClasificar > 0) {

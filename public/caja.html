@@ -48,10 +48,10 @@
   
   <section>
   <h2>Cargar gasto</h2>
-  <p><small><strong>Fijo</strong>: no depende de lo que vendés (sueldos, alquiler, luz, agua, gas, internet, tasas). <strong>Variable</strong>: sube y baja con las ventas (packaging, comisiones, delivery). La mercadería que comprás para vender (ej. empanadas) va como categoría "Mercadería".</small></p>
+  <p><small><strong>Fijo</strong>: no depende de lo que vendés (sueldos, servicios, alquiler, monotributo, seguros, impuestos y permisos). <strong>Variable</strong>: sube y baja con las ventas (materia prima, insumos de papelería). Las compras de insumos que cargás en "Compras" ya cuentan solas como materia prima: acá van solo las que no pasan por ahí.</small></p>
   <form id="formulario-gasto">
     <label>Concepto: <input type="text" id="gasto-concepto" placeholder="Ej: Sueldo Juan, Alquiler agosto" required></label>
-    <label>Categoría: <input type="text" id="gasto-categoria" list="lista-categorias" placeholder="Ej: Sueldos, Alquiler, Luz, Mercadería"></label>
+    <label>Categoría: <input type="text" id="gasto-categoria" list="lista-categorias" placeholder="Ej: Sueldos, Alquiler, Servicios, Materia prima"></label>
     <datalist id="lista-categorias"></datalist>
     <label>Tipo:
       <select id="gasto-tipo">
@@ -75,7 +75,7 @@
 
   <section>
     <h2>Gastos que se repiten todos los meses</h2>
-    <p><small>Cargá una vez el alquiler, la luz, el internet, los sueldos fijos, etc. de esta sucursal. Después, cada mes, un botón los convierte en gastos sin tipear todo de nuevo. Si ya cargaste uno en ese mes, no se duplica.</small></p>
+    <p><small>Cargá una vez el alquiler, los servicios, los sueldos, el monotributo, etc. de esta sucursal. Después, cada mes, un botón los convierte en gastos sin tipear todo de nuevo. Si ya cargaste uno en ese mes, no se duplica.</small></p>
     <form id="formulario-recurrente">
       <label>Concepto: <input type="text" id="recurrente-concepto" placeholder="Ej: Alquiler local" required></label>
       <label>Categoría: <input type="text" id="recurrente-categoria" list="lista-categorias" placeholder="Ej: Alquiler"></label>

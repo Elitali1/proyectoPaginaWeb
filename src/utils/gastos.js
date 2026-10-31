@@ -1,32 +1,25 @@
 const { ErrorNegocio } = require('./errores.js');
 const { esTexto, esNumero, esFechaISO, textoOpcional } = require('./validaciones.js');
 
-// Reglas de los gastos: tipo (fijo / variable), categorías conocidas y qué cuenta como costo directo.
+// Reglas de los gastos: tipo (fijo / variable) y categorías conocidas.
 // Son funciones puras (no tocan la base), así se pueden probar sin servidor.
 
 const TIPOS = ['fijo', 'variable'];
 
 // Categorías sugeridas. "tipo" es el que se propone por defecto (se puede cambiar al cargar el gasto).
-//  - Fijo: no cambia con lo que se vende. Los servicios (luz, gas) varían un poco con el uso, pero
-//    para costos se tratan como fijos porque hay que pagarlos aunque se venda poco.
-//  - Variable: sube y baja con las ventas.
-//  - "directo": costo de mercadería. Va junto con las compras de insumos para calcular la ganancia bruta.
+//  - Fijo: no cambia con lo que se vende (se paga aunque se venda poco).
+//  - Variable: sube y baja con las ventas. La materia prima va acá; las compras de insumos que se cargan
+//    en "Compras" ya cuentan solas como materia prima en el estado de resultados.
+// "alias" son los nombres que se usaban antes: se siguen reconociendo y pasan a la categoría nueva.
 const CATEGORIAS = [
   { nombre: 'Sueldos', tipo: 'fijo' },
+  { nombre: 'Servicios', tipo: 'fijo', alias: ['Luz', 'Agua', 'Gas', 'Internet'] },
   { nombre: 'Alquiler', tipo: 'fijo' },
-  { nombre: 'Luz', tipo: 'fijo' },
-  { nombre: 'Agua', tipo: 'fijo' },
-  { nombre: 'Gas', tipo: 'fijo' },
-  { nombre: 'Internet', tipo: 'fijo' },
-  { nombre: 'Tasas municipales', tipo: 'fijo' },
-  { nombre: 'Impuestos', tipo: 'fijo' },
-  { nombre: 'Contador', tipo: 'fijo' },
-  { nombre: 'Marketing', tipo: 'fijo' },
-  { nombre: 'Mercadería', tipo: 'variable', directo: true },
-  { nombre: 'Packaging y descartables', tipo: 'variable' },
-  { nombre: 'Comisiones', tipo: 'variable' },
-  { nombre: 'Delivery', tipo: 'variable' },
-  { nombre: 'Mantenimiento', tipo: 'variable' },
+  { nombre: 'Monotributo', tipo: 'fijo' },
+  { nombre: 'Seguros', tipo: 'fijo' },
+  { nombre: 'Impuestos y permisos', tipo: 'fijo', alias: ['Impuestos', 'Tasas municipales', 'Permisos'] },
+  { nombre: 'Materia prima', tipo: 'variable', alias: ['Mercadería'] },
+  { nombre: 'Insumos de papelería generales', tipo: 'variable', alias: ['Papelería', 'Packaging y descartables'] },
   { nombre: 'Otros', tipo: null }
 ];
 
@@ -39,15 +32,11 @@ function normalizar(texto) {
     .toLowerCase();
 }
 
+// Busca por el nombre actual o por alguno de los nombres viejos (alias).
 function buscarCategoria(nombre) {
   const buscado = normalizar(nombre);
   if (!buscado) return undefined;
-  return CATEGORIAS.find(c => normalizar(c.nombre) === buscado);
-}
-
-function esCostoDirecto(categoria) {
-  const encontrada = buscarCategoria(categoria);
-  return Boolean(encontrada && encontrada.directo);
+  return CATEGORIAS.find(c => normalizar(c.nombre) === buscado || (c.alias || []).some(a => normalizar(a) === buscado));
 }
 
 // Valida el tipo y la categoría. Si no se indica el tipo, se toma el de la categoría conocida;
@@ -106,23 +95,18 @@ function validarRecurrente(body) {
   return { concepto: concepto.trim(), categoria: clasificado.categoria, tipo: clasificado.tipo, monto: montoLimpio };
 }
 
-// Suma los gastos de un período según cómo cuentan en el estado de resultados.
-//  - sin clasificar: se informan aparte (no se sabe si son fijos o variables);
-//  - costo directo (Mercadería): resta en la ganancia bruta;
-//  - fijos / variables: restan más abajo.
+// Suma los gastos de un período según cómo cuentan en el estado de resultados:
+//  - fijos y variables restan donde corresponde (la materia prima es variable);
+//  - sin clasificar: se informan aparte (no se sabe si son fijos o variables).
 function clasificarGastos(filas) {
-  const total = { fijos: 0, variables: 0, directos: 0, sinClasificar: 0 };
+  const total = { fijos: 0, variables: 0, sinClasificar: 0 };
   for (const gasto of filas) {
     const monto = Number(gasto.monto);
-    if (gasto.tipo === 'fijo' || gasto.tipo === 'variable') {
-      if (esCostoDirecto(gasto.categoria)) total.directos += monto;
-      else if (gasto.tipo === 'fijo') total.fijos += monto;
-      else total.variables += monto;
-    } else {
-      total.sinClasificar += monto;
-    }
+    if (gasto.tipo === 'fijo') total.fijos += monto;
+    else if (gasto.tipo === 'variable') total.variables += monto;
+    else total.sinClasificar += monto;
   }
   return total;
 }
 
-module.exports = { TIPOS, CATEGORIAS, buscarCategoria, esCostoDirecto, validarGasto, validarClasificacion, validarRecurrente, clasificarGastos };
+module.exports = { TIPOS, CATEGORIAS, buscarCategoria, validarGasto, validarClasificacion, validarRecurrente, clasificarGastos };
