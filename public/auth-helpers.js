@@ -122,8 +122,17 @@ function manejarNoAutorizado(respuesta) {
     }
   }
 
+  // Marca en el menú la página en la que se está (el CSS la resalta con la clase "activo").
+  function marcarPaginaActual() {
+    const paginaActual = window.location.pathname.split('/').pop() || 'index.html';
+    document.querySelectorAll('.barra-superior nav a').forEach(enlace => {
+      if (enlace.getAttribute('href') === paginaActual) enlace.classList.add('activo');
+    });
+  }
+
   function iniciar() {
     mostrarBandaDePruebas();
+    marcarPaginaActual();
 
     const usuario = leerUsuario();
     if (!usuario) return;

@@ -13,6 +13,7 @@
   --color-text: #2B211C;
   --color-text-muted: #6B5B49;
   --color-border: #E3D3B4;
+  --color-mantel: rgba(200, 50, 31, 0.55);   /* cuadros del mantel (franja bajo la cabecera) */
   --radius: 10px;
   --shadow: 0 2px 10px rgba(122, 46, 40, 0.10);
   --font-display: 'Fraunces', Georgia, serif;
@@ -26,7 +27,7 @@
 }
 
 body {
-  max-width: 780px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 20px;
   background-color: var(--color-bg);
@@ -426,6 +427,7 @@ html[data-sucursal="2"] {
   --color-text-muted: #4B667C;
   --color-border: #B7D0E4;
   --shadow: 0 2px 10px rgba(29, 90, 142, 0.14);
+  --color-mantel: rgba(29, 90, 142, 0.5);
 }
 
 html[data-sucursal="2"] form input:focus,
@@ -448,8 +450,10 @@ html[data-sucursal="2"] .btn-toggle:hover {
   font-weight: 700;
   font-size: 0.85rem;
   padding: 6px 10px;
-  margin: -20px -20px 14px -20px;
   letter-spacing: 0.03em;
+  /* a todo el ancho de la pantalla aunque el contenido esté centrado, y pegada al borde de arriba */
+  width: 100vw;
+  margin: -20px 0 0 calc(50% - 50vw);
 }
 /* ============================================================================
    LOOK "LANDING" PARA EL SISTEMA INTERNO
@@ -516,6 +520,203 @@ body:not(.landing) .tarjeta-metrica {
 
 .badge-sucursal {
   border: 2px solid var(--color-ink);
+}
+
+/* ============================================================================
+   MARCO DEL SISTEMA INTERNO: cabecera bordó con mantel, como la landing.
+   - La cabecera (.barra-superior) y la del login (.cabecera-login) ocupan todo el ancho de la
+     pantalla aunque el contenido esté centrado en una columna: por eso el ancho de 100vw y el
+     margen negativo (se anula el margen de la columna). El overflow-x del body evita la barra
+     horizontal que el 100vw causaría en escritorio.
+   - Todo sale de las variables de :root, así que la sucursal 2 (azul) la hereda sola.
+   - Mantel: franja de cuadros bajo la cabecera, con su color en --color-mantel.
+   ============================================================================ */
+body:not(.landing) { overflow-x: hidden; }
+
+body:not(.landing) :is(.barra-superior, .cabecera-login) {
+  position: relative;
+  width: 100vw;
+  margin: -20px 0 56px calc(50% - 50vw);   /* arriba, derecha, abajo (aire para el mantel), izquierda */
+  padding: 14px calc(50vw - 50%) 16px;     /* el contenido queda alineado con la columna del sistema */
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+/* franja de mantel que cuelga bajo la cabecera */
+body:not(.landing) :is(.barra-superior, .cabecera-login)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 28px;
+  border-top: 3px solid var(--color-ink);
+  border-bottom: 3px solid var(--color-ink);
+  background-color: #fff;
+  background-image:
+    linear-gradient(90deg, var(--color-mantel) 50%, transparent 50%),
+    linear-gradient(var(--color-mantel) 50%, transparent 50%);
+  background-size: 14px 14px;
+}
+
+/* si arriba está la banda de staging, la cabecera se pega a ella */
+#banda-staging + .barra-superior { margin-top: 0; }
+
+/* --- Cabecera interna: marca a la izquierda, usuario a la derecha, menú abajo --- */
+body:not(.landing) .barra-superior {
+  display: grid;
+  grid-template-columns: auto 1fr;   /* la marca no se achica; el usuario usa lo que sobra */
+  grid-template-areas:
+    "marca usuario"
+    "menu  menu";
+  align-items: center;
+  gap: 12px 20px;
+}
+
+body:not(.landing) :is(.barra-superior, .cabecera-login) .marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+body:not(.landing) .barra-superior .marca { grid-area: marca; }
+
+body:not(.landing) :is(.barra-superior, .cabecera-login) .logo {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  padding: 3px;
+  background: var(--color-bg);
+}
+
+body:not(.landing) :is(.barra-superior, .cabecera-login) .marca h1 {
+  margin: 0;
+  color: var(--color-bg);
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Menú */
+body:not(.landing) .barra-superior nav {
+  grid-area: menu;
+  gap: 4px 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+body:not(.landing) .barra-superior nav a {
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: var(--color-bg);
+  font-size: 0.93rem;
+  font-weight: 700;
+}
+
+body:not(.landing) .barra-superior nav a:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* página actual (la marca auth-helpers.js) */
+body:not(.landing) .barra-superior nav a.activo {
+  background-color: var(--color-bg);
+  color: var(--color-primary-dark);
+}
+
+/* Zona de usuario: sucursal, selector, sesión y salir */
+body:not(.landing) .barra-superior > div:last-child {
+  grid-area: usuario;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  text-align: right;
+}
+
+body:not(.landing) .barra-superior #indicador-sucursal { margin: 0; }
+
+body:not(.landing) .barra-superior .badge-sucursal {
+  background-color: var(--color-bg);
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+body:not(.landing) .barra-superior #selector-sucursal {
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+body:not(.landing) .barra-superior #info-usuario {
+  margin: 0;
+  color: var(--color-bg);
+  opacity: 0.9;
+}
+
+body:not(.landing) .barra-superior #btn-logout {
+  padding: 6px 14px;
+  background-color: transparent;
+  color: var(--color-bg);
+  border: 2px solid var(--color-bg);
+  box-shadow: none;
+}
+
+body:not(.landing) .barra-superior #btn-logout:hover:not(:disabled) {
+  background-color: var(--color-bg);
+  color: var(--color-primary-dark);
+  box-shadow: none;
+}
+
+/* --- Login: cabecera con la marca centrada y el formulario en una tarjeta angosta --- */
+body:not(.landing) .cabecera-login {
+  display: flex;
+  justify-content: center;
+}
+
+body.login section {
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fila-olvide { margin: 1rem 0 0; }
+
+/* --- Celular: una sola columna (marca, usuario, menú) y cabecera más compacta --- */
+@media (max-width: 640px) {
+  body:not(.landing) :is(.barra-superior, .cabecera-login) {
+    margin-top: -12px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
+
+  #banda-staging { margin-top: -12px; }
+
+  body:not(.landing) .barra-superior {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "marca"
+      "usuario"
+      "menu";
+    align-items: start;
+    gap: 10px;
+  }
+
+  body:not(.landing) :is(.barra-superior, .cabecera-login) .logo { width: 44px; height: 44px; }
+  body:not(.landing) :is(.barra-superior, .cabecera-login) .marca h1 { font-size: 1.4rem; white-space: normal; overflow-wrap: anywhere; }
+
+  body:not(.landing) .barra-superior > div:last-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  body:not(.landing) .barra-superior nav a { padding: 8px 12px; }
 }
 
 /* ---- Responsive: celular ---- */
