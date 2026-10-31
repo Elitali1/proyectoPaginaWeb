@@ -341,9 +341,9 @@ document.getElementById('formulario-balance').addEventListener('submit', async (
     <div class="pedido">
       <p>Período: ${balance.desde} al ${balance.hasta}</p>
       <p>Ventas: $${formatearPrecio(balance.ventas)}</p>
-      <p>Compras de mercadería: -$${formatearPrecio(balance.compras)}</p>
+      <p>Compras de insumos (materia prima): -$${formatearPrecio(balance.compras)}</p>
       <p>Gastos: -$${formatearPrecio(balance.gastos)}</p>
-      <p class="${claseResultado}"><strong>Ganancia neta: $${formatearPrecio(balance.gananciaNeta)}</strong></p>
+      <p class="${claseResultado}"><strong>Resultado neto: $${formatearPrecio(balance.gananciaNeta)}</strong></p>
     </div>
   `;
 });

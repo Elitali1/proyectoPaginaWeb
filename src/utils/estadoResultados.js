@@ -1,13 +1,14 @@
-// Estado de resultados (el esquema clásico de Gestión y Costos). Es una función pura.
+// Estado de resultados por costeo variable. Es una función pura.
 //
 //   Ventas (netas de IVA si es Responsable Inscripto)
-//   − Costo de mercadería (compras de insumos + gastos de "Mercadería")
-//   = Ganancia bruta
-//   − Gastos variables
+//   − Gastos variables (compras de insumos + lo cargado como gasto variable: materia prima, papelería)
 //   = Margen de contribución
-//   − Gastos fijos
+//   − Gastos fijos (sueldos, servicios, alquiler, monotributo, seguros, impuestos y permisos)
 //   − Gastos sin clasificar (se restan por prudencia y se avisan aparte)
 //   = Resultado neto
+//
+// Es la cuenta de siempre: ventas − gastos variables − gastos fijos = resultado neto.
+// El margen de contribución es solo un subtotal intermedio: de ahí sale el punto de equilibrio.
 //
 // Punto de equilibrio = gastos fijos ÷ (margen de contribución ÷ ventas):
 // cuánto hay que vender en el período para cubrir todos los costos fijos.
@@ -23,7 +24,9 @@ function porcentaje(parte, ventas) {
   return ventas > 0 ? redondear((parte / ventas) * 100) : null;
 }
 
-// entrada: { ventas, compras, gastos: {fijos, variables, directos, sinClasificar}, iva: {condicion, alicuota} }
+// entrada: { ventas, compras, gastos: {fijos, variables, sinClasificar}, iva: {condicion, alicuota} }
+//  - compras: total de las facturas de compra de insumos (la materia prima), ya cuentan como variable.
+//  - gastos.variables: lo cargado como gasto variable (materia prima que no pasa por Compras, papelería, etc.).
 function armarEstadoResultados({ ventas, compras, gastos, iva }) {
   const condicion = iva && iva.condicion;
   const esRI = condicion === 'responsable_inscripto';
@@ -34,9 +37,11 @@ function armarEstadoResultados({ ventas, compras, gastos, iva }) {
   const ventasNetas = esRI ? ventasBrutas / (1 + alicuota / 100) : ventasBrutas;
   const iva21 = ventasBrutas - ventasNetas;
 
-  const costoMercaderia = Number(compras) + Number(gastos.directos);
-  const gananciaBruta = ventasNetas - costoMercaderia;
-  const margenContribucion = gananciaBruta - Number(gastos.variables);
+  const comprasInsumos = Number(compras);
+  const otrosVariables = Number(gastos.variables);
+  const gastosVariables = comprasInsumos + otrosVariables;
+
+  const margenContribucion = ventasNetas - gastosVariables;
   const resultadoNeto = margenContribucion - Number(gastos.fijos) - Number(gastos.sinClasificar);
 
   const pctContribucion = ventasNetas > 0 ? margenContribucion / ventasNetas : null;
@@ -50,12 +55,9 @@ function armarEstadoResultados({ ventas, compras, gastos, iva }) {
     ventasBrutas: redondear(ventasBrutas),
     iva: redondear(iva21),
     ventasNetas: redondear(ventasNetas),
-    compras: redondear(compras),
-    gastosDirectos: redondear(gastos.directos),
-    costoMercaderia: redondear(costoMercaderia),
-    gananciaBruta: redondear(gananciaBruta),
-    margenBrutoPorcentual: porcentaje(gananciaBruta, ventasNetas),
-    gastosVariables: redondear(gastos.variables),
+    compras: redondear(comprasInsumos),
+    otrosVariables: redondear(otrosVariables),
+    gastosVariables: redondear(gastosVariables),
     margenContribucion: redondear(margenContribucion),
     margenContribucionPorcentual: porcentaje(margenContribucion, ventasNetas),
     gastosFijos: redondear(gastos.fijos),
@@ -78,7 +80,6 @@ function sumarEntradas(entradas) {
     gastos: {
       fijos: suma(e => e.gastos.fijos),
       variables: suma(e => e.gastos.variables),
-      directos: suma(e => e.gastos.directos),
       sinClasificar: suma(e => e.gastos.sinClasificar)
     },
     iva: entradas.length > 0 ? entradas[0].iva : { condicion: 'monotributo', alicuota: 21 }

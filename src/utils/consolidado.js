@@ -5,8 +5,8 @@
 // { sucursal: {id, nombre, activa, cuenta_transferencia},
 //   resumen: {cantidadPedidos, ventasTotales, topProductos},
 //   pagos: {efectivo, transferencia},
-//   compras,                      // total de facturas de compra del período
-//   gastos: {fijos, variables, directos, sinClasificar},   // ver clasificarGastos
+//   compras,                      // total de facturas de compra del período (materia prima)
+//   gastos: {fijos, variables, sinClasificar},   // ver clasificarGastos
 //   iva: {condicion, alicuota} }
 
 const { armarEstadoResultados, sumarEntradas } = require('./estadoResultados.js');
@@ -15,7 +15,7 @@ function redondear(n) {
   return Math.round(Number(n) * 100) / 100;
 }
 
-const totalGastos = g => g.fijos + g.variables + g.directos + g.sinClasificar;
+const totalGastos = g => g.fijos + g.variables + g.sinClasificar;
 
 function armarConsolidado(items) {
   // Una sucursal inactiva sin ningún movimiento en el período no aporta nada: se oculta.
