@@ -354,6 +354,25 @@ body.publico .local-direccion {
 
 body.publico .local-acciones { gap: 12px; margin-top: 14px; }
 
+/* ---------- Mapa de los locales (Visitanos) ---------- */
+body.publico .mapa-locales {
+  margin-top: 44px;
+  margin-bottom: 8px;            /* aire para la sombra pegada */
+  aspect-ratio: 2 / 1;
+  background: var(--h-crema-clara);
+  border: 3px solid var(--h-tinta);
+  border-radius: 30px;
+  box-shadow: 0 8px 0 var(--h-tinta);
+  overflow: hidden;              /* el mapa respeta las esquinas redondeadas */
+}
+
+body.publico .mapa-locales iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 body.publico .btn-local {
   padding: 13px 24px;
   font-size: 1rem;
@@ -526,6 +545,12 @@ body.publico .footer-card .footer-redes a:hover { background: var(--h-crema-clar
   body.publico .hero-texto p { font-size: 1.08rem; }
 
   body.publico .seccion { padding: 56px 20px 4px; }
+
+  body.publico .mapa-locales {
+    margin-top: 32px;
+    aspect-ratio: 4 / 3;
+    border-radius: 24px;
+  }
 
   body.publico .banda-procesos { padding: 30px 24px; }
 
@@ -803,4 +828,9 @@ body.publico #mensaje-contacto-estado { font-weight: 600; color: var(--h-suave);
   body.publico .pagina-cabecera { padding: 28px 20px 80px; }
   body.publico .menu-comanda { padding: 22px 20px; }
   body.publico .historia { gap: 28px; }
+}
+
+/* En celular el mapa se hace más alto que ancho para que se vean bien los dos pines */
+@media (max-width: 520px) {
+  body.publico .mapa-locales { aspect-ratio: 4 / 5; }
 }
