@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { fechaDeEmision } = require('../utils/fechas.js');
 const { esProduccionArca, describirModoArca } = require('../utils/ambiente.js');
+const { claveDeCola, crearColasPorClave } = require('../utils/colaEmision.js');
 
 const cert = process.env.ARCA_CERT
   ? process.env.ARCA_CERT
@@ -25,17 +26,10 @@ const arca = new Arca({
 // Deja a la vista en el log, en cada arranque, en qué modo quedó ARCA.
 console.log(describirModoArca(process.env.ARCA_PRODUCTION));
 
-// Lock simple: encadena todas las emisiones una detrás de otra, para que
-// nunca dos peticiones consulten "el último comprobante" al mismo tiempo.
-// Es una sola cola para todas las sucursales: el volumen es bajo y así es lo más seguro.
-let colaDeEmision = Promise.resolve();
-
-function encolarEmision(funcion) {
-  const resultado = colaDeEmision.then(() => funcion());
-  // Si esta emisión falla, no debe trabar la cola para las siguientes
-  colaDeEmision = resultado.catch(() => {});
-  return resultado;
-}
+// Una cola por punto de venta y tipo de comprobante (ver utils/colaEmision.js): las emisiones de la
+// misma numeración salen de a una, para que nunca dos peticiones consulten "el último comprobante"
+// al mismo tiempo, pero las sucursales con puntos de venta distintos no se esperan entre sí.
+const colas = crearColasPorClave();
 
 // El punto de venta lo decide quien llama (según la sucursal). Acá solo se exige que sea válido,
 // para que nunca se emita con un punto de venta indefinido.
@@ -47,9 +41,8 @@ function validarPtoVta(ptoVta) {
 
 async function emitirFactura({ monto, cuitReceptor, ptoVta }) {
   validarPtoVta(ptoVta);
-  return encolarEmision(async () => {
-    const cbteTipo = Number(process.env.ARCA_CBTE_TIPO);
-
+  const cbteTipo = Number(process.env.ARCA_CBTE_TIPO);
+  return colas.encolar(claveDeCola(ptoVta, cbteTipo), async () => {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipo);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
@@ -91,9 +84,8 @@ async function emitirFactura({ monto, cuitReceptor, ptoVta }) {
 // La nota de crédito se emite con el mismo punto de venta de la factura que acredita.
 async function emitirNotaCredito({ monto, cuitReceptor, facturaAsociada, ptoVta }) {
   validarPtoVta(ptoVta);
-  return encolarEmision(async () => {
-    const cbteTipoNC = 13;
-
+  const cbteTipoNC = 13;
+  return colas.encolar(claveDeCola(ptoVta, cbteTipoNC), async () => {
     const ultimoComprobante = await arca.electronicBillingService.getLastVoucher(ptoVta, cbteTipoNC);
     const nuevoNumero = ultimoComprobante.cbteNro + 1;
 
