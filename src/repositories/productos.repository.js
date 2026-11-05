@@ -48,13 +48,12 @@ async function crear(datos, sucursalId) {
   const estaDisponible = disponible ?? true;
 
   return conTransaccion(async (db) => {
-    // TEMPORAL: productos.precio es obligatorio, así que se completa con el precio de la sucursal que
-    // lo crea. Es lo único que queda escribiendo en las columnas viejas; se saca con la migración de limpieza.
+    // El precio y la disponibilidad son de cada sucursal: viven solo en productos_sucursal.
     const nuevo = await db.query(
-      `INSERT INTO productos (nombre, precio, disponible, imagen, categoria_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO productos (nombre, imagen, categoria_id)
+       VALUES ($1, $2, $3)
        RETURNING id`,
-      [nombre, precio, estaDisponible, imagen || null, categoria_id || null]
+      [nombre, imagen || null, categoria_id || null]
     );
     const id = nuevo.rows[0].id;
 
