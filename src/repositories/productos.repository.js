@@ -5,10 +5,9 @@ const { ErrorNegocio } = require('../utils/errores.js');
 // El catálogo (nombre, imagen, categoría) es compartido entre sucursales.
 // El precio y la disponibilidad son de cada sucursal y viven en productos_sucursal.
 
-// La sucursal 1 es el local original. Mientras otras partes del sistema sigan leyendo precio y
-// disponible de la tabla productos, los cambios de la sucursal 1 también se copian ahí.
-// TEMPORAL: se elimina cuando todo el código lea productos_sucursal.
-const SUCURSAL_PRINCIPAL = 1;
+// Las columnas productos.precio y productos.disponible quedaron del modelo de un solo local: ya nadie
+// las lee ni las actualiza. Solo se completa productos.precio al crear (la columna es obligatoria)
+// hasta que la migración de limpieza las elimine.
 
 // precio y disponible salen de productos_sucursal. Si el producto no se ofrece en la sucursal,
 // precio es null y disponible es false.
@@ -49,7 +48,8 @@ async function crear(datos, sucursalId) {
   const estaDisponible = disponible ?? true;
 
   return conTransaccion(async (db) => {
-    // productos.precio es obligatorio: se completa con el precio de la sucursal que lo crea.
+    // TEMPORAL: productos.precio es obligatorio, así que se completa con el precio de la sucursal que
+    // lo crea. Es lo único que queda escribiendo en las columnas viejas; se saca con la migración de limpieza.
     const nuevo = await db.query(
       `INSERT INTO productos (nombre, precio, disponible, imagen, categoria_id)
        VALUES ($1, $2, $3, $4, $5)
@@ -89,10 +89,6 @@ async function actualizar(id, datos, sucursalId) {
        DO UPDATE SET precio = EXCLUDED.precio, disponible = EXCLUDED.disponible`,
       [id, sucursalId, precio, disponible]
     );
-
-    if (sucursalId === SUCURSAL_PRINCIPAL) {
-      await db.query('UPDATE productos SET precio = $1, disponible = $2 WHERE id = $3', [precio, disponible, id]);
-    }
 
     return leerProducto(db, id, sucursalId);
   });
@@ -172,22 +168,13 @@ async function guardarSucursalesDeProducto(id, lista) {
     const elegidas = new Set(lista.map(item => item.sucursal_id));
 
     for (const item of lista) {
-      const guardado = await db.query(
+      await db.query(
         `INSERT INTO productos_sucursal (producto_id, sucursal_id, precio, disponible)
          VALUES ($1, $2, $3, true)
          ON CONFLICT (producto_id, sucursal_id)
-         DO UPDATE SET precio = EXCLUDED.precio
-         RETURNING precio, disponible`,
+         DO UPDATE SET precio = EXCLUDED.precio`,
         [id, item.sucursal_id, item.precio]
       );
-
-      // TEMPORAL (igual que en actualizar): la sucursal 1 también se copia a las columnas viejas.
-      if (item.sucursal_id === SUCURSAL_PRINCIPAL) {
-        await db.query(
-          'UPDATE productos SET precio = $1, disponible = $2 WHERE id = $3',
-          [guardado.rows[0].precio, guardado.rows[0].disponible, id]
-        );
-      }
     }
 
     for (const sucursalId of idsActivas) {
