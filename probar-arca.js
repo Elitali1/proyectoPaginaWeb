@@ -49,6 +49,8 @@ async function probar() {
       Concepto: 1,
       DocTipo: 99,
       DocNro: 0,
+      // parche: 5 = Consumidor Final (DocTipo 99, sin identificar)
+      CondicionIVAReceptorId: 5,
       CbteDesde: ultimoComprobante.cbteNro + 1,
       CbteHasta: ultimoComprobante.cbteNro + 1,
       CbteFch: fecha,
