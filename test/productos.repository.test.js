@@ -114,12 +114,13 @@ test('guardarSucursalesDeProducto: una sucursal inexistente o inactiva se rechaz
   assert.equal(consultas.filter(c => /INSERT INTO productos_sucursal/i.test(c.sql)).length, 0);
 });
 
-test('crear: crea el producto y su fila en la sucursal (productos.precio se completa solo porque es obligatoria)', async () => {
+test('crear: el catálogo no recibe precio ni disponibilidad; eso va solo en productos_sucursal', async () => {
   await repositorio.crear({ nombre: 'Fugazzeta', precio: 15000, imagen: null, categoria_id: 3 }, 2);
 
   const catalogo = consultas.find(c => /INSERT INTO productos \(/i.test(c.sql));
   assert.ok(catalogo);
-  assert.deepEqual(catalogo.params, ['Fugazzeta', 15000, true, null, 3]);
+  assert.deepEqual(catalogo.params, ['Fugazzeta', null, 3]);
+  assert.ok(!/precio|disponible/i.test(catalogo.sql));
 
   const enSucursal = consultas.find(c => /INSERT INTO productos_sucursal/i.test(c.sql));
   assert.deepEqual(enSucursal.params, [7, 2, 15000, true]);
