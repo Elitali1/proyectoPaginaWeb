@@ -2,6 +2,9 @@
   "name": "proyectopaginaweb",
   "version": "1.0.0",
   "main": "servidor.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "start": "node servidor.js",
     "test": "node --test test/",
