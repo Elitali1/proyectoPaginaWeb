@@ -2,11 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Productos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- Estilos de la pantalla de Productos. Usa las variables de color de estilos.css,
+       así cada sucursal se ve con su color sin tocar nada acá. -->
+  <link rel="stylesheet" href="productos-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
   <div class="marca">
   <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -30,78 +34,190 @@
   </div>
 </div>
 
-  <section>
-  <h2 id="titulo-formulario">Agregar producto</h2>
-  <form id="formulario-producto">
-    <label>Nombre: <input type="text" id="nombre" required></label>
-    <label>Precio: <input type="number" id="precio" required></label>
-    <label>Categoría:
-      <select id="categoria" required>
-        <option value="">Cargando categorías...</option>
-      </select>
-    </label>
-    <label>Nombre de archivo de imagen (opcional): <input type="text" id="imagen" placeholder="ej: napolitana.jpg"></label>
-    <label>
-      <input type="checkbox" id="disponible" checked>
-      Disponible
-    </label>
-    <button type="submit" id="btn-guardar">Guardar</button>
-    <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
-  </form>
+  <main class="pro-contenido">
 
-  <div id="seccion-subir-foto" class="oculto">
-    <label>Subir foto del producto:
-      <input type="file" id="archivo-imagen" accept="image/jpeg,image/png,image/webp">
-    </label>
-    <button type="button" id="btn-subir-foto">Subir foto</button>
-    <span id="mensaje-subida"></span>
-  </div>
+    <!-- Pestañas de la pantalla: Catálogo / Categorías -->
+    <div class="pro-tabs" role="tablist" aria-label="Vista">
+      <button type="button" class="pro-tab" id="tab-catalogo" role="tab" aria-selected="true">Catálogo</button>
+      <button type="button" class="pro-tab" id="tab-categorias" role="tab" aria-selected="false">Categorías</button>
+    </div>
 
-  <div id="seccion-receta" class="oculto">
-    <h3>Receta (insumos que consume)</h3>
-    <label>Insumo:
-      <select id="receta-insumo"></select>
-    </label>
-    <label>Cantidad: <input type="number" id="receta-cantidad" step="0.001" min="0.001"></label>
-    <button type="button" id="btn-agregar-item-receta">Agregar a la receta</button>
+    <!-- ================= CATÁLOGO ================= -->
+    <div id="vista-catalogo" class="pro-layout">
 
-    <ul id="lista-receta"></ul>
+      <section class="pro-tarjeta pro-catalogo" aria-label="Catálogo">
+        <h2 class="pro-titulo">Catálogo</h2>
 
-    <button type="button" id="btn-guardar-receta">Guardar receta</button>
+        <div class="pro-barra">
+          <label class="pro-campo pro-campo-buscar">Buscar producto
+            <input type="search" id="buscar-producto" placeholder="Escribí un nombre" autocomplete="off">
+          </label>
+          <label class="pro-campo">Mostrar
+            <select id="filtro-estado">
+              <option value="todos">Todos</option>
+              <option value="disponibles">Disponibles</option>
+              <option value="nodisp">No disponibles</option>
+              <option value="noaca">No se venden en esta sucursal</option>
+            </select>
+          </label>
+          <button type="button" id="btn-agregar-producto" class="btn-pro">Agregar producto</button>
+        </div>
 
-    <div id="resultado-costo"></div>
-  </div>
-     <div id="seccion-sucursales" class="oculto">
-     <h3>Dónde se vende</h3>
-     <p><small>Tildá las sucursales donde se vende y poné el precio de cada una. El precio de arriba es el de la sucursal en la que estás trabajando.</small></p>
-     <div id="lista-sucursales-producto"></div>
-     <button type="button" id="btn-guardar-sucursales">Guardar sucursales</button>
-   </div>
-</section>
+        <div id="chips-categoria" class="pro-chips" role="group" aria-label="Filtrar por categoría"></div>
 
-  <section id="seccion-categorias">
-    <h2 id="titulo-formulario-categoria">Agregar categoría</h2>
-    <form id="formulario-categoria" autocomplete="off">
-      <label>Nombre: <input type="text" id="categoria-nombre" maxlength="100" required placeholder="Ej: Canastitas"></label>
-      <label>
-        <input type="checkbox" id="categoria-requiere-masa">
-        Sus productos llevan masa (en el menú online se elige a la piedra o al molde, y las pizzas pueden ir mitad y mitad)
-      </label>
-      <label>
-        <input type="checkbox" id="categoria-es-extra">
-        Son extras (agregados como "Extra jamón": en el menú online se ofrecen dentro de cada pizza, cada uno con su precio)
-      </label>
-      <button type="submit" id="btn-guardar-categoria">Guardar categoría</button>
-      <button type="button" id="btn-cancelar-categoria" class="oculto">Cancelar</button>
-    </form>
-    <p><small>Una categoría se puede eliminar solo si no tiene productos. Después de crearla, elegila al cargar o editar un producto.</small></p>
-    <div id="contenedor-categorias"></div>
-  </section>
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Categoría</th>
+                <th scope="col" class="col-precio">Precio</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-productos"></tbody>
+          </table>
+          <div id="sin-resultados" class="pro-vacio oculto">
+            <p>No hay productos que coincidan.</p>
+            <button type="button" id="btn-limpiar-filtros" class="btn-pro btn-amarillo">Limpiar filtros</button>
+          </div>
+        </div>
 
-  <section>
-    <h2>Catálogo</h2>
-    <div id="contenedor-productos"></div>
-  </section>
+        <div class="pro-pie">
+          <div id="rango-productos" class="pro-rango"></div>
+          <nav id="paginacion" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
+
+      <!-- Panel lateral: Agregar / Editar producto -->
+      <section id="panel-producto" class="pro-tarjeta pro-panel oculto" aria-label="Datos del producto">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-formulario" class="pro-titulo">Agregar producto</h2>
+          <button type="button" id="btn-cerrar-panel" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+
+        <div id="tabs-panel" class="pro-tabs-chicas oculto" role="tablist" aria-label="Secciones del producto">
+          <button type="button" class="tab-panel" data-tab="datos" role="tab" aria-selected="true">Datos</button>
+          <button type="button" class="tab-panel" data-tab="foto" role="tab" aria-selected="false">Foto</button>
+          <button type="button" class="tab-panel" data-tab="receta" role="tab" aria-selected="false">Receta y costo</button>
+          <button type="button" class="tab-panel" data-tab="sucursales" role="tab" aria-selected="false">Dónde se vende</button>
+        </div>
+
+        <form id="formulario-producto" class="pestana activa" data-pestana="datos">
+          <label class="pro-campo">Nombre
+            <input type="text" id="nombre" required>
+          </label>
+          <div class="pro-fila">
+            <label class="pro-campo">Precio
+              <input type="number" id="precio" required>
+            </label>
+            <label class="pro-campo">Categoría
+              <select id="categoria" required>
+                <option value="">Cargando categorías...</option>
+              </select>
+            </label>
+          </div>
+          <label class="pro-campo">Nombre de archivo de imagen (opcional)
+            <input type="text" id="imagen" placeholder="ej: napolitana.jpg">
+          </label>
+          <label class="pro-check">
+            <input type="checkbox" id="disponible" checked>
+            Disponible
+          </label>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar" class="btn-pro">Guardar</button>
+            <button type="button" id="btn-cancelar-edicion" class="btn-sec">Cancelar</button>
+          </div>
+        </form>
+
+        <div id="seccion-subir-foto" class="pestana oculto" data-pestana="foto">
+          <label class="pro-campo">Subir foto del producto
+            <input type="file" id="archivo-imagen" accept="image/jpeg,image/png,image/webp">
+          </label>
+          <p class="pro-ayuda">Formatos: jpg, png o webp.</p>
+          <div class="pro-botones">
+            <button type="button" id="btn-subir-foto" class="btn-pro btn-amarillo">Subir foto</button>
+            <span id="mensaje-subida"></span>
+          </div>
+        </div>
+
+        <div id="seccion-receta" class="pestana oculto" data-pestana="receta">
+          <h3>Receta (insumos que consume)</h3>
+          <div class="pro-fila pro-fila-receta">
+            <label class="pro-campo">Insumo
+              <select id="receta-insumo"></select>
+            </label>
+            <label class="pro-campo">Cantidad
+              <input type="number" id="receta-cantidad" step="0.001" min="0.001">
+            </label>
+            <button type="button" id="btn-agregar-item-receta" class="btn-sec">Agregar a la receta</button>
+          </div>
+
+          <ul id="lista-receta"></ul>
+
+          <div class="pro-botones">
+            <button type="button" id="btn-guardar-receta" class="btn-pro">Guardar receta</button>
+          </div>
+
+          <div id="resultado-costo"></div>
+        </div>
+
+        <div id="seccion-sucursales" class="pestana oculto" data-pestana="sucursales">
+          <h3>Dónde se vende</h3>
+          <p class="pro-ayuda">Tildá las sucursales donde se vende y poné el precio de cada una. El precio de arriba es el de la sucursal en la que estás trabajando.</p>
+          <div id="lista-sucursales-producto"></div>
+          <div class="pro-botones">
+            <button type="button" id="btn-guardar-sucursales" class="btn-pro">Guardar sucursales</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= CATEGORÍAS ================= -->
+    <div id="seccion-categorias" class="pro-layout vista-oculta">
+
+      <section class="pro-tarjeta pro-panel" aria-label="Formulario de categoría">
+        <h2 id="titulo-formulario-categoria" class="pro-titulo">Agregar categoría</h2>
+        <form id="formulario-categoria" autocomplete="off">
+          <label class="pro-campo">Nombre
+            <input type="text" id="categoria-nombre" maxlength="100" required placeholder="Ej: Canastitas">
+          </label>
+          <label class="pro-check pro-check-largo">
+            <input type="checkbox" id="categoria-requiere-masa">
+            <span>Sus productos llevan masa (en el menú online se elige a la piedra o al molde, y las pizzas pueden ir mitad y mitad)</span>
+          </label>
+          <label class="pro-check pro-check-largo">
+            <input type="checkbox" id="categoria-es-extra">
+            <span>Son extras (agregados como "Extra jamón": en el menú online se ofrecen dentro de cada pizza, cada uno con su precio)</span>
+          </label>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar-categoria" class="btn-pro">Guardar categoría</button>
+            <button type="button" id="btn-cancelar-categoria" class="btn-sec oculto">Cancelar</button>
+          </div>
+        </form>
+        <p class="pro-ayuda">Una categoría se puede eliminar solo si no tiene productos. Después de crearla, elegila al cargar o editar un producto.</p>
+      </section>
+
+      <section class="pro-tarjeta pro-catalogo" aria-label="Lista de categorías">
+        <h2 class="pro-titulo">Categorías</h2>
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Categoría</th>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="col-precio">Productos</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-categorias"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="productos.js"></script>

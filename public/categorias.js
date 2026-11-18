@@ -1,7 +1,7 @@
 // Pantalla de categorías (dentro de Productos): crear, renombrar, cambiar si llevan masa y borrar las vacías.
 // Se carga después de productos.js y usa sus funciones y variables globales (API_URL, cargarCategorias,
 // cargarProductos) y las de auth-helpers.js (escapeHtml, manejarNoAutorizado).
-// OJO: productos.js ata sus propios handlers a TODOS los .btn-editar y .btn-toggle de la página,
+// OJO: los botones de cada fila del catálogo se manejan en productos.js con .btn-editar y .btn-toggle,
 // por eso estos botones usan otras clases (btn-comanda solo da el estilo amarillo).
 let categoriaEditandoId = null;
 let listaCategorias = [];
@@ -11,21 +11,34 @@ async function cargarListaCategorias() {
   if (manejarNoAutorizado(respuesta)) return;
   listaCategorias = await respuesta.json();
 
+  // #contenedor-categorias es el <tbody> de la tabla de categorías.
   const contenedor = document.getElementById('contenedor-categorias');
   contenedor.innerHTML = '';
 
   listaCategorias.forEach(c => {
     const n = c.cantidad_productos || 0;
-    const div = document.createElement('div');
-    div.className = 'pedido';
-    div.innerHTML = `
-      <strong>${escapeHtml(c.nombre)}</strong>
-      ${c.requiere_masa ? ' · lleva masa' : ''}${c.es_extra ? ' · extras' : ''}
-      · ${n} producto${n === 1 ? '' : 's'}
-      <button type="button" class="btn-comanda btn-editar-categoria" data-id="${c.id}">Editar</button>
-      <button type="button" class="btn-cancelar btn-borrar-categoria" data-id="${c.id}">Eliminar</button>
+    const tipo = c.requiere_masa ? 'Lleva masa' : (c.es_extra ? 'Extras' : 'Común');
+    const fila = document.createElement('tr');
+    fila.dataset.id = c.id;
+    fila.innerHTML = `
+      <td><strong>${escapeHtml(c.nombre)}</strong></td>
+      <td>${tipo}</td>
+      <td class="col-precio">${n}</td>
+      <td class="col-acciones">
+        <button type="button" class="btn-comanda btn-editar-categoria" data-id="${c.id}" aria-label="Editar la categoría ${escapeHtml(c.nombre)}">Editar</button>
+        <button type="button" class="btn-cancelar btn-borrar-categoria" data-id="${c.id}" aria-label="Eliminar la categoría ${escapeHtml(c.nombre)}">Eliminar</button>
+      </td>
     `;
-    contenedor.appendChild(div);
+    contenedor.appendChild(fila);
+  });
+
+  marcarCategoriaEditando();
+}
+
+// Resalta en la tabla la categoría que se está editando.
+function marcarCategoriaEditando() {
+  document.querySelectorAll('#contenedor-categorias tr').forEach(fila => {
+    fila.classList.toggle('fila-editando', categoriaEditandoId !== null && Number(fila.dataset.id) === Number(categoriaEditandoId));
   });
 }
 
@@ -44,6 +57,7 @@ function volverAModoCrearCategoria() {
   document.getElementById('titulo-formulario-categoria').textContent = 'Agregar categoría';
   document.getElementById('btn-guardar-categoria').textContent = 'Guardar categoría';
   document.getElementById('btn-cancelar-categoria').classList.add('oculto');
+  marcarCategoriaEditando();
 }
 
 document.getElementById('btn-cancelar-categoria').addEventListener('click', volverAModoCrearCategoria);
@@ -62,6 +76,7 @@ document.getElementById('contenedor-categorias').addEventListener('click', async
     document.getElementById('titulo-formulario-categoria').textContent = `Editar categoría "${categoria.nombre}"`;
     document.getElementById('btn-guardar-categoria').textContent = 'Guardar cambios';
     document.getElementById('btn-cancelar-categoria').classList.remove('oculto');
+    marcarCategoriaEditando();
     document.getElementById('seccion-categorias').scrollIntoView({ behavior: 'smooth' });
     return;
   }
