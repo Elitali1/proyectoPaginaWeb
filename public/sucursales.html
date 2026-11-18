@@ -2,16 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Sucursales</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css: base compartida del panel nuevo. tablas-pro.css: piezas de las pantallas con tabla.
+       sucursales-pro.css: lo propio de esta pantalla. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="tablas-pro.css">
+  <link rel="stylesheet" href="sucursales-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
-  <div class="marca">
-    <img src="img/Logo.png" alt="Don Chicho" class="logo">
-    <h1>Sucursales</h1>
-  </div>
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Sucursales</h1>
+    </div>
 
     <nav>
       <a href="pedidos.html">Pedidos</a>
@@ -31,55 +37,118 @@
     </div>
   </div>
 
-  <section>
-    <h2 id="titulo-formulario">Agregar sucursal</h2>
-    <form id="formulario-sucursal" autocomplete="off">
-      <label>Nombre: <input type="text" id="nombre" maxlength="100" required></label>
-      <label>Dirección (se imprime en las facturas de esta sucursal): <input type="text" id="direccion" maxlength="200"></label>
-      <label>Punto de venta de ARCA: <input type="number" id="pto_vta" min="1" step="1"></label>
-      <label>Cuenta donde cobra las transferencias (ej. MercadoPago, Banco Galicia): <input type="text" id="cuenta_transferencia" maxlength="100" placeholder="MercadoPago"></label>
-      <label>WhatsApp donde recibe los pedidos del menú online (con código de país, ej. 5491165838528): <input type="tel" id="whatsapp" maxlength="20" placeholder="5491165838528"></label>
-      <label>Link de Google Maps del local (en Maps: Compartir > Copiar vínculo). Es el botón "Cómo llegar" de la página Visitanos: abre la ubicación con las reseñas: <input type="url" id="link_mapa" maxlength="500" placeholder="https://maps.app.goo.gl/..."></label>
-      <label>Días y horario de atención (se muestra en la página Visitanos, ej. "Miércoles a domingos de 19:30 a 00:00"): <input type="text" id="horario" maxlength="200" placeholder="Miércoles a domingos de 19:30 a 00:00"></label>
-      <label>
-        <input type="checkbox" id="activa" checked>
-        Activa
-      </label>
+  <main class="pro-contenido">
+    <div class="pro-layout">
 
-      <!-- Solo al crear: copia los productos (con precios) y los insumos de otra sucursal. El stock empieza en 0. -->
-      <div id="seccion-copiar">
-        <label>Copiar productos e insumos de:
-          <select id="copiar_de"></select>
-        </label>
-        <label>Factor de precios (1 = mismos precios, 1.10 = 10% más caros): <input type="number" id="factor" value="1" min="0.01" max="10" step="0.01"></label>
+      <div class="suc-columna">
+
+        <!-- ================= TABLA DE SUCURSALES ================= -->
+        <section class="pro-tarjeta pro-catalogo" aria-label="Sucursales">
+          <div class="pro-barra">
+            <h2 class="pro-titulo suc-titulo">Sucursales</h2>
+            <button type="button" id="btn-agregar-sucursal" class="btn-pro">Agregar sucursal</button>
+          </div>
+
+          <div class="pro-tabla-wrap">
+            <table class="pro-tabla">
+              <thead>
+                <tr>
+                  <th scope="col">Sucursal</th>
+                  <th scope="col">Facturación y cobros</th>
+                  <th scope="col">Contacto y menú online</th>
+                  <th scope="col" class="col-acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="contenedor-sucursales"></tbody>
+            </table>
+            <div id="sin-sucursales" class="pro-vacio oculto"><p>No hay sucursales cargadas todavía.</p></div>
+          </div>
+
+          <p class="pro-ayuda">Una sucursal sin punto de venta no puede emitir facturas. El punto de venta no se puede repetir entre sucursales ni cambiar una vez que la sucursal emitió facturas. Las sucursales no se borran: se desactivan.</p>
+        </section>
+
+        <!-- ================= IVA ================= -->
+        <section class="pro-tarjeta" aria-label="Condición frente al IVA">
+          <h2 class="pro-titulo">Impuestos: condición frente al IVA</h2>
+          <form id="formulario-iva" class="pestana activa suc-iva" autocomplete="off">
+            <label class="pro-campo">Condición
+              <select id="iva-condicion">
+                <option value="monotributo">Monotributista (las ventas se toman tal cual)</option>
+                <option value="responsable_inscripto">Responsable Inscripto (el precio incluye IVA)</option>
+              </select>
+            </label>
+            <label class="pro-campo">Alícuota de IVA (%)
+              <input type="number" id="iva-alicuota" value="21" min="0" max="50" step="0.5">
+            </label>
+            <div class="pro-botones">
+              <button type="submit" class="btn-pro">Guardar</button>
+            </div>
+          </form>
+          <p class="pro-ayuda">Es una sola configuración para todas las sucursales (comparten CUIT). Como Responsable Inscripto, el dashboard muestra las ventas netas de IVA, porque el IVA no es ganancia. Antes de cambiarlo, confirmalo con tu contador.</p>
+          <p id="mensaje-iva" class="pro-aviso oculto" role="status"></p>
+        </section>
       </div>
 
-      <button type="submit" id="btn-guardar">Crear sucursal</button>
-      <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
-    </form>
-    <p><small>Una sucursal sin punto de venta no puede emitir facturas. El punto de venta no se puede repetir entre sucursales ni cambiar una vez que la sucursal emitió facturas. Las sucursales no se borran: se desactivan.</small></p>
-  </section>
+      <!-- ================= PANEL: AGREGAR / EDITAR ================= -->
+      <section id="panel-sucursal" class="pro-tarjeta pro-panel oculto" aria-label="Datos de la sucursal">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-formulario" class="pro-titulo">Agregar sucursal</h2>
+          <button type="button" id="btn-cerrar-panel-sucursal" class="btn-sec btn-chico">Cerrar</button>
+        </div>
 
-  <section>
-    <h2>Impuestos: condición frente al IVA</h2>
-    <form id="formulario-iva" autocomplete="off">
-      <label>Condición:
-        <select id="iva-condicion">
-          <option value="monotributo">Monotributista (las ventas se toman tal cual)</option>
-          <option value="responsable_inscripto">Responsable Inscripto (el precio incluye IVA)</option>
-        </select>
-      </label>
-      <label>Alícuota de IVA (%): <input type="number" id="iva-alicuota" value="21" min="0" max="50" step="0.5"></label>
-      <button type="submit">Guardar</button>
-    </form>
-    <p><small>Es una sola configuración para todas las sucursales (comparten CUIT). Como Responsable Inscripto, el dashboard muestra las ventas netas de IVA, porque el IVA no es ganancia. Antes de cambiarlo, confirmalo con tu contador.</small></p>
-    <p id="mensaje-iva" class="oculto"></p>
-  </section>
+        <p id="mensaje-panel-sucursal" class="pro-aviso pro-aviso-error oculto" role="alert"></p>
 
-  <section>
-    <h2>Sucursales</h2>
-    <div id="contenedor-sucursales"></div>
-  </section>
+        <form id="formulario-sucursal" class="pestana activa" autocomplete="off">
+          <label class="pro-campo">Nombre
+            <input type="text" id="nombre" maxlength="100" required>
+          </label>
+          <label class="pro-campo">Dirección
+            <input type="text" id="direccion" maxlength="200">
+            <span class="pro-ayuda">Se imprime en las facturas de esta sucursal.</span>
+          </label>
+          <label class="pro-campo">Punto de venta de ARCA
+            <input type="number" id="pto_vta" min="1" step="1">
+          </label>
+          <label class="pro-campo">Cuenta donde cobra las transferencias
+            <input type="text" id="cuenta_transferencia" maxlength="100" placeholder="MercadoPago">
+            <span class="pro-ayuda">Por ejemplo, MercadoPago o Banco Galicia.</span>
+          </label>
+          <label class="pro-campo">WhatsApp donde recibe los pedidos del menú online
+            <input type="tel" id="whatsapp" maxlength="20" placeholder="5491165838528">
+            <span class="pro-ayuda">Con código de país, por ejemplo 5491165838528.</span>
+          </label>
+          <label class="pro-campo">Link de Google Maps del local
+            <input type="url" id="link_mapa" maxlength="500" placeholder="https://maps.app.goo.gl/...">
+            <span class="pro-ayuda">En Maps: Compartir &gt; Copiar vínculo. Es el botón "Cómo llegar" de la página Visitanos: abre la ubicación con las reseñas.</span>
+          </label>
+          <label class="pro-campo">Días y horario de atención
+            <input type="text" id="horario" maxlength="200" placeholder="Miércoles a domingos de 19:30 a 00:00">
+            <span class="pro-ayuda">Se muestra en la página Visitanos, por ejemplo "Miércoles a domingos de 19:30 a 00:00".</span>
+          </label>
+          <label class="suc-check">
+            <input type="checkbox" id="activa" checked>
+            Activa
+          </label>
+
+          <!-- Solo al crear: copia los productos (con precios) y los insumos de otra sucursal. El stock empieza en 0. -->
+          <div id="seccion-copiar" class="suc-copiar">
+            <label class="pro-campo">Copiar productos e insumos de
+              <select id="copiar_de"></select>
+            </label>
+            <label class="pro-campo">Factor de precios
+              <input type="number" id="factor" value="1" min="0.01" max="10" step="0.01">
+              <span class="pro-ayuda">1 = mismos precios, 1.10 = 10% más caros.</span>
+            </label>
+          </div>
+
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar" class="btn-pro">Crear sucursal</button>
+            <button type="button" id="btn-cancelar-edicion" class="btn-sec">Cancelar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="sucursales.js"></script>

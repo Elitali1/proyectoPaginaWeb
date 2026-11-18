@@ -1,0 +1,31 @@
+/* Lo propio de la pantalla de Sucursales. La base está en productos-pro.css y tablas-pro.css. */
+
+.suc-columna { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.productos-pro .suc-titulo { margin: 0; flex: 1; }
+
+/* Celdas con varios datos apilados: "Etiqueta: valor". Si falta el dato, se marca en tono de aviso. */
+.pro-tabla td.suc-celda { min-width: 170px; vertical-align: top; }
+.suc-estado { margin-left: 6px; font-size: 12px; }
+.pro-tabla td.suc-acciones-celda { vertical-align: top; width: 1%; }
+.suc-acciones { display: flex; flex-direction: column; gap: 6px; }
+.pro-tabla .suc-acciones .btn-tabla { margin: 0; }
+.suc-dato { display: block; font-size: 13px; margin-top: 3px; overflow-wrap: anywhere; }
+.suc-dato b { font-weight: 800; }
+.suc-falta { color: #8A5A0B; }
+.suc-menu a { font-size: 13px; font-weight: 700; word-break: break-all; }
+.pro-tabla .suc-menu .btn-tabla { margin: 6px 0 0; }
+
+/* Formularios */
+.suc-iva { flex-direction: column; }
+.suc-check { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }
+.suc-check input { width: 18px; height: 18px; }
+.suc-copiar {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.productos-pro .pro-campo .pro-ayuda { font-weight: 600; }

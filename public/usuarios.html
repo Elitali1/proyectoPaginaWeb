@@ -2,17 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Usuarios</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css: base compartida del panel nuevo. tablas-pro.css: piezas de las pantallas con tabla. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="tablas-pro.css">
 </head>
-<body>
-   <div class="barra-superior">
-  <div class="marca">
-  <img src="img/Logo.png" alt="Don Chicho" class="logo">
-  <h1>Usuarios</h1>
-  </div>
-    
+<body class="productos-pro">
+  <div class="barra-superior">
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Usuarios</h1>
+    </div>
+
     <nav>
       <a href="pedidos.html">Pedidos</a>
       <a href="productos.html" id="link-productos">Productos</a>
@@ -30,31 +34,85 @@
     </div>
   </div>
 
-  <section>
-    <h2 id="titulo-formulario">Crear nuevo usuario</h2>
-    <form id="formulario-usuario" autocomplete="off">
-      <label>Nombre: <input type="text" id="nombre" required></label>
-      <label>Email: <input type="email" id="email" required autocomplete="new-email"></label>
-      <label>Contraseña<span id="etiqueta-password-opcional"></span>: <input type="password" id="password" autocomplete="new-password"></label>
-      <label>Rol:
-        <select id="rol">
-          <option value="cajero">Cajero</option>
-          <option value="admin">Administrador</option>
-        </select>
-      </label>
-      <!-- Se muestra solo cuando hay más de una sucursal (mientras haya una, el panel se ve igual que siempre). -->
-      <label id="campo-sucursal" class="oculto">Sucursal:
-        <select id="sucursal"></select>
-      </label>
-      <button type="submit" id="btn-guardar">Crear usuario</button>
-      <button type="button" id="btn-cancelar-edicion" class="oculto">Cancelar</button>
-    </form>
-  </section>
+  <main class="pro-contenido">
+    <div class="pro-layout">
 
-  <section>
-    <h2>Usuarios del sistema</h2>
-    <div id="contenedor-usuarios"></div>
-  </section>
+      <!-- ================= TABLA DE USUARIOS ================= -->
+      <section class="pro-tarjeta pro-catalogo" aria-label="Usuarios del sistema">
+        <h2 class="pro-titulo">Usuarios del sistema</h2>
+
+        <div class="pro-barra">
+          <label class="pro-campo pro-campo-buscar">Buscar usuario
+            <input type="search" id="buscar-usuario" placeholder="Nombre o email" autocomplete="off">
+          </label>
+          <button type="button" id="btn-agregar-usuario" class="btn-pro">Crear usuario</button>
+        </div>
+
+        <div id="chips-rol" class="pro-chips" role="group" aria-label="Filtrar por rol"></div>
+
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Usuario</th>
+                <th scope="col">Email</th>
+                <th scope="col">Rol</th>
+                <th scope="col" id="columna-sucursal" class="oculto">Sucursal</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-usuarios"></tbody>
+          </table>
+          <div id="sin-usuarios" class="pro-vacio oculto"><p>No hay usuarios cargados todavía.</p></div>
+          <div id="sin-resultados-usuarios" class="pro-vacio oculto">
+            <p>No hay usuarios que coincidan.</p>
+            <button type="button" id="btn-limpiar-filtros-usuarios" class="btn-pro btn-amarillo">Limpiar filtros</button>
+          </div>
+        </div>
+
+        <div class="pro-pie">
+          <div id="rango-usuarios" class="pro-rango"></div>
+          <nav id="paginacion-usuarios" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
+
+      <!-- ================= PANEL: CREAR / EDITAR ================= -->
+      <section id="panel-usuario" class="pro-tarjeta pro-panel oculto" aria-label="Datos del usuario">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-formulario" class="pro-titulo">Crear nuevo usuario</h2>
+          <button type="button" id="btn-cerrar-panel-usuario" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+
+        <p id="mensaje-panel-usuario" class="pro-aviso pro-aviso-error oculto" role="alert"></p>
+
+        <form id="formulario-usuario" class="pestana activa" autocomplete="off">
+          <label class="pro-campo">Nombre
+            <input type="text" id="nombre" required>
+          </label>
+          <label class="pro-campo">Email
+            <input type="email" id="email" required autocomplete="new-email">
+          </label>
+          <label class="pro-campo">Contraseña<span id="etiqueta-password-opcional"></span>
+            <input type="password" id="password" autocomplete="new-password">
+          </label>
+          <label class="pro-campo">Rol
+            <select id="rol">
+              <option value="cajero">Cajero</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
+          <!-- Se muestra solo cuando hay más de una sucursal (mientras haya una, el panel se ve igual que siempre). -->
+          <label id="campo-sucursal" class="pro-campo oculto">Sucursal
+            <select id="sucursal"></select>
+          </label>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar" class="btn-pro">Crear usuario</button>
+            <button type="button" id="btn-cancelar-edicion" class="btn-sec">Cancelar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="usuarios.js"></script>
