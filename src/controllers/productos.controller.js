@@ -4,6 +4,7 @@ const { esTexto, esNumero, esEnteroPositivo } = require('../utils/validaciones.j
 const { validarSucursalesDeProducto, leerSucursalDeConsulta } = require('../utils/sucursales.js');
 const sucursalesRepository = require('../repositories/sucursales.repository.js');
 const categoriasRepository = require('../repositories/categorias.repository.js');
+const { optimizarImagenCloudinary } = require('../utils/imagenes.js');
 
 // Valida y limpia los datos de un producto. Lanza ErrorNegocio si algo no cierra.
 function validarDatosProducto(body) {
@@ -122,7 +123,8 @@ async function listarPublico(req, res) {
         id: p.id,
         nombre: p.nombre,
         precio: p.precio,
-        imagen: p.imagen,
+        // Las fotos se suben en tamaño original (varios MB): el menú público las recibe reducidas.
+        imagen: optimizarImagenCloudinary(p.imagen),
         categoria_nombre: p.categoria_nombre,
         // Para que el armado de pedido sepa si hay que elegir masa (piedra / molde).
         requiere_masa: Boolean(p.requiere_masa),
