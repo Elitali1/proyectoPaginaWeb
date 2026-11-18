@@ -2,11 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Cierre de Caja</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css tiene los estilos compartidos del panel nuevo (tarjetas, tablas, pestañas, botones);
+       caja-pro.css agrega solo lo propio de esta pantalla. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="caja-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
   <div class="marca">
   <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -14,10 +19,10 @@
 </div>
     <nav>
       <a href="pedidos.html">Pedidos</a>
-      <a href="productos.html">Productos</a>
+      <a href="productos.html" id="link-productos">Productos</a>
       <a href="insumos.html" id="link-insumos">Insumos</a>
-      <a href="compras.html">Compras</a>
-      <a href="caja.html">Cierre de caja</a>
+      <a href="compras.html" id="link-compras">Compras</a>
+      <a href="caja.html" id="link-caja">Cierre de caja</a>
       <a href="usuarios.html" id="link-usuarios">Usuarios</a> <a href="sucursales.html" id="link-sucursales">Sucursales</a>
       <a href="historial.html">Historial</a>
       <a href="clientes.html" id="link-clientes">Clientes</a>
@@ -29,82 +34,170 @@
     </div>
   </div>
 
-  <section>
-    <h2>Cerrar caja del día</h2>
-    <form id="formulario-cierre">
-      <label>Fecha: <input type="date" id="fecha-cierre" required></label>
-      <button type="submit">Cerrar caja</button>
-    </form>
-    <p id="mensaje-cierre" class="oculto"></p>
-  </section>
+  <main class="pro-contenido">
 
-  <section>
-    <h2>Historial de cierres</h2>
-    <label>Desde: <input type="date" id="cierres-desde"></label>
-    <label>Hasta: <input type="date" id="cierres-hasta"></label>
-    <button type="button" id="btn-filtrar-cierres">Filtrar</button>
-    <div id="contenedor-cierres"></div>
-  </section>
-  
-  <section>
-  <h2>Cargar gasto</h2>
-  <p><small><strong>Fijo</strong>: no depende de lo que vendés (sueldos, servicios, alquiler, monotributo, seguros, impuestos y permisos). <strong>Variable</strong>: sube y baja con las ventas (materia prima, insumos de papelería). Las compras de insumos que cargás en "Compras" ya cuentan solas como materia prima: acá van solo las que no pasan por ahí.</small></p>
-  <form id="formulario-gasto">
-    <label>Concepto: <input type="text" id="gasto-concepto" placeholder="Ej: Sueldo Juan, Alquiler agosto" required></label>
-    <label>Categoría: <input type="text" id="gasto-categoria" list="lista-categorias" placeholder="Ej: Sueldos, Alquiler, Servicios, Materia prima"></label>
-    <datalist id="lista-categorias"></datalist>
-    <label>Tipo:
-      <select id="gasto-tipo">
-        <option value="">Elegir...</option>
-        <option value="fijo">Fijo</option>
-        <option value="variable">Variable</option>
-      </select>
-    </label>
-    <label>Monto: <input type="number" id="gasto-monto" required></label>
-    <label>Fecha: <input type="date" id="gasto-fecha" required></label>
-    <button type="submit">Guardar gasto</button>
-  </form>
-  <p id="mensaje-gasto" class="oculto"></p>
+    <!-- Pestañas de la pantalla -->
+    <div class="pro-tabs" role="tablist" aria-label="Vista">
+      <button type="button" class="pro-tab" id="tab-cierres" role="tab" aria-selected="true">Cierres</button>
+      <button type="button" class="pro-tab" id="tab-gastos" role="tab" aria-selected="false">Gastos</button>
+      <button type="button" class="pro-tab" id="tab-balance" role="tab" aria-selected="false">Balance</button>
+    </div>
 
-  <h3>Gastos cargados</h3>
-  <label>Desde: <input type="date" id="gastos-desde"></label>
-  <label>Hasta: <input type="date" id="gastos-hasta"></label>
-  <button type="button" id="btn-filtrar-gastos">Filtrar</button>
-  <div id="contenedor-gastos"></div>
-</section>
+    <!-- ================= CIERRES ================= -->
+    <div id="vista-cierres" class="pro-layout">
 
-  <section>
-    <h2>Gastos que se repiten todos los meses</h2>
-    <p><small>Cargá una vez el alquiler, los servicios, los sueldos, el monotributo, etc. de esta sucursal. Después, cada mes, un botón los convierte en gastos sin tipear todo de nuevo. Si ya cargaste uno en ese mes, no se duplica.</small></p>
-    <form id="formulario-recurrente">
-      <label>Concepto: <input type="text" id="recurrente-concepto" placeholder="Ej: Alquiler local" required></label>
-      <label>Categoría: <input type="text" id="recurrente-categoria" list="lista-categorias" placeholder="Ej: Alquiler"></label>
-      <label>Tipo:
-        <select id="recurrente-tipo">
-          <option value="">Elegir...</option>
-          <option value="fijo">Fijo</option>
-          <option value="variable">Variable</option>
-        </select>
-      </label>
-      <label>Monto mensual: <input type="number" id="recurrente-monto" required></label>
-      <button type="submit">Agregar</button>
-    </form>
-    <p id="mensaje-recurrente" class="oculto"></p>
-    <div id="contenedor-recurrentes"></div>
+      <section class="pro-tarjeta pro-lateral" aria-label="Cerrar caja del día">
+        <h2 class="pro-titulo">Cerrar caja del día</h2>
+        <form id="formulario-cierre">
+          <label class="pro-campo">Fecha
+            <input type="date" id="fecha-cierre" required>
+          </label>
+          <div class="pro-botones">
+            <button type="submit" class="btn-pro">Cerrar caja</button>
+          </div>
+        </form>
+        <p id="mensaje-cierre" class="pro-aviso oculto"></p>
+        <p class="pro-ayuda">Cuando cerrás una fecha, se guardan las ventas de ese día separadas por producto, en efectivo y en transferencia.</p>
+      </section>
 
-    <label>Cargar los gastos del mes con fecha: <input type="date" id="recurrentes-fecha"></label>
-    <button type="button" id="btn-cargar-recurrentes">Cargar gastos del mes</button>
-  </section>
+      <section class="pro-tarjeta pro-catalogo" aria-label="Historial de cierres">
+        <h2 class="pro-titulo">Historial de cierres</h2>
+        <div class="pro-barra pro-barra-inicio">
+          <label class="pro-campo">Desde
+            <input type="date" id="cierres-desde">
+          </label>
+          <label class="pro-campo">Hasta
+            <input type="date" id="cierres-hasta">
+          </label>
+          <button type="button" id="btn-filtrar-cierres" class="btn-pro btn-amarillo">Filtrar</button>
+        </div>
+        <div id="contenedor-cierres"></div>
+      </section>
+    </div>
 
-  <section>
-    <h2>Balance del período</h2>
-    <form id="formulario-balance">
-    <label>Desde: <input type="date" id="balance-desde" required></label>
-    <label>Hasta: <input type="date" id="balance-hasta" required></label>
-    <button type="submit">Calcular balance</button>
-    </form>
-    <div id="resultado-balance"></div>
-  </section>
+    <!-- ================= GASTOS ================= -->
+    <div id="vista-gastos" class="pro-columna vista-oculta">
+
+      <div class="pro-layout">
+        <section class="pro-tarjeta pro-lateral pro-lateral-ancho" aria-label="Cargar gasto">
+          <h2 class="pro-titulo">Cargar gasto</h2>
+          <p class="pro-ayuda"><strong>Fijo</strong>: no depende de lo que vendés (sueldos, servicios, alquiler, monotributo, seguros, impuestos y permisos). <strong>Variable</strong>: sube y baja con las ventas (materia prima, insumos de papelería). Las compras de insumos que cargás en "Compras" ya cuentan solas como materia prima: acá van solo las que no pasan por ahí.</p>
+          <form id="formulario-gasto">
+            <label class="pro-campo">Concepto
+              <input type="text" id="gasto-concepto" placeholder="Ej: Sueldo Juan, Alquiler agosto" required>
+            </label>
+            <label class="pro-campo">Categoría
+              <input type="text" id="gasto-categoria" list="lista-categorias" placeholder="Ej: Sueldos, Alquiler, Servicios, Materia prima">
+            </label>
+            <datalist id="lista-categorias"></datalist>
+            <div class="pro-fila">
+              <label class="pro-campo">Tipo
+                <select id="gasto-tipo">
+                  <option value="">Elegir...</option>
+                  <option value="fijo">Fijo</option>
+                  <option value="variable">Variable</option>
+                </select>
+              </label>
+              <label class="pro-campo">Monto
+                <input type="number" id="gasto-monto" required>
+              </label>
+            </div>
+            <label class="pro-campo">Fecha
+              <input type="date" id="gasto-fecha" required>
+            </label>
+            <div class="pro-botones">
+              <button type="submit" class="btn-pro">Guardar gasto</button>
+            </div>
+          </form>
+          <p id="mensaje-gasto" class="pro-aviso pro-aviso-error oculto"></p>
+        </section>
+
+        <section class="pro-tarjeta pro-catalogo" aria-label="Gastos cargados">
+          <h2 class="pro-titulo">Gastos cargados</h2>
+          <div class="pro-barra pro-barra-inicio">
+            <label class="pro-campo">Desde
+              <input type="date" id="gastos-desde">
+            </label>
+            <label class="pro-campo">Hasta
+              <input type="date" id="gastos-hasta">
+            </label>
+            <button type="button" id="btn-filtrar-gastos" class="btn-pro btn-amarillo">Filtrar</button>
+          </div>
+          <div id="contenedor-gastos"></div>
+        </section>
+      </div>
+
+      <section class="pro-tarjeta" aria-label="Gastos recurrentes">
+        <h2 class="pro-titulo">Gastos que se repiten todos los meses</h2>
+        <p class="pro-ayuda">Cargá una vez el alquiler, los servicios, los sueldos, el monotributo, etc. de esta sucursal. Después, cada mes, un botón los convierte en gastos sin tipear todo de nuevo. Si ya cargaste uno en ese mes, no se duplica.</p>
+        <div class="pro-layout">
+          <div class="pro-lateral pro-lateral-ancho pro-bloque">
+            <form id="formulario-recurrente">
+              <label class="pro-campo">Concepto
+                <input type="text" id="recurrente-concepto" placeholder="Ej: Alquiler local" required>
+              </label>
+              <label class="pro-campo">Categoría
+                <input type="text" id="recurrente-categoria" list="lista-categorias" placeholder="Ej: Alquiler">
+              </label>
+              <div class="pro-fila">
+                <label class="pro-campo">Tipo
+                  <select id="recurrente-tipo">
+                    <option value="">Elegir...</option>
+                    <option value="fijo">Fijo</option>
+                    <option value="variable">Variable</option>
+                  </select>
+                </label>
+                <label class="pro-campo">Monto mensual
+                  <input type="number" id="recurrente-monto" required>
+                </label>
+              </div>
+              <div class="pro-botones">
+                <button type="submit" class="btn-pro">Agregar</button>
+              </div>
+            </form>
+            <p id="mensaje-recurrente" class="pro-aviso pro-aviso-error oculto"></p>
+          </div>
+
+          <div class="pro-catalogo pro-bloque">
+            <div id="contenedor-recurrentes"></div>
+            <div class="pro-caja-mes">
+              <label class="pro-campo">Cargar los gastos del mes con fecha
+                <input type="date" id="recurrentes-fecha">
+              </label>
+              <button type="button" id="btn-cargar-recurrentes" class="btn-pro btn-amarillo">Cargar gastos del mes</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= BALANCE ================= -->
+    <div id="vista-balance" class="pro-layout vista-oculta">
+
+      <section class="pro-tarjeta pro-lateral" aria-label="Balance del período">
+        <h2 class="pro-titulo">Balance del período</h2>
+        <form id="formulario-balance">
+          <div class="pro-fila">
+            <label class="pro-campo">Desde
+              <input type="date" id="balance-desde" required>
+            </label>
+            <label class="pro-campo">Hasta
+              <input type="date" id="balance-hasta" required>
+            </label>
+          </div>
+          <div class="pro-botones">
+            <button type="submit" class="btn-pro">Calcular balance</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="pro-tarjeta pro-catalogo" aria-label="Resultado del balance">
+        <h2 class="pro-titulo">Resultado</h2>
+        <div id="resultado-balance"><p>Elegí las fechas y apretá "Calcular balance".</p></div>
+      </section>
+    </div>
+
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="caja.js"></script>

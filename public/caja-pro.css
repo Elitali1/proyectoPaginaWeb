@@ -1,0 +1,92 @@
+/* Lo propio de la pantalla de Cierre de caja. La base (tarjetas, tablas, pestañas, botones, campos)
+   está en productos-pro.css. Los colores salen de las mismas variables, así cada sucursal usa el suyo. */
+
+.pro-columna { display: flex; flex-direction: column; gap: 22px; }
+.pro-lateral { flex: 1 1 320px; max-width: 420px; }
+.pro-lateral-ancho { flex: 1 1 380px; max-width: 480px; }
+.pro-bloque { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.pro-barra-inicio { justify-content: flex-start; }
+
+/* Avisos (cierre guardado, errores) */
+.productos-pro .pro-aviso {
+  margin: 0;
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+
+/* Botones chicos dentro de las tablas */
+.pro-tabla .btn-tabla {
+  margin-left: 6px;
+  padding: 4px 14px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 999px;
+  background: var(--pro-crema);
+  color: var(--pro-tinta);
+  cursor: pointer;
+}
+.pro-tabla .btn-tabla:first-child { margin-left: 0; }
+.pro-tabla .btn-peligro { color: #7A1F16; border-color: #7A1F16; }
+.pro-tabla .btn-amarillo-chico { background: #E8A33D; }
+
+/* Detalle de ventas de cada cierre */
+.pro-tabla tr.fila-detalle td { background: #F7EFDD; padding: 12px 16px; }
+.detalle-grupos { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.detalle-grupos > div { min-width: 180px; font-size: 14px; }
+.detalle-grupos strong { color: var(--color-primary-dark, var(--color-primary, #7A2E28)); display: block; }
+
+/* Gastos */
+.sin-clasificar { color: #7A1F16; font-weight: 800; font-style: normal; }
+.celda-clasificar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.celda-clasificar select {
+  height: 34px;
+  border: 1px solid var(--pro-borde);
+  border-radius: 8px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 13px;
+  background: #fff;
+  color: #2B211C;
+}
+.total-periodo { margin-top: 10px; font-weight: 800; text-align: right; }
+.pro-caja-mes {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.pro-caja-mes .pro-campo { flex: 1 1 200px; }
+
+/* Balance */
+.balance-linea {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #E3D3B4;
+  padding: 6px 0;
+}
+.balance-periodo { margin: 0 0 6px; color: var(--pro-suave); font-weight: 700; }
+.balance-neto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 18px;
+  font-weight: 800;
+}
+.balance-neto.balance-positivo { background: var(--pro-cabecera); color: #1F4D29; }
+.balance-neto.balance-negativo { background: #F6D9D4; color: #7A1F16; }
