@@ -21,8 +21,19 @@ let categorias = [];
 let insumosDisponibles = [];
 let itemsReceta = [];
 
+// ---- Estado del catálogo (lista con buscador, filtros y paginación) ----
+const PRODUCTOS_POR_PAGINA = 10;
+let todosLosProductos = [];
+let catalogoCargado = false;
+const filtros = { texto: '', estado: 'todos', categoria: 'todas', pagina: 1 };
+
 function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
+}
+
+// Para buscar sin importar mayúsculas ni tildes ("jamon" encuentra "Jamón").
+function normalizarTexto(texto) {
+  return String(texto || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
 async function cargarCategorias() {
@@ -38,6 +49,9 @@ async function cargarCategorias() {
     option.textContent = categoria.nombre;
     select.appendChild(option);
   });
+
+  // Los botones de filtro por categoría salen de esta misma lista.
+  renderizarCatalogo();
 }
 
 async function cargarInsumosParaReceta() {
@@ -57,70 +71,278 @@ async function cargarInsumosParaReceta() {
 async function cargarProductos() {
   const respuesta = await fetch(`${API_URL}/productos`, { credentials: 'include' });
   if (manejarNoAutorizado(respuesta)) return;
-  const productos = await respuesta.json();
+  todosLosProductos = await respuesta.json();
+  catalogoCargado = true;
+  renderizarCatalogo();
+}
+
+// Dibuja los botones de categoría, la tabla (ya filtrada y de a 10) y la paginación.
+function renderizarCatalogo() {
+  if (!catalogoCargado) return;
+
+  // Botones de categoría con su cantidad de productos.
+  const chips = document.getElementById('chips-categoria');
+  chips.innerHTML = '';
+  const opcionesChips = [{ id: 'todas', nombre: 'Todas', cantidad: todosLosProductos.length }].concat(
+    categorias.map(c => ({
+      id: String(c.id),
+      nombre: c.nombre,
+      cantidad: todosLosProductos.filter(p => String(p.categoria_id) === String(c.id)).length
+    }))
+  );
+  opcionesChips.forEach(opcion => {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'chip';
+    boton.dataset.categoria = opcion.id;
+    boton.setAttribute('aria-pressed', String(String(filtros.categoria) === opcion.id));
+    boton.textContent = `${opcion.nombre} ${opcion.cantidad}`;
+    chips.appendChild(boton);
+  });
+
+  // Filtros: texto, estado y categoría.
+  const texto = normalizarTexto(filtros.texto.trim());
+  const filtrados = todosLosProductos.filter(p => {
+    if (filtros.categoria !== 'todas' && String(p.categoria_id) !== String(filtros.categoria)) return false;
+    if (texto && !normalizarTexto(p.nombre).includes(texto)) return false;
+    if (filtros.estado === 'disponibles') return p.en_sucursal && p.disponible;
+    if (filtros.estado === 'nodisp') return p.en_sucursal && !p.disponible;
+    if (filtros.estado === 'noaca') return !p.en_sucursal;
+    return true;
+  });
+
+  // Paginación.
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / PRODUCTOS_POR_PAGINA));
+  if (filtros.pagina > totalPaginas) filtros.pagina = totalPaginas;
+  const desde = (filtros.pagina - 1) * PRODUCTOS_POR_PAGINA;
+  const visibles = filtrados.slice(desde, desde + PRODUCTOS_POR_PAGINA);
 
   const contenedor = document.getElementById('contenedor-productos');
   contenedor.innerHTML = '';
 
-  productos.forEach(producto => {
-    const div = document.createElement('div');
-    div.className = 'pedido';
-    div.innerHTML = `
-      <strong>${escapeHtml(producto.nombre)}</strong>${producto.en_sucursal ? ` - $${formatearPrecio(producto.precio)}` : ' - no se vende en esta sucursal'}
-      ${producto.categoria_nombre ? ` (${escapeHtml(producto.categoria_nombre)})` : ''}
-      ${producto.en_sucursal && !producto.disponible ? ' (no disponible)' : ''}
-      ${producto.imagen ? `<br><small>Imagen: ${escapeHtml(producto.imagen)}</small>` : ''}
-      <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${escapeHtml(producto.nombre)}" data-precio="${escapeHtml(producto.precio)}" data-disponible="${producto.disponible}" data-imagen="${escapeHtml(producto.imagen)}" data-categoria="${producto.categoria_id || ''}">Editar</button>
-      ${producto.en_sucursal ? `<button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
-        ${producto.disponible ? 'Marcar no disponible' : 'Reactivar'}
-      </button>` : ''}
+  visibles.forEach(producto => {
+    let estadoTexto = 'Disponible';
+    let estadoClase = 'estado-ok';
+    if (!producto.en_sucursal) {
+      estadoTexto = 'No se vende acá';
+      estadoClase = 'estado-fuera';
+    } else if (!producto.disponible) {
+      estadoTexto = 'No disponible';
+      estadoClase = 'estado-no';
+    }
+
+    const fila = document.createElement('tr');
+    fila.dataset.id = producto.id;
+    fila.innerHTML = `
+      <td>
+        <strong>${escapeHtml(producto.nombre)}</strong>
+        ${producto.imagen ? `<br><small>Imagen: ${escapeHtml(producto.imagen)}</small>` : ''}
+      </td>
+      <td>${producto.categoria_nombre ? escapeHtml(producto.categoria_nombre) : ''}</td>
+      <td class="col-precio">${producto.en_sucursal ? `$${formatearPrecio(producto.precio)}` : 'Sin precio'}</td>
+      <td><span class="estado ${estadoClase}">${estadoTexto}</span></td>
+      <td class="col-acciones">
+        <button type="button" class="btn-editar" data-id="${producto.id}" data-nombre="${escapeHtml(producto.nombre)}" data-precio="${escapeHtml(producto.precio)}" data-disponible="${producto.disponible}" data-imagen="${escapeHtml(producto.imagen)}" data-categoria="${producto.categoria_id || ''}" aria-label="Editar ${escapeHtml(producto.nombre)}">Editar</button>
+        ${producto.en_sucursal ? `<button type="button" class="btn-toggle" data-id="${producto.id}" data-disponible="${producto.disponible}">
+          ${producto.disponible ? 'Marcar no disponible' : 'Reactivar'}
+        </button>` : ''}
+      </td>
     `;
-    contenedor.appendChild(div);
+    contenedor.appendChild(fila);
   });
 
-  document.querySelectorAll('.btn-toggle').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      const id = boton.dataset.id;
-      const disponibleActual = boton.dataset.disponible === 'true';
+  marcarFilaEditando();
 
-      const producto = productos.find(p => p.id === Number(id));
+  document.getElementById('sin-resultados').classList.toggle('oculto', filtrados.length > 0);
 
-      await fetch(`${API_URL}/productos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          nombre: producto.nombre,
-          precio: producto.precio,
-          disponible: !disponibleActual,
-          imagen: producto.imagen,
-          categoria_id: producto.categoria_id
-        })
-      });
+  document.getElementById('rango-productos').textContent = filtrados.length === 0
+    ? 'Sin resultados'
+    : `Mostrando ${desde + 1} a ${desde + visibles.length} de ${filtrados.length}`;
 
-      cargarProductos();
-    });
-  });
+  const paginacion = document.getElementById('paginacion');
+  paginacion.innerHTML = '';
+  const agregarBotonPagina = (texto, pagina, { activa = false, deshabilitada = false, etiqueta = '' } = {}) => {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'pagina';
+    boton.dataset.pagina = pagina;
+    boton.textContent = texto;
+    boton.disabled = deshabilitada;
+    if (etiqueta) boton.setAttribute('aria-label', etiqueta);
+    if (activa) boton.setAttribute('aria-current', 'page');
+    paginacion.appendChild(boton);
+  };
+  agregarBotonPagina('Anterior', filtros.pagina - 1, { deshabilitada: filtros.pagina <= 1 });
+  for (let n = 1; n <= totalPaginas; n++) {
+    agregarBotonPagina(String(n), n, { activa: n === filtros.pagina, etiqueta: `Página ${n}` });
+  }
+  agregarBotonPagina('Siguiente', filtros.pagina + 1, { deshabilitada: filtros.pagina >= totalPaginas });
+}
 
-  document.querySelectorAll('.btn-editar').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      editandoId = boton.dataset.id;
-      document.getElementById('nombre').value = boton.dataset.nombre;
-      document.getElementById('precio').value = boton.dataset.precio;
-      document.getElementById('imagen').value = boton.dataset.imagen;
-      document.getElementById('categoria').value = boton.dataset.categoria;
-      document.getElementById('disponible').checked = boton.dataset.disponible === 'true';
-      document.getElementById('titulo-formulario').textContent = 'Editar producto';
-      document.getElementById('btn-guardar').textContent = 'Guardar cambios';
-      document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
-      document.getElementById('seccion-subir-foto').classList.remove('oculto');
-      document.getElementById('seccion-receta').classList.remove('oculto');
-
-      await cargarRecetaDeProducto(editandoId);
-      await cargarSucursalesDeProducto(editandoId);
-    });
+// Resalta en la tabla el producto que se está editando.
+function marcarFilaEditando() {
+  document.querySelectorAll('#contenedor-productos tr').forEach(fila => {
+    fila.classList.toggle('fila-editando', editandoId !== null && String(fila.dataset.id) === String(editandoId));
   });
 }
+
+// ---- Buscador, filtros y paginación ----
+document.getElementById('buscar-producto').addEventListener('input', (e) => {
+  filtros.texto = e.target.value;
+  filtros.pagina = 1;
+  renderizarCatalogo();
+});
+
+document.getElementById('filtro-estado').addEventListener('change', (e) => {
+  filtros.estado = e.target.value;
+  filtros.pagina = 1;
+  renderizarCatalogo();
+});
+
+document.getElementById('chips-categoria').addEventListener('click', (e) => {
+  const boton = e.target.closest('button[data-categoria]');
+  if (!boton) return;
+  filtros.categoria = boton.dataset.categoria;
+  filtros.pagina = 1;
+  renderizarCatalogo();
+});
+
+document.getElementById('paginacion').addEventListener('click', (e) => {
+  const boton = e.target.closest('button[data-pagina]');
+  if (!boton || boton.disabled) return;
+  filtros.pagina = Number(boton.dataset.pagina);
+  renderizarCatalogo();
+});
+
+document.getElementById('btn-limpiar-filtros').addEventListener('click', () => {
+  filtros.texto = '';
+  filtros.estado = 'todos';
+  filtros.categoria = 'todas';
+  filtros.pagina = 1;
+  document.getElementById('buscar-producto').value = '';
+  document.getElementById('filtro-estado').value = 'todos';
+  renderizarCatalogo();
+});
+
+// ---- Pestañas de la pantalla (Catálogo / Categorías) ----
+function mostrarVista(vista) {
+  const verCategorias = vista === 'categorias';
+  document.getElementById('vista-catalogo').classList.toggle('vista-oculta', verCategorias);
+  document.getElementById('seccion-categorias').classList.toggle('vista-oculta', !verCategorias);
+  document.getElementById('tab-catalogo').setAttribute('aria-selected', String(!verCategorias));
+  document.getElementById('tab-categorias').setAttribute('aria-selected', String(verCategorias));
+}
+document.getElementById('tab-catalogo').addEventListener('click', () => mostrarVista('catalogo'));
+document.getElementById('tab-categorias').addEventListener('click', () => mostrarVista('categorias'));
+
+// ---- Panel de Agregar / Editar producto ----
+// Las secciones Foto, Receta y Dónde se vende siguen usando la clase "oculto" como siempre
+// (el código de más abajo la prende y la apaga igual que antes). Acá solo se decide cuál
+// de las que están disponibles se muestra, según la pestaña elegida.
+const panelProducto = document.getElementById('panel-producto');
+
+function activarPestana(nombre) {
+  document.querySelectorAll('.pestana').forEach(seccion => {
+    seccion.classList.toggle('activa', seccion.dataset.pestana === nombre);
+  });
+  document.querySelectorAll('.tab-panel').forEach(boton => {
+    boton.setAttribute('aria-selected', String(boton.dataset.tab === nombre));
+  });
+}
+
+// Muestra solo las pestañas de las secciones disponibles (ej.: "Dónde se vende" no aparece con una sola sucursal).
+function actualizarPestanas() {
+  let hayOtras = false;
+  document.querySelectorAll('.tab-panel').forEach(boton => {
+    const seccion = document.querySelector(`.pestana[data-pestana="${boton.dataset.tab}"]`);
+    const disponible = !seccion.classList.contains('oculto');
+    boton.classList.toggle('oculto', !disponible);
+    if (boton.dataset.tab !== 'datos' && disponible) hayOtras = true;
+  });
+  document.getElementById('tabs-panel').classList.toggle('oculto', !hayOtras);
+
+  const activa = document.querySelector('.tab-panel[aria-selected="true"]');
+  if (!activa || activa.classList.contains('oculto')) activarPestana('datos');
+}
+
+document.querySelectorAll('.tab-panel').forEach(boton => {
+  boton.addEventListener('click', () => activarPestana(boton.dataset.tab));
+});
+
+// Cada vez que otra parte del código muestra u oculta una sección, se actualizan las pestañas.
+const observador = new MutationObserver(actualizarPestanas);
+['seccion-subir-foto', 'seccion-receta', 'seccion-sucursales'].forEach(id => {
+  observador.observe(document.getElementById(id), { attributes: true, attributeFilter: ['class'] });
+});
+
+function mostrarPanel() {
+  panelProducto.classList.remove('oculto');
+  activarPestana('datos');
+  actualizarPestanas();
+  panelProducto.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function ocultarPanel() {
+  panelProducto.classList.add('oculto');
+}
+
+// "Cerrar" sirve desde cualquier pestaña del panel: hace lo mismo que Cancelar.
+document.getElementById('btn-cerrar-panel').addEventListener('click', () => {
+  document.getElementById('btn-cancelar-edicion').click();
+});
+
+document.getElementById('btn-agregar-producto').addEventListener('click', () => {
+  // Cancelar deja el formulario limpio y en modo "Agregar"; después se abre el panel.
+  document.getElementById('btn-cancelar-edicion').click();
+  mostrarPanel();
+  document.getElementById('nombre').focus();
+});
+
+// ---- Acciones de cada fila del catálogo (Editar y Marcar no disponible / Reactivar) ----
+document.getElementById('contenedor-productos').addEventListener('click', async (event) => {
+  const botonToggle = event.target.closest('button.btn-toggle');
+  if (botonToggle) {
+    const id = botonToggle.dataset.id;
+    const disponibleActual = botonToggle.dataset.disponible === 'true';
+
+    const producto = todosLosProductos.find(p => p.id === Number(id));
+
+    await fetch(`${API_URL}/productos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        nombre: producto.nombre,
+        precio: producto.precio,
+        disponible: !disponibleActual,
+        imagen: producto.imagen,
+        categoria_id: producto.categoria_id
+      })
+    });
+
+    cargarProductos();
+    return;
+  }
+
+  const botonEditar = event.target.closest('button.btn-editar');
+  if (botonEditar) {
+    editandoId = botonEditar.dataset.id;
+    document.getElementById('nombre').value = botonEditar.dataset.nombre;
+    document.getElementById('precio').value = botonEditar.dataset.precio;
+    document.getElementById('imagen').value = botonEditar.dataset.imagen;
+    document.getElementById('categoria').value = botonEditar.dataset.categoria;
+    document.getElementById('disponible').checked = botonEditar.dataset.disponible === 'true';
+    document.getElementById('titulo-formulario').textContent = 'Editar producto';
+    document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+    document.getElementById('seccion-subir-foto').classList.remove('oculto');
+    document.getElementById('seccion-receta').classList.remove('oculto');
+    mostrarPanel();
+    marcarFilaEditando();
+
+    await cargarRecetaDeProducto(editandoId);
+    await cargarSucursalesDeProducto(editandoId);
+  }
+});
 
 async function cargarRecetaDeProducto(productoId) {
   const respuesta = await fetch(`${API_URL}/recetas/${productoId}`, { credentials: 'include' });
@@ -143,7 +365,7 @@ function renderizarListaReceta() {
     const insumo = insumosDisponibles.find(i => i.id === item.insumo_id);
     const li = document.createElement('li');
     li.innerHTML = `
-      ${insumo ? escapeHtml(insumo.nombre) : 'Insumo'}: ${item.cantidad} ${insumo ? escapeHtml(insumo.unidad_medida) : ''}
+      <span>${insumo ? escapeHtml(insumo.nombre) : 'Insumo'}: ${item.cantidad} ${insumo ? escapeHtml(insumo.unidad_medida) : ''}</span>
       <button type="button" class="btn-quitar-receta" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);
@@ -219,12 +441,13 @@ document.getElementById('btn-cancelar-edicion').addEventListener('click', () => 
   document.getElementById('formulario-producto').reset();
   document.getElementById('titulo-formulario').textContent = 'Agregar producto';
   document.getElementById('btn-guardar').textContent = 'Guardar';
-  document.getElementById('btn-cancelar-edicion').classList.add('oculto');
   document.getElementById('seccion-subir-foto').classList.add('oculto');
   document.getElementById('seccion-receta').classList.add('oculto');
   document.getElementById('seccion-sucursales').classList.add('oculto');
   document.getElementById('lista-receta').innerHTML = '';
   document.getElementById('resultado-costo').innerHTML = '';
+  ocultarPanel();
+  marcarFilaEditando();
 });
 
 document.getElementById('formulario-producto').addEventListener('submit', async (event) => {
@@ -249,9 +472,10 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
     itemsReceta = [];
     document.getElementById('titulo-formulario').textContent = 'Agregar producto';
     document.getElementById('btn-guardar').textContent = 'Guardar';
-    document.getElementById('btn-cancelar-edicion').classList.add('oculto');
     document.getElementById('seccion-receta').classList.add('oculto');
     document.getElementById('seccion-sucursales').classList.add('oculto');
+    // Al guardar los cambios el panel se cierra y la tabla se actualiza.
+    ocultarPanel();
   } else {
   const respuesta = await fetch(`${API_URL}/productos`, {
     method: 'POST',
@@ -265,7 +489,6 @@ document.getElementById('formulario-producto').addEventListener('submit', async 
   editandoId = productoCreado.id;
   document.getElementById('titulo-formulario').textContent = 'Editar producto';
   document.getElementById('btn-guardar').textContent = 'Guardar cambios';
-  document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
   document.getElementById('seccion-subir-foto').classList.remove('oculto');
   document.getElementById('seccion-receta').classList.remove('oculto');
   cargarSucursalesDeProducto(editandoId);
@@ -341,12 +564,13 @@ async function cargarSucursalesDeProducto(productoId) {
 
   sucursalesDelProducto.forEach(s => {
     const fila = document.createElement('div');
+    fila.className = 'fila-sucursal';
     fila.innerHTML = `
-      <label>
+      <label class="pro-check">
         <input type="checkbox" class="chk-sucursal" data-id="${s.sucursal_id}" ${s.en_sucursal ? 'checked' : ''}>
         ${escapeHtml(s.nombre)}
       </label>
-      <label>Precio: <input type="number" class="precio-sucursal" data-id="${s.sucursal_id}" min="0" step="any" value="${s.en_sucursal ? escapeHtml(s.precio) : ''}"></label>
+      <label class="pro-campo-inline">Precio <input type="number" class="precio-sucursal" data-id="${s.sucursal_id}" min="0" step="any" value="${s.en_sucursal ? escapeHtml(s.precio) : ''}"></label>
     `;
     lista.appendChild(fila);
   });
