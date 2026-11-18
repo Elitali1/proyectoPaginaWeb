@@ -376,10 +376,52 @@
     const envio = document.querySelector('input[name="entrega"]:checked').value === 'envio';
     $('ped-nota-envio').classList.toggle('oculto', !envio);
     $('lbl-direccion').classList.toggle('oculto', !envio);
+    actualizarCajaTransferencia();
 
     const sinWhatsapp = !L.limpiarTelefono(estado.sucursal.whatsapp);
     $('btn-enviar').disabled = sinWhatsapp;
     mostrarErrorPedido(sinWhatsapp ? 'Este local todavía no tiene WhatsApp cargado para recibir pedidos por acá.' : '');
+  }
+
+  // Si el cliente elige Transferencia y el local cargó su alias, se muestra para copiarlo. Sin alias no se muestra nada.
+  function actualizarCajaTransferencia() {
+    const alias = estado.sucursal && estado.sucursal.alias_transferencia;
+    const transfiere = document.querySelector('input[name="pago"]:checked').value === 'transferencia';
+    $('caja-transferencia').classList.toggle('oculto', !(transfiere && alias));
+    if (!alias) return;
+    $('alias-valor').textContent = alias;
+    const titular = estado.sucursal.titular_transferencia;
+    $('alias-titular').textContent = titular ? `A nombre de ${titular}` : '';
+    $('alias-titular').classList.toggle('oculto', !titular);
+    $('alias-estado').textContent = '';
+    $('btn-copiar-alias').textContent = 'Copiar';
+  }
+
+  // Copia el alias. Si el navegador no deja usar el portapapeles, se prueba el método viejo y, si tampoco anda,
+  // se le pide al cliente que lo copie a mano (el alias queda a la vista, seleccionable).
+  async function copiarAlias() {
+    const alias = estado.sucursal && estado.sucursal.alias_transferencia;
+    if (!alias) return;
+    let copiado = false;
+    try {
+      await navigator.clipboard.writeText(alias);
+      copiado = true;
+    } catch (e) {
+      try {
+        const campo = document.createElement('textarea');
+        campo.value = alias;
+        campo.setAttribute('readonly', '');
+        campo.style.position = 'fixed';
+        campo.style.opacity = '0';
+        $('caja-transferencia').appendChild(campo);
+        campo.select();
+        copiado = document.execCommand('copy');
+        campo.remove();
+      } catch (e2) { copiado = false; }
+    }
+    $('btn-copiar-alias').textContent = copiado ? '¡Copiado!' : 'Copiar';
+    $('alias-estado').textContent = copiado ? 'Alias copiado.' : 'No pudimos copiarlo solos: mantené apretado el alias y copialo.';
+    if (copiado) setTimeout(() => { $('btn-copiar-alias').textContent = 'Copiar'; }, 2500);
   }
 
   function mostrarErrorPedido(texto) {
@@ -463,6 +505,8 @@
     });
 
     document.querySelectorAll('input[name="entrega"]').forEach(r => r.addEventListener('change', renderPedido));
+    document.querySelectorAll('input[name="pago"]').forEach(r => r.addEventListener('change', actualizarCajaTransferencia));
+    $('btn-copiar-alias').addEventListener('click', copiarAlias);
     $('form-pedido').addEventListener('submit', enviarPedido);
     $('btn-volver-pedido').addEventListener('click', abrirPedido);
     $('btn-nuevo-pedido').addEventListener('click', nuevoPedido);

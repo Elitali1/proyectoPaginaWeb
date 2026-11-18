@@ -190,3 +190,12 @@ fieldset.extras legend { font-weight: 700; font-size: 0.9rem; padding: 0; margin
 .enviado-acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Alias para transferir: aparece al elegir Transferencia */
+.caja-transferencia { background: var(--papel); border: 2px dashed #CDB88F; border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; }
+.caja-transferencia-titulo { margin: 0 0 8px; font-weight: 800; font-size: 0.9rem; }
+.alias-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.alias-valor { font-size: 1.15rem; color: var(--primary-dark); word-break: break-all; user-select: all; -webkit-user-select: all; }
+.caja-transferencia .nota { margin: 8px 0 0; }
+.alias-estado { margin: 6px 0 0; font-size: 0.8rem; font-weight: 700; color: var(--verde); }
+.alias-estado:empty { display: none; }

@@ -61,6 +61,7 @@ async function cargarSucursales() {
       <td class="suc-celda">
         ${datoCelda('Punto de venta', s.pto_vta, 'no puede facturar')}
         <span class="suc-dato"><b>Cobra transferencias en:</b> ${escapeHtml(s.cuenta_transferencia)}</span>
+        ${datoCelda('Alias en el menú online', s.alias_transferencia, 'el menú online no muestra a dónde transferir')}
       </td>
       <td class="suc-celda suc-menu">
         ${datoCelda('WhatsApp para pedidos', s.whatsapp, 'el menú online no puede enviar pedidos')}
@@ -169,6 +170,8 @@ document.getElementById('contenedor-sucursales').addEventListener('click', async
     document.getElementById('direccion').value = s.direccion || '';
     document.getElementById('pto_vta').value = s.pto_vta || '';
     document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
+    document.getElementById('alias_transferencia').value = s.alias_transferencia || '';
+    document.getElementById('titular_transferencia').value = s.titular_transferencia || '';
     document.getElementById('whatsapp').value = s.whatsapp || '';
     document.getElementById('link_mapa').value = s.link_mapa || '';
     document.getElementById('horario').value = s.horario || '';
@@ -227,6 +230,8 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
     direccion: document.getElementById('direccion').value,
     pto_vta: document.getElementById('pto_vta').value,
     cuenta_transferencia: document.getElementById('cuenta_transferencia').value,
+    alias_transferencia: document.getElementById('alias_transferencia').value,
+    titular_transferencia: document.getElementById('titular_transferencia').value,
     whatsapp: document.getElementById('whatsapp').value,
     link_mapa: document.getElementById('link_mapa').value,
     horario: document.getElementById('horario').value,

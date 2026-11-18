@@ -6,6 +6,33 @@ const { ErrorNegocio } = require('./errores.js');
 const PTO_VTA_MAXIMO = 99999;
 const FACTOR_MAXIMO = 10;
 
+// Alias de transferencia del local: es el que el menú online le muestra al cliente para que transfiera.
+// Reglas de los alias bancarios: entre 6 y 20 caracteres, solo letras, números, punto y guion.
+//  - no viene (undefined)  -> undefined: se conserva el que tenía;
+//  - vacío                 -> null: se borra;
+//  - con contenido         -> el alias sin espacios de más, si cumple las reglas.
+function validarAlias(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null || String(valor).trim() === '') return null;
+  if (typeof valor !== 'string') throw new ErrorNegocio('El alias no es válido');
+  const texto = valor.trim();
+  if (!/^[A-Za-z0-9.-]{6,20}$/.test(texto)) {
+    throw new ErrorNegocio('El alias tiene que tener entre 6 y 20 caracteres y solo puede usar letras, números, punto y guion (ej. donchicho.pizza)');
+  }
+  return texto;
+}
+
+// Nombre del titular de la cuenta: se muestra junto al alias para que el cliente verifique a quién transfiere.
+// Mismo criterio que el alias: undefined conserva, vacío borra, con contenido se limpia (máximo 100 caracteres).
+function validarTitular(valor) {
+  if (valor === undefined) return undefined;
+  if (valor === null || String(valor).trim() === '') return null;
+  if (typeof valor !== 'string') throw new ErrorNegocio('El titular no es válido');
+  const texto = valor.trim().replace(/\s+/g, ' ');
+  if (texto.length > 100) throw new ErrorNegocio('El nombre del titular es demasiado largo (máximo 100 caracteres)');
+  return texto;
+}
+
 // Número de WhatsApp del local. Se guardan solo los dígitos, con código de país (Argentina celular: 549 +
 // código de área + número, ej. 5491165838528), que es lo que pide el link wa.me.
 //  - no viene (undefined)  -> undefined: se conserva el que tenía;
@@ -77,7 +104,7 @@ function leerSucursalDeConsulta(valor) {
 
 // Datos de una sucursal: nombre (obligatorio), dirección y punto de venta (opcionales), activa.
 function validarDatosSucursal(body) {
-  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario } = body || {};
+  const { nombre, direccion, pto_vta, activa, cuenta_transferencia, whatsapp, link_mapa, horario, alias_transferencia, titular_transferencia } = body || {};
 
   if (typeof nombre !== 'string' || nombre.trim() === '') {
     throw new ErrorNegocio('El nombre de la sucursal es obligatorio');
@@ -124,7 +151,9 @@ function validarDatosSucursal(body) {
     cuenta_transferencia: cuentaTransferencia,
     whatsapp: validarWhatsapp(whatsapp),
     link_mapa: validarLinkMapa(link_mapa),
-    horario: validarHorario(horario)
+    horario: validarHorario(horario),
+    alias_transferencia: validarAlias(alias_transferencia),
+    titular_transferencia: validarTitular(titular_transferencia)
   };
 }
 
@@ -175,5 +204,5 @@ function validarSucursalesDeProducto(body) {
 }
 
 module.exports = {
-  validarWhatsapp, validarLinkMapa, validarHorario,
+  validarWhatsapp, validarLinkMapa, validarHorario, validarAlias, validarTitular,
   leerSucursalDeConsulta, validarDatosSucursal, validarOpcionesDeCopia, validarSucursalesDeProducto };

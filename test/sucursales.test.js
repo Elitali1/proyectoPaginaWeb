@@ -13,7 +13,7 @@ const {
 
 test('sucursal: datos válidos se limpian (espacios, vacíos a null)', () => {
   const datos = validarDatosSucursal({ nombre: '  Donchichopizza Av. 25 de Mayo  ', direccion: ' Av. 25 de Mayo 1645 ', pto_vta: '3', activa: true });
-  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined, link_mapa: undefined, horario: undefined });
+  assert.deepStrictEqual(datos, { nombre: 'Donchichopizza Av. 25 de Mayo', direccion: 'Av. 25 de Mayo 1645', pto_vta: 3, activa: true, cuenta_transferencia: undefined, whatsapp: undefined, link_mapa: undefined, horario: undefined, alias_transferencia: undefined, titular_transferencia: undefined });
 
   const sinOpcionales = validarDatosSucursal({ nombre: 'Local', direccion: '', pto_vta: '' });
   assert.strictEqual(sinOpcionales.direccion, null);
@@ -147,4 +147,36 @@ test('horario: undefined conserva, vacío borra, texto se limpia y no pasa de 20
 test('datos de sucursal incluyen el horario validado', () => {
   assert.strictEqual(validarDatosSucursal({ nombre: 'Local', horario: ' Vie a dom 20 a 00 ' }).horario, 'Vie a dom 20 a 00');
   assert.strictEqual(validarDatosSucursal({ nombre: 'Local' }).horario, undefined);
+});
+
+test('alias de transferencia: undefined conserva, vacío borra, y solo acepta alias bancarios', () => {
+  const { validarAlias } = require('../src/utils/sucursales.js');
+  assert.strictEqual(validarAlias(undefined), undefined);
+  assert.strictEqual(validarAlias(''), null);
+  assert.strictEqual(validarAlias('   '), null);
+  assert.strictEqual(validarAlias(null), null);
+  assert.strictEqual(validarAlias('  donchicho.pizza '), 'donchicho.pizza');
+  assert.strictEqual(validarAlias('Don-Chicho.123'), 'Don-Chicho.123');
+  for (const malo of ['corto', 'a'.repeat(21), 'con espacio', 'ñandu.pizza', 'alias_guion', '<script>alert(1)</script>', 123, {}]) {
+    assert.throws(() => validarAlias(malo), ErrorNegocio, String(malo));
+  }
+});
+
+test('titular de la cuenta: undefined conserva, vacío borra, se limpia y no pasa de 100 caracteres', () => {
+  const { validarTitular } = require('../src/utils/sucursales.js');
+  assert.strictEqual(validarTitular(undefined), undefined);
+  assert.strictEqual(validarTitular(''), null);
+  assert.strictEqual(validarTitular('  Elías   Aguirre  '), 'Elías Aguirre');
+  assert.throws(() => validarTitular('a'.repeat(101)), ErrorNegocio);
+  assert.throws(() => validarTitular(5), ErrorNegocio);
+});
+
+test('datos de sucursal incluyen alias y titular validados', () => {
+  const datos = validarDatosSucursal({ nombre: 'Local', alias_transferencia: ' donchicho.pizza ', titular_transferencia: 'Elias Aguirre' });
+  assert.strictEqual(datos.alias_transferencia, 'donchicho.pizza');
+  assert.strictEqual(datos.titular_transferencia, 'Elias Aguirre');
+  const sinDatos = validarDatosSucursal({ nombre: 'Local' });
+  assert.strictEqual(sinDatos.alias_transferencia, undefined);
+  assert.strictEqual(sinDatos.titular_transferencia, undefined);
+  assert.throws(() => validarDatosSucursal({ nombre: 'Local', alias_transferencia: 'mal alias' }), ErrorNegocio);
 });
