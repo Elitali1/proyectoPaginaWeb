@@ -756,3 +756,93 @@ body.login section {
     font-size: 16px;
   }
 }
+/* ============================================================================
+   MENÚ HAMBURGUESA DEL SISTEMA (celular)
+   En el celular el menú, la sucursal, la sesión y "Cerrar sesión" quedan escondidos detrás del
+   botón de las 3 líneas (lo agrega auth-helpers.js). En compu no cambia nada.
+   ============================================================================ */
+.menu-toggle { display: none; }
+
+@media (max-width: 640px) {
+  body:not(.landing) .barra-superior {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "marca   toggle"
+      "menu    menu"
+      "usuario usuario";
+    align-items: center;
+  }
+
+  body:not(.landing) .barra-superior .menu-toggle {
+    grid-area: toggle;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: none;
+    transform: none;
+  }
+
+  body:not(.landing) .barra-superior .menu-toggle:hover:not(:disabled),
+  body:not(.landing) .barra-superior .menu-toggle:active:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+    transform: none;
+  }
+
+  body:not(.landing) .barra-superior .menu-toggle:focus-visible {
+    outline: 2px solid var(--color-bg);
+    outline-offset: 2px;
+  }
+
+  .barra-superior .menu-toggle span {
+    display: block;
+    width: 30px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--color-bg);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* abierto: las 3 líneas se vuelven una X */
+  .barra-superior.menu-abierto .menu-toggle span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
+  .barra-superior.menu-abierto .menu-toggle span:nth-child(2) { opacity: 0; }
+  .barra-superior.menu-abierto .menu-toggle span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); }
+
+  /* cerrado: una sola fila (marca + botón), sin huecos de las filas escondidas */
+  body:not(.landing) .barra-superior:not(.menu-abierto) {
+    grid-template-areas: "marca toggle";
+    gap: 0;
+  }
+
+  /* cerrado: se esconden el menú y la zona del usuario */
+  body:not(.landing) .barra-superior:not(.menu-abierto) nav,
+  body:not(.landing) .barra-superior:not(.menu-abierto) > div:last-child {
+    display: none;
+  }
+
+  /* abierto: links en columna, fáciles de tocar */
+  body:not(.landing) .barra-superior nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 2px;
+  }
+
+  body:not(.landing) .barra-superior nav a {
+    padding: 12px 14px;
+    font-size: 1.02rem;
+  }
+
+  body:not(.landing) .barra-superior > div:last-child {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+  }
+}
