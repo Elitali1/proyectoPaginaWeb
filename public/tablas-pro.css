@@ -1,5 +1,5 @@
-/* Piezas compartidas por Clientes, Historial y Compras (la base está en productos-pro.css).
-   Todo va scopeado bajo .productos-pro igual que el resto del panel nuevo. */
+/* Piezas compartidas por Clientes, Historial y Compras (la base está en panel-base.css).
+   Todo va scopeado bajo .panel-base igual que el resto del panel nuevo. */
 
 /* Filas de tabla */
 .pro-tabla tr.fila-editando { background: #F7EFDD; }
@@ -24,7 +24,7 @@
 .pro-tabla .btn-peligro { background: #F6D9D4; color: #7A1F16; border-color: #7A1F16; }
 
 /* Avisos dentro de la pantalla o del panel */
-.productos-pro .pro-aviso {
+.panel-base .pro-aviso {
   margin: 0;
   background: #F7EFDD;
   border: 2px solid var(--pro-tinta);
@@ -33,10 +33,10 @@
   font-size: 14px;
   font-weight: 700;
 }
-.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+.panel-base .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
 
 /* Línea de resumen sobre la tabla (cantidad y total) */
-.productos-pro .pro-resumen { margin: 0; font-size: 14px; font-weight: 800; }
+.panel-base .pro-resumen { margin: 0; font-size: 14px; font-weight: 800; }
 
 /* Estados */
 .estado-pendiente { background: #F6E2B3; border-color: var(--pro-tinta); }
@@ -57,7 +57,7 @@
   font-size: 14px;
 }
 .detalle-bloque p { margin: 0; font-weight: 700; word-break: break-word; }
-.productos-pro .pro-panel h3 { margin: 0; font-size: 16px; }
+.panel-base .pro-panel h3 { margin: 0; font-size: 16px; }
 
 /* ---------- Compras ---------- */
 .lista-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -83,9 +83,9 @@
   background: var(--pro-crema);
   cursor: pointer;
 }
-.productos-pro #alertas-precio { display: flex; flex-direction: column; gap: 6px; }
-.productos-pro #alertas-precio p { margin: 0; font-weight: 700; }
-.productos-pro #alertas-precio .balance-negativo { color: #7A1F16; font-weight: 800; }
-.productos-pro #alertas-precio .balance-positivo { color: #1F4D29; font-weight: 800; }
-.productos-pro .campos-en-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel-base #alertas-precio { display: flex; flex-direction: column; gap: 6px; }
+.panel-base #alertas-precio p { margin: 0; font-weight: 700; }
+.panel-base #alertas-precio .balance-negativo { color: #7A1F16; font-weight: 800; }
+.panel-base #alertas-precio .balance-positivo { color: #1F4D29; font-weight: 800; }
+.panel-base .campos-en-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .pro-tabla td.col-nowrap { white-space: nowrap; }

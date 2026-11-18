@@ -1,9 +1,9 @@
-/* Lo propio del Dashboard. La base (tarjetas, botones, chips, campos) está en productos-pro.css.
+/* Lo propio del Dashboard. La base (tarjetas, botones, chips, campos) está en panel-base.css.
    Los verdes de las barras usan el color de cada sucursal (--color-primary); los rojos y el amarillo son fijos. */
 
 .dash-contenido { display: flex; flex-direction: column; gap: 18px; }
 .dash-vista { display: flex; flex-direction: column; gap: 18px; }
-.productos-pro .dash-vista.oculto { display: none !important; }
+.panel-base .dash-vista.oculto { display: none !important; }
 
 /* Período */
 .dash-periodo { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
@@ -179,5 +179,5 @@
 }
 
 /* Pestañas de vista (usan aria-selected en vez de aria-pressed) */
-.productos-pro .chip[aria-selected="true"] { background: var(--color-primary, #7A2E28); color: #fff; }
+.panel-base .chip[aria-selected="true"] { background: var(--color-primary, #7A2E28); color: #fff; }
 #contenedor-dash-equilibrio { display: flex; flex-direction: column; gap: 12px; }

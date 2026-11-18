@@ -1,9 +1,9 @@
 /* Pantalla de Productos (catálogo en tabla, panel lateral y categorías).
    Los colores principales salen de las variables de estilos.css (--color-primary, etc.):
    la sucursal 2 las redefine con html[data-sucursal="2"], así que acá no hay ningún color de sucursal escrito.
-   Todo va bajo .productos-pro para no tocar las otras pantallas. */
+   Todo va bajo .panel-base para no tocar las otras pantallas. */
 
-.productos-pro {
+.panel-base {
   --pro-tinta: var(--color-ink, #2B0F0C);
   --pro-crema: #FFFCF6;
   --pro-borde: #C9B58E;
@@ -11,8 +11,8 @@
   --pro-cabecera: color-mix(in srgb, var(--color-primary, #7A2E28) 14%, #fff);
 }
 
-.productos-pro .oculto,
-.productos-pro .vista-oculta { display: none !important; }
+.panel-base .oculto,
+.panel-base .vista-oculta { display: none !important; }
 
 .pro-contenido {
   max-width: 1320px;
@@ -88,9 +88,9 @@
   color: var(--pro-suave);
   margin: 0;
 }
-.productos-pro .pro-campo input:not([type="checkbox"]):not([type="file"]),
-.productos-pro .pro-campo select,
-.productos-pro .pro-campo-inline input {
+.panel-base .pro-campo input:not([type="checkbox"]):not([type="file"]),
+.panel-base .pro-campo select,
+.panel-base .pro-campo-inline input {
   width: 100%;
   height: 42px;
   box-sizing: border-box;
@@ -104,16 +104,16 @@
   margin: 0;
 }
 .pro-campo-inline { flex-direction: row; align-items: center; gap: 8px; }
-.productos-pro .pro-campo-inline input { width: 110px; height: 38px; }
+.panel-base .pro-campo-inline input { width: 110px; height: 38px; }
 
 .pro-fila { display: flex; flex-wrap: wrap; gap: 12px; }
 .pro-fila > .pro-campo { flex: 1 1 140px; }
 .pro-fila-receta { align-items: flex-end; }
 .pro-fila-receta > .pro-campo:first-child { flex: 2 1 160px; }
 
-.productos-pro form,
-.productos-pro .pestana { display: flex; flex-direction: column; gap: 12px; }
-.productos-pro .pestana:not(.activa) { display: none !important; }
+.panel-base form,
+.panel-base .pestana { display: flex; flex-direction: column; gap: 12px; }
+.panel-base .pestana:not(.activa) { display: none !important; }
 
 .pro-check { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 0; }
 .pro-check input { width: 20px; height: 20px; flex: none; margin: 0; }
@@ -121,10 +121,10 @@
 .pro-check-largo input { margin-top: 2px; }
 
 .pro-ayuda { margin: 0; font-size: 13px; color: var(--pro-suave); }
-.productos-pro .pestana h3 { margin: 0; font-size: 16px; }
+.panel-base .pestana h3 { margin: 0; font-size: 16px; }
 
 .pro-cabecera-panel { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.productos-pro .btn-chico { height: 34px; padding: 0 16px; font-size: 13px; }
+.panel-base .btn-chico { height: 34px; padding: 0 16px; font-size: 13px; }
 
 /* ---- Botones ---- */
 .pro-botones { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
@@ -184,24 +184,24 @@
 .pagina:disabled { opacity: 0.45; cursor: default; }
 
 /* ---- Receta, costo y sucursales ---- */
-.productos-pro #lista-receta { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.productos-pro #lista-receta li {
+.panel-base #lista-receta { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.panel-base #lista-receta li {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   border: 1px dashed var(--pro-borde); border-radius: 8px; padding: 6px 10px; font-size: 14px;
 }
-.productos-pro #resultado-costo { background: #F7EFDD; border: 2px solid var(--pro-tinta); border-radius: 12px; padding: 12px; font-size: 14px; }
-.productos-pro #resultado-costo p { margin: 2px 0; }
-.productos-pro #lista-sucursales-producto { display: flex; flex-direction: column; gap: 10px; }
-.productos-pro .fila-sucursal {
+.panel-base #resultado-costo { background: #F7EFDD; border: 2px solid var(--pro-tinta); border-radius: 12px; padding: 12px; font-size: 14px; }
+.panel-base #resultado-costo p { margin: 2px 0; }
+.panel-base #lista-sucursales-producto { display: flex; flex-direction: column; gap: 10px; }
+.panel-base .fila-sucursal {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
   border: 1px dashed var(--pro-borde); border-radius: 10px; padding: 8px 12px;
 }
-.productos-pro #mensaje-subida { font-weight: 700; font-size: 14px; }
+.panel-base #mensaje-subida { font-weight: 700; font-size: 14px; }
 
 /* ---- Foco visible para teclado ---- */
-.productos-pro button:focus-visible,
-.productos-pro input:focus-visible,
-.productos-pro select:focus-visible {
+.panel-base button:focus-visible,
+.panel-base input:focus-visible,
+.panel-base select:focus-visible {
   outline: 2px solid var(--pro-tinta);
   outline-offset: 2px;
 }
