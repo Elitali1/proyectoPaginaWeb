@@ -415,31 +415,18 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Sucursal 2: azul (mismo carácter que la landing, en tonos azules) */
+/* Sucursal 2: verde de la landing. Solo cambia el color principal; el crema,
+   los bordes y los textos los hereda de :root, igual que la sucursal 1. */
 html[data-sucursal="2"] {
-  --color-bg: #DDEBF5;
-  --color-surface: #FBFDFF;
-  --color-primary: #1D5A8E;
-  --color-primary-dark: #12406A;
-  --color-secondary: #4FC3B0;
-  --color-ink: #0E2A43;
-  --color-text: #14283A;
-  --color-text-muted: #4B667C;
-  --color-border: #B7D0E4;
-  --shadow: 0 2px 10px rgba(29, 90, 142, 0.14);
-  --color-mantel: rgba(29, 90, 142, 0.5);
+  --color-primary: #2F6B3A;
+  --color-primary-dark: #1F4D29;
+  --shadow: 0 2px 10px rgba(47, 107, 58, 0.14);
+  --color-mantel: rgba(47, 107, 58, 0.5);
 }
 
 html[data-sucursal="2"] form input:focus,
 html[data-sucursal="2"] form select:focus {
-  box-shadow: 0 0 0 2px rgba(29, 90, 142, 0.2);
-}
-
-html[data-sucursal="2"] .btn-comanda:hover,
-html[data-sucursal="2"] .btn-modificar:hover,
-html[data-sucursal="2"] .btn-editar:hover,
-html[data-sucursal="2"] .btn-toggle:hover {
-  background-color: #3AAE9B;
+  box-shadow: 0 0 0 2px rgba(47, 107, 58, 0.2);
 }
 
 /* Banda de ambiente de pruebas */
