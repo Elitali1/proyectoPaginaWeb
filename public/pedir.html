@@ -145,6 +145,17 @@
             <label class="segmento"><input type="radio" name="pago" value="transferencia"><span>Transferencia</span></label>
           </fieldset>
 
+          <div id="caja-transferencia" class="caja-transferencia oculto">
+            <p class="caja-transferencia-titulo">Transferí a este alias</p>
+            <div class="alias-fila">
+              <output id="alias-valor" class="alias-valor mono"></output>
+              <button type="button" id="btn-copiar-alias" class="btn-secundario">Copiar</button>
+            </div>
+            <p id="alias-titular" class="nota oculto"></p>
+            <p class="nota">Cuando hagas la transferencia, mandanos el comprobante por WhatsApp.</p>
+            <p id="alias-estado" class="alias-estado" role="status" aria-live="polite"></p>
+          </div>
+
           <label class="campo">Aclaraciones para todo el pedido (opcional)
             <textarea id="ped-aclaraciones" rows="2" maxlength="200" placeholder="Ej: tocar timbre 2, pagar con $20.000"></textarea>
           </label>
