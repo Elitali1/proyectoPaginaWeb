@@ -2,11 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Clientes</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css: base compartida del panel nuevo. tablas-pro.css: piezas de Clientes, Historial y Compras. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="tablas-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
     <div class="marca">
       <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -29,23 +33,76 @@
     </div>
   </div>
 
-  <section>
-    <h2 id="titulo-formulario-cliente">Agregar cliente</h2>
-    <form id="formulario-cliente">
-      <label>Nombre: <input type="text" id="cliente-nombre" required></label>
-      <label>Teléfono: <input type="tel" id="cliente-telefono" required></label>
-      <label>Dirección (opcional): <input type="text" id="cliente-direccion"></label>
-      <label>CUIT (opcional): <input type="text" id="cliente-cuit" placeholder="20123456789"></label>
-      <button type="submit" id="btn-guardar-cliente">Guardar cliente</button>
-      <button type="button" id="btn-cancelar-edicion-cliente" class="oculto">Cancelar edición</button>
-    </form>
-  </section>
+  <main class="pro-contenido">
+    <div class="pro-layout">
 
-  <section>
-    <h2>Clientes</h2>
-    <input type="text" id="buscador-clientes" placeholder="Buscar por nombre o teléfono...">
-    <div id="contenedor-clientes"></div>
-  </section>
+      <!-- ================= TABLA DE CLIENTES ================= -->
+      <section class="pro-tarjeta pro-catalogo" aria-label="Clientes">
+        <h2 class="pro-titulo">Clientes</h2>
+
+        <div class="pro-barra">
+          <label class="pro-campo pro-campo-buscar">Buscar cliente
+            <input type="search" id="buscador-clientes" placeholder="Buscar por nombre o teléfono..." autocomplete="off">
+          </label>
+          <button type="button" id="btn-agregar-cliente" class="btn-pro">Agregar cliente</button>
+        </div>
+
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Cliente</th>
+                <th scope="col">Teléfono</th>
+                <th scope="col">Dirección</th>
+                <th scope="col">CUIT</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-clientes"></tbody>
+          </table>
+          <div id="sin-clientes" class="pro-vacio oculto"><p>No hay clientes cargados todavía.</p></div>
+          <div id="sin-resultados-clientes" class="pro-vacio oculto">
+            <p>No hay clientes que coincidan.</p>
+            <button type="button" id="btn-limpiar-busqueda-clientes" class="btn-pro btn-amarillo">Limpiar búsqueda</button>
+          </div>
+        </div>
+
+        <div class="pro-pie">
+          <div id="rango-clientes" class="pro-rango"></div>
+          <nav id="paginacion-clientes" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
+
+      <!-- ================= PANEL: AGREGAR / EDITAR ================= -->
+      <section id="panel-cliente" class="pro-tarjeta pro-panel oculto" aria-label="Datos del cliente">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-formulario-cliente" class="pro-titulo">Agregar cliente</h2>
+          <button type="button" id="btn-cerrar-panel-cliente" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+
+        <p id="mensaje-panel-cliente" class="pro-aviso pro-aviso-error oculto" role="alert"></p>
+
+        <form id="formulario-cliente" class="pestana activa">
+          <label class="pro-campo">Nombre
+            <input type="text" id="cliente-nombre" required>
+          </label>
+          <label class="pro-campo">Teléfono
+            <input type="tel" id="cliente-telefono" required>
+          </label>
+          <label class="pro-campo">Dirección (opcional)
+            <input type="text" id="cliente-direccion">
+          </label>
+          <label class="pro-campo">CUIT (opcional)
+            <input type="text" id="cliente-cuit" placeholder="20123456789">
+          </label>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar-cliente" class="btn-pro">Guardar cliente</button>
+            <button type="button" id="btn-cancelar-edicion-cliente" class="btn-sec">Cancelar edición</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="clientes.js"></script>

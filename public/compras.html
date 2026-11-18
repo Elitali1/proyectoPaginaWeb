@@ -2,17 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Compras</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css: base compartida del panel nuevo. tablas-pro.css: piezas de Clientes, Historial y Compras. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="tablas-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
-  <div class="marca">
-  <img src="img/Logo.png" alt="Don Chicho" class="logo">
-  <h1>Compras</h1>
-  </div>
-    
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Compras</h1>
+    </div>
+
     <nav>
       <a href="pedidos.html">Pedidos</a>
       <a href="productos.html">Productos</a>
@@ -30,47 +34,130 @@
     </div>
   </div>
 
-  <section>
-    <h2>Cargar factura de compra</h2>
-    <form id="formulario-compra">
-      <label>Proveedor: <input type="text" id="proveedor" required></label>
-      <label>Concepto: <input type="text" id="concepto" placeholder="Ej: Muzzarella x 20kg"></label>
-      <label>Monto: <input type="number" id="monto" required></label>
-      <label>Fecha: <input type="date" id="fecha" required></label>
-      <button type="submit">Guardar</button>
-    </form>
-  </section>
+  <main class="pro-contenido">
+    <div class="pro-layout">
 
-  <section id="seccion-detalle-compra" class="oculto">
-    <h2>Itemizar esta compra</h2>
-    <p>Cargá cada insumo comprado, para actualizar el stock y el costo automáticamente.</p>
+      <!-- ================= TABLA DE COMPRAS ================= -->
+      <section class="pro-tarjeta pro-catalogo" aria-label="Historial de compras">
+        <h2 class="pro-titulo">Historial de compras</h2>
 
-    <label>Insumo:
-      <select id="detalle-insumo"></select>
-    </label>
-    <label>Cantidad: <input type="number" id="detalle-cantidad" step="0.01" min="0.01"></label>
-    <label>Precio unitario: <input type="number" id="detalle-precio" step="0.01" min="0.01"></label>
-    <button type="button" id="btn-agregar-detalle">Agregar item</button>
+        <div class="pro-barra">
+          <label class="pro-campo">Filtrar desde
+            <input type="date" id="filtro-desde">
+          </label>
+          <label class="pro-campo">hasta
+            <input type="date" id="filtro-hasta">
+          </label>
+          <button type="button" id="btn-filtrar" class="btn-sec">Filtrar</button>
+          <button type="button" id="btn-limpiar-filtro" class="btn-sec">Ver todas</button>
+          <button type="button" id="btn-nueva-compra" class="btn-pro">Cargar compra</button>
+        </div>
 
-    <ul id="lista-detalle-compra"></ul>
+        <div class="pro-barra">
+          <label class="pro-campo pro-campo-buscar">Buscar en la lista
+            <input type="search" id="buscar-compra" placeholder="Proveedor o concepto" autocomplete="off">
+          </label>
+        </div>
 
-    <button type="button" id="btn-guardar-detalle">Guardar detalle de la compra</button>
-    <button type="button" id="btn-omitir-detalle">Omitir (no itemizar esta compra)</button>
+        <div id="chips-rango" class="pro-chips" role="group" aria-label="Rangos rápidos">
+          <button type="button" class="chip" data-rango="30dias">Últimos 30 días</button>
+          <button type="button" class="chip" data-rango="mes">Este mes</button>
+          <button type="button" class="chip" data-rango="mespasado">Mes pasado</button>
+        </div>
 
-    <div id="alertas-precio"></div>
-  </section>
+        <p id="total-filtrado" class="pro-resumen"></p>
 
-  <section>
-    <h2>Historial de compras</h2>
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Proveedor</th>
+                <th scope="col">Concepto</th>
+                <th scope="col" class="col-precio">Monto</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-compras"></tbody>
+          </table>
+          <div id="sin-compras" class="pro-vacio oculto"><p>No hay compras en este período.</p></div>
+          <div id="sin-resultados-compras" class="pro-vacio oculto">
+            <p>No hay compras que coincidan.</p>
+            <button type="button" id="btn-limpiar-busqueda-compras" class="btn-pro btn-amarillo">Limpiar búsqueda</button>
+          </div>
+        </div>
 
-    <label>Filtrar desde: <input type="date" id="filtro-desde"></label>
-    <label>hasta: <input type="date" id="filtro-hasta"></label>
-    <button type="button" id="btn-filtrar">Filtrar</button>
-    <button type="button" id="btn-limpiar-filtro">Ver todas</button>
+        <div class="pro-pie">
+          <div id="rango-compras" class="pro-rango"></div>
+          <nav id="paginacion-compras" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
 
-    <p id="total-filtrado"></p>
-    <div id="contenedor-compras"></div>
-  </section>
+      <!-- ================= PANEL: CARGAR COMPRA E ITEMIZAR ================= -->
+      <section id="panel-compra" class="pro-tarjeta pro-panel oculto" aria-label="Cargar compra">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-panel-compra" class="pro-titulo">Cargar factura de compra</h2>
+          <button type="button" id="btn-cerrar-panel-compra" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+
+        <p id="mensaje-panel-compra" class="pro-aviso pro-aviso-error oculto" role="alert"></p>
+
+        <!-- Paso 1: datos de la factura -->
+        <form id="formulario-compra" class="pestana activa" data-pestana="compra">
+          <label class="pro-campo">Proveedor
+            <input type="text" id="proveedor" required>
+          </label>
+          <label class="pro-campo">Concepto
+            <input type="text" id="concepto" placeholder="Ej: Muzzarella x 20kg">
+          </label>
+          <div class="campos-en-fila">
+            <label class="pro-campo">Monto
+              <input type="number" id="monto" required>
+            </label>
+            <label class="pro-campo">Fecha
+              <input type="date" id="fecha" required>
+            </label>
+          </div>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar-compra" class="btn-pro">Guardar</button>
+            <button type="button" id="btn-cancelar-compra" class="btn-sec">Cancelar</button>
+          </div>
+        </form>
+
+        <!-- Paso 2: itemizar la compra (actualiza stock y costo de los insumos) -->
+        <div id="seccion-detalle-compra" class="pestana oculto" data-pestana="detalle">
+          <p id="resumen-compra-actual" class="pro-resumen"></p>
+
+          <div id="bloque-carga-items" class="pestana activa">
+            <p class="pro-ayuda">Cargá cada insumo comprado, para actualizar el stock y el costo automáticamente.</p>
+
+            <label class="pro-campo">Insumo
+              <select id="detalle-insumo"></select>
+            </label>
+            <div class="campos-en-fila">
+              <label class="pro-campo">Cantidad
+                <input type="number" id="detalle-cantidad" step="0.01" min="0.01">
+              </label>
+              <label class="pro-campo">Precio unitario
+                <input type="number" id="detalle-precio" step="0.01" min="0.01">
+              </label>
+            </div>
+            <button type="button" id="btn-agregar-detalle" class="btn-sec">Agregar item</button>
+
+            <ul id="lista-detalle-compra" class="lista-items"></ul>
+            <p id="total-items" class="pro-ayuda"></p>
+
+            <div class="pro-botones">
+              <button type="button" id="btn-guardar-detalle" class="btn-pro">Guardar detalle de la compra</button>
+              <button type="button" id="btn-omitir-detalle" class="btn-sec">Omitir (no itemizar esta compra)</button>
+            </div>
+          </div>
+
+          <div id="alertas-precio"></div>
+        </div>
+      </section>
+    </div>
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="compras.js"></script>

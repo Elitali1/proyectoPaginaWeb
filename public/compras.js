@@ -18,42 +18,130 @@ function formatearPrecio(numero) {
   return Number(numero).toLocaleString('es-AR');
 }
 
+// Para buscar sin importar mayúsculas ni tildes.
+function normalizarTexto(texto) {
+  return String(texto || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Fechas con el día LOCAL (toISOString pasa a UTC y después de las 21 hs daba el día siguiente).
+function fechaLocal(fecha) {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
+// De "2026-11-18T00:00:00.000Z" o "2026-11-18" a "18/11/2026".
+function formatearFechaCompra(fecha) {
+  const [anio, mes, dia] = String(fecha).split('T')[0].split('-');
+  return `${dia}/${mes}/${anio}`;
+}
+
 let insumos = [];
 let itemsDetalleCompra = [];
 let facturaCompraIdActual = null;
+let montoCompraActual = 0;
+
+// ---- Estado de la tabla ----
+const COMPRAS_POR_PAGINA = 10;
+let comprasCargadas = [];
+let comprasListas = false;
+let verTodas = false; // true cuando se apretó "Ver todas" (sin rango de fechas)
+const filtros = { texto: '', pagina: 1 };
 
 function mostrarCompras(compras) {
+  comprasCargadas = compras;
+  comprasListas = true;
+  filtros.pagina = 1;
+  renderizarTabla();
+}
+
+function comprasFiltradas() {
+  const texto = normalizarTexto(filtros.texto.trim());
+  if (!texto) return comprasCargadas;
+  return comprasCargadas.filter(c =>
+    normalizarTexto(c.proveedor).includes(texto) || normalizarTexto(c.concepto).includes(texto)
+  );
+}
+
+function renderizarTabla() {
+  if (!comprasListas) return;
+
+  const filtradas = comprasFiltradas();
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / COMPRAS_POR_PAGINA));
+  if (filtros.pagina > totalPaginas) filtros.pagina = totalPaginas;
+  const desde = (filtros.pagina - 1) * COMPRAS_POR_PAGINA;
+  const visibles = filtradas.slice(desde, desde + COMPRAS_POR_PAGINA);
+
+  const total = filtradas.reduce((acumulado, c) => acumulado + Number(c.monto), 0);
+  document.getElementById('total-filtrado').textContent = `Total: $${formatearPrecio(total)}`;
+
   const contenedor = document.getElementById('contenedor-compras');
   contenedor.innerHTML = '';
 
-  let total = 0;
-
-  compras.forEach(compra => {
-    total += Number(compra.monto);
-
-    const div = document.createElement('div');
-    div.className = 'pedido';
-    div.innerHTML = `
-      <strong>${escapeHtml(compra.proveedor)}</strong> - $${formatearPrecio(compra.monto)}<br>
-      ${escapeHtml(compra.concepto)} | Fecha: ${compra.fecha.split('T')[0]}
-      <button type="button" class="btn-eliminar" data-id="${compra.id}">Eliminar</button>
+  visibles.forEach(compra => {
+    const fila = document.createElement('tr');
+    fila.innerHTML = `
+      <td>${formatearFechaCompra(compra.fecha)}</td>
+      <td><strong>${escapeHtml(compra.proveedor)}</strong></td>
+      <td class="col-suave">${compra.concepto ? escapeHtml(compra.concepto) : '—'}</td>
+      <td class="col-precio">$${formatearPrecio(compra.monto)}</td>
+      <td class="col-acciones">
+        <button type="button" class="btn-tabla btn-peligro btn-eliminar" data-id="${compra.id}" data-proveedor="${escapeHtml(compra.proveedor)}" data-monto="${compra.monto}">Eliminar</button>
+      </td>
     `;
-    contenedor.appendChild(div);
+    contenedor.appendChild(fila);
   });
 
-  document.getElementById('total-filtrado').textContent = `Total: $${formatearPrecio(total)}`;
+  document.getElementById('sin-compras').classList.toggle('oculto', comprasCargadas.length > 0);
+  document.getElementById('sin-resultados-compras').classList.toggle('oculto', comprasCargadas.length === 0 || filtradas.length > 0);
 
-  document.querySelectorAll('.btn-eliminar').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      const id = boton.dataset.id;
-      await fetch(`${API_URL}/facturas-compra/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      actualizarListaCompras();
-    });
-  });
+  document.getElementById('rango-compras').textContent = filtradas.length === 0
+    ? 'Sin resultados'
+    : `Mostrando ${desde + 1} a ${desde + visibles.length} de ${filtradas.length}`;
+
+  const paginacion = document.getElementById('paginacion-compras');
+  paginacion.innerHTML = '';
+  const agregarBotonPagina = (textoBoton, pagina, { activa = false, deshabilitada = false, etiqueta = '' } = {}) => {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'pagina';
+    boton.dataset.pagina = pagina;
+    boton.textContent = textoBoton;
+    boton.disabled = deshabilitada;
+    if (etiqueta) boton.setAttribute('aria-label', etiqueta);
+    if (activa) boton.setAttribute('aria-current', 'page');
+    paginacion.appendChild(boton);
+  };
+  agregarBotonPagina('Anterior', filtros.pagina - 1, { deshabilitada: filtros.pagina <= 1 });
+  for (let n = 1; n <= totalPaginas; n++) {
+    agregarBotonPagina(String(n), n, { activa: n === filtros.pagina, etiqueta: `Página ${n}` });
+  }
+  agregarBotonPagina('Siguiente', filtros.pagina + 1, { deshabilitada: filtros.pagina >= totalPaginas });
 }
+
+// Eliminar una compra (con confirmación y chequeando que el servidor la haya borrado).
+document.getElementById('contenedor-compras').addEventListener('click', async (event) => {
+  const boton = event.target.closest('button.btn-eliminar');
+  if (!boton) return;
+
+  if (!confirm(`¿Eliminar la compra de "${boton.dataset.proveedor}" por $${formatearPrecio(boton.dataset.monto)}?`)) return;
+
+  const respuesta = await fetch(`${API_URL}/facturas-compra/${boton.dataset.id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+
+  if (manejarNoAutorizado(respuesta)) return;
+
+  if (!respuesta.ok) {
+    const error = await respuesta.json().catch(() => ({}));
+    alert(error.error || 'No se pudo eliminar la compra');
+    return;
+  }
+
+  actualizarListaCompras();
+});
 
 async function cargarCompras() {
   const respuesta = await fetch(`${API_URL}/facturas-compra`, { credentials: 'include' });
@@ -71,16 +159,18 @@ async function cargarComprasFiltradas(desde, hasta) {
   mostrarCompras(compras);
 }
 
-// Se usa después de crear o borrar una compra: si ya había un filtro de fechas aplicado, lo
-// respeta; si no, vuelve a pedir que se elijan fechas en vez de mostrar TODO el historial de nuevo.
+// Se usa después de crear o borrar una compra: respeta el rango de fechas que está elegido
+// (o, si se había apretado "Ver todas", vuelve a mostrar todas).
 function actualizarListaCompras() {
   const desde = document.getElementById('filtro-desde').value;
   const hasta = document.getElementById('filtro-hasta').value;
 
   if (desde && hasta) {
     cargarComprasFiltradas(desde, hasta);
+  } else if (verTodas) {
+    cargarCompras();
   } else {
-    document.getElementById('contenedor-compras').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver las compras.</p>';
+    aplicarRango('30dias');
   }
 }
 
@@ -93,18 +183,68 @@ document.getElementById('btn-filtrar').addEventListener('click', () => {
     return;
   }
 
+  verTodas = false;
   cargarComprasFiltradas(desde, hasta);
 });
 
 document.getElementById('btn-limpiar-filtro').addEventListener('click', () => {
   document.getElementById('filtro-desde').value = '';
   document.getElementById('filtro-hasta').value = '';
+  verTodas = true;
   cargarCompras();
+});
+
+// Rangos rápidos: completan las fechas y filtran.
+function aplicarRango(rango) {
+  const hoy = new Date();
+  let desde;
+  let hasta = hoy;
+
+  if (rango === 'mes') {
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  } else if (rango === 'mespasado') {
+    desde = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    hasta = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+  } else {
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 30);
+  }
+
+  document.getElementById('filtro-desde').value = fechaLocal(desde);
+  document.getElementById('filtro-hasta').value = fechaLocal(hasta);
+  verTodas = false;
+  cargarComprasFiltradas(fechaLocal(desde), fechaLocal(hasta));
+}
+
+document.getElementById('chips-rango').addEventListener('click', (event) => {
+  const boton = event.target.closest('button[data-rango]');
+  if (boton) aplicarRango(boton.dataset.rango);
+});
+
+document.getElementById('buscar-compra').addEventListener('input', (event) => {
+  filtros.texto = event.target.value;
+  filtros.pagina = 1;
+  renderizarTabla();
+});
+
+document.getElementById('btn-limpiar-busqueda-compras').addEventListener('click', () => {
+  filtros.texto = '';
+  filtros.pagina = 1;
+  document.getElementById('buscar-compra').value = '';
+  renderizarTabla();
+});
+
+document.getElementById('paginacion-compras').addEventListener('click', (event) => {
+  const boton = event.target.closest('button[data-pagina]');
+  if (!boton || boton.disabled) return;
+  filtros.pagina = Number(boton.dataset.pagina);
+  renderizarTabla();
 });
 
 async function cargarInsumosEnSelector() {
   const respuesta = await fetch(`${API_URL}/insumos`, { credentials: 'include' });
-  insumos = (await respuesta.json()).filter(i => i.activo);
+  if (manejarNoAutorizado(respuesta)) return;
+  const datos = await respuesta.json();
+  insumos = Array.isArray(datos) ? datos.filter(i => i.activo) : [];
 
   const select = document.getElementById('detalle-insumo');
   select.innerHTML = '';
@@ -116,8 +256,60 @@ async function cargarInsumosEnSelector() {
   });
 }
 
+// ---- Panel: paso 1 (datos de la factura) y paso 2 (itemizar) ----
+const panelCompra = document.getElementById('panel-compra');
+
+function mostrarMensajePanel(texto) {
+  const mensaje = document.getElementById('mensaje-panel-compra');
+  mensaje.textContent = texto;
+  mensaje.classList.remove('oculto');
+}
+
+function ocultarMensajePanel() {
+  document.getElementById('mensaje-panel-compra').classList.add('oculto');
+}
+
+function mostrarPaso(paso) {
+  const enDetalle = paso === 'detalle';
+  document.getElementById('formulario-compra').classList.toggle('activa', !enDetalle);
+  const seccionDetalle = document.getElementById('seccion-detalle-compra');
+  seccionDetalle.classList.toggle('oculto', !enDetalle);
+  seccionDetalle.classList.toggle('activa', enDetalle);
+  document.getElementById('titulo-panel-compra').textContent = enDetalle ? 'Itemizar esta compra' : 'Cargar factura de compra';
+}
+
+function abrirPanelNuevaCompra() {
+  cerrarPanel();
+  document.getElementById('fecha').value = fechaLocal(new Date());
+  mostrarPaso('compra');
+  panelCompra.classList.remove('oculto');
+  panelCompra.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  document.getElementById('proveedor').focus();
+}
+
+// Cerrar el panel sin terminar de itemizar equivale a "Omitir": la factura ya quedó guardada.
+function cerrarPanel() {
+  itemsDetalleCompra = [];
+  facturaCompraIdActual = null;
+  montoCompraActual = 0;
+  document.getElementById('formulario-compra').reset();
+  document.getElementById('lista-detalle-compra').innerHTML = '';
+  document.getElementById('total-items').textContent = '';
+  document.getElementById('alertas-precio').innerHTML = '';
+  document.getElementById('bloque-carga-items').classList.add('activa');
+  document.getElementById('bloque-carga-items').classList.remove('oculto');
+  ocultarMensajePanel();
+  mostrarPaso('compra');
+  panelCompra.classList.add('oculto');
+}
+
+document.getElementById('btn-nueva-compra').addEventListener('click', abrirPanelNuevaCompra);
+document.getElementById('btn-cancelar-compra').addEventListener('click', cerrarPanel);
+document.getElementById('btn-cerrar-panel-compra').addEventListener('click', cerrarPanel);
+
 document.getElementById('formulario-compra').addEventListener('submit', async (event) => {
   event.preventDefault();
+  ocultarMensajePanel();
 
   const nuevaCompra = {
     proveedor: document.getElementById('proveedor').value,
@@ -133,21 +325,25 @@ document.getElementById('formulario-compra').addEventListener('submit', async (e
     body: JSON.stringify(nuevaCompra)
   });
 
-  const facturaCreada = await respuesta.json();
+  if (manejarNoAutorizado(respuesta)) return;
+
+  const facturaCreada = await respuesta.json().catch(() => ({}));
 
   if (!respuesta.ok) {
-    alert(facturaCreada.error || 'No se pudo guardar la compra');
+    mostrarMensajePanel(facturaCreada.error || 'No se pudo guardar la compra');
     return;
   }
   facturaCompraIdActual = facturaCreada.id;
+  montoCompraActual = nuevaCompra.monto;
   itemsDetalleCompra = [];
 
   document.getElementById('formulario-compra').reset();
   document.getElementById('lista-detalle-compra').innerHTML = '';
+  document.getElementById('total-items').textContent = '';
   document.getElementById('alertas-precio').innerHTML = '';
-  document.getElementById('seccion-detalle-compra').classList.remove('oculto');
-
-  document.getElementById('seccion-detalle-compra').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('resumen-compra-actual').textContent =
+    `Compra guardada: ${nuevaCompra.proveedor} - $${formatearPrecio(nuevaCompra.monto)}`;
+  mostrarPaso('detalle');
 
   actualizarListaCompras();
 });
@@ -156,26 +352,33 @@ function renderizarDetalleCompra() {
   const lista = document.getElementById('lista-detalle-compra');
   lista.innerHTML = '';
 
+  let totalItems = 0;
+
   itemsDetalleCompra.forEach((item, index) => {
+    totalItems += item.cantidad * item.precio_unitario;
     const insumo = insumos.find(i => i.id === item.insumo_id);
     const li = document.createElement('li');
     li.innerHTML = `
-      ${escapeHtml(insumo.nombre)}: ${item.cantidad} ${escapeHtml(insumo.unidad_medida)} x $${formatearPrecio(item.precio_unitario)}
+      <span>${escapeHtml(insumo ? insumo.nombre : `Insumo #${item.insumo_id}`)}: ${item.cantidad} ${escapeHtml(insumo ? insumo.unidad_medida : '')} x $${formatearPrecio(item.precio_unitario)}</span>
       <button type="button" class="btn-quitar-detalle" data-index="${index}">Quitar</button>
     `;
     lista.appendChild(li);
   });
 
-  document.querySelectorAll('.btn-quitar-detalle').forEach(boton => {
-    boton.addEventListener('click', () => {
-      const index = Number(boton.dataset.index);
-      itemsDetalleCompra.splice(index, 1);
-      renderizarDetalleCompra();
-    });
-  });
+  // Ayuda para chequear que los items sumen más o menos lo que dice la factura.
+  document.getElementById('total-items').textContent = itemsDetalleCompra.length === 0
+    ? ''
+    : `Suma de los items: $${formatearPrecio(Math.round(totalItems * 100) / 100)} (monto de la factura: $${formatearPrecio(montoCompraActual)})`;
 }
 
-document.getElementById('btn-agregar-detalle').addEventListener('click', () => {
+document.getElementById('lista-detalle-compra').addEventListener('click', (event) => {
+  const boton = event.target.closest('button.btn-quitar-detalle');
+  if (!boton) return;
+  itemsDetalleCompra.splice(Number(boton.dataset.index), 1);
+  renderizarDetalleCompra();
+});
+
+function agregarItemDetalle() {
   const insumoId = Number(document.getElementById('detalle-insumo').value);
   const cantidad = Number(document.getElementById('detalle-cantidad').value);
   const precioUnitario = Number(document.getElementById('detalle-precio').value);
@@ -191,6 +394,16 @@ document.getElementById('btn-agregar-detalle').addEventListener('click', () => {
   document.getElementById('detalle-precio').value = '';
 
   renderizarDetalleCompra();
+  document.getElementById('detalle-cantidad').focus();
+}
+
+document.getElementById('btn-agregar-detalle').addEventListener('click', agregarItemDetalle);
+// Enter en el precio agrega el item (más rápido cuando se carga una factura larga).
+document.getElementById('detalle-precio').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    agregarItemDetalle();
+  }
 });
 
 document.getElementById('btn-guardar-detalle').addEventListener('click', async () => {
@@ -206,7 +419,9 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
     body: JSON.stringify({ items: itemsDetalleCompra })
   });
 
-  const datos = await respuesta.json();
+  if (manejarNoAutorizado(respuesta)) return;
+
+  const datos = await respuesta.json().catch(() => ({}));
 
   if (!respuesta.ok) {
     alert(datos.error || 'Error al guardar el detalle de la compra');
@@ -222,7 +437,7 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
       const signo = alerta.variacionPorcentual > 0 ? '+' : '';
       const div = document.createElement('div');
       div.className = alerta.variacionPorcentual > 0 ? 'balance-negativo' : 'balance-positivo';
-      div.innerHTML = `⚠ ${escapeHtml(insumo.nombre)}: ${signo}${alerta.variacionPorcentual}% (de $${formatearPrecio(alerta.precioAnterior)} a $${formatearPrecio(alerta.precioNuevo)})`;
+      div.innerHTML = `⚠ ${escapeHtml(insumo ? insumo.nombre : `Insumo #${alerta.insumo_id}`)}: ${signo}${alerta.variacionPorcentual}% (de $${formatearPrecio(alerta.precioAnterior)} a $${formatearPrecio(alerta.precioNuevo)})`;
       contenedorAlertas.appendChild(div);
     });
   } else {
@@ -231,16 +446,16 @@ document.getElementById('btn-guardar-detalle').addEventListener('click', async (
 
   itemsDetalleCompra = [];
   document.getElementById('lista-detalle-compra').innerHTML = '';
+  document.getElementById('total-items').textContent = '';
   facturaCompraIdActual = null;
+
+  // Ya está guardado: se esconde la carga de items y queda el resultado, con el botón Cerrar arriba.
+  document.getElementById('bloque-carga-items').classList.remove('activa');
 });
 
-document.getElementById('btn-omitir-detalle').addEventListener('click', () => {
-  document.getElementById('seccion-detalle-compra').classList.add('oculto');
-  itemsDetalleCompra = [];
-  facturaCompraIdActual = null;
-});
+document.getElementById('btn-omitir-detalle').addEventListener('click', cerrarPanel);
 
-// No se carga nada automáticamente: se espera a que elijas un rango y apretés "Filtrar"
-// (antes mostraba TODO el historial de compras apenas se abría la página).
-document.getElementById('contenedor-compras').innerHTML = '<p>Elegí un rango de fechas y apretá "Filtrar" para ver las compras.</p>';
+// Al abrir la pantalla se muestran los últimos 30 días (antes no se mostraba nada hasta elegir fechas).
+// "Ver todas" sigue estando para el historial completo.
+aplicarRango('30dias');
 cargarInsumosEnSelector();

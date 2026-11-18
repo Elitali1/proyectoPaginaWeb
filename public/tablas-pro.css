@@ -1,0 +1,91 @@
+/* Piezas compartidas por Clientes, Historial y Compras (la base está en productos-pro.css).
+   Todo va scopeado bajo .productos-pro igual que el resto del panel nuevo. */
+
+/* Filas de tabla */
+.pro-tabla tr.fila-editando { background: #F7EFDD; }
+.pro-tabla td small { display: block; color: var(--pro-suave); font-size: 12px; }
+.pro-tabla td.col-suave { color: var(--pro-suave); }
+
+/* Botones chicos dentro de la tabla */
+.pro-tabla .btn-tabla {
+  margin-left: 6px;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 999px;
+  background: var(--pro-crema);
+  color: var(--pro-tinta);
+  cursor: pointer;
+}
+.pro-tabla .btn-tabla:first-child { margin-left: 0; }
+.pro-tabla .btn-amarillo-chico { background: #E8A33D; }
+.pro-tabla .btn-peligro { background: #F6D9D4; color: #7A1F16; border-color: #7A1F16; }
+
+/* Avisos dentro de la pantalla o del panel */
+.productos-pro .pro-aviso {
+  margin: 0;
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+
+/* Línea de resumen sobre la tabla (cantidad y total) */
+.productos-pro .pro-resumen { margin: 0; font-size: 14px; font-weight: 800; }
+
+/* Estados */
+.estado-pendiente { background: #F6E2B3; border-color: var(--pro-tinta); }
+
+/* ---------- Historial: detalle del pedido ---------- */
+.detalle-datos { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+.detalle-datos dt { font-weight: 800; color: var(--pro-suave); }
+.detalle-datos dd { margin: 0; font-weight: 700; word-break: break-word; }
+.detalle-productos { margin: 0; padding-left: 20px; font-size: 14px; font-weight: 700; }
+.detalle-bloque {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+.detalle-bloque p { margin: 0; font-weight: 700; word-break: break-word; }
+.productos-pro .pro-panel h3 { margin: 0; font-size: 16px; }
+
+/* ---------- Compras ---------- */
+.lista-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lista-items li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.lista-items li .btn-quitar-detalle {
+  padding: 2px 10px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 999px;
+  background: var(--pro-crema);
+  cursor: pointer;
+}
+.productos-pro #alertas-precio { display: flex; flex-direction: column; gap: 6px; }
+.productos-pro #alertas-precio p { margin: 0; font-weight: 700; }
+.productos-pro #alertas-precio .balance-negativo { color: #7A1F16; font-weight: 800; }
+.productos-pro #alertas-precio .balance-positivo { color: #1F4D29; font-weight: 800; }
+.productos-pro .campos-en-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pro-tabla td.col-nowrap { white-space: nowrap; }
