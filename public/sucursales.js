@@ -26,6 +26,13 @@ async function pedirSucursales() {
   return respuesta.json();
 }
 
+// Una línea "Etiqueta: valor" dentro de una celda. Si el dato no está cargado se muestra el aviso en otro tono.
+function datoCelda(etiqueta, valor, avisoSiFalta) {
+  return valor
+    ? `<span class="suc-dato"><b>${etiqueta}:</b> ${escapeHtml(valor)}</span>`
+    : `<span class="suc-dato suc-falta"><b>${etiqueta}:</b> sin cargar (${avisoSiFalta})</span>`;
+}
+
 // Las sucursales no se borran: una sucursal tiene pedidos, stock y comprobantes asociados.
 // "Desactivar" la deja guardada pero sin uso.
 async function cargarSucursales() {
@@ -37,82 +44,50 @@ async function cargarSucursales() {
   contenedor.innerHTML = '';
 
   sucursales.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'pedido';
-    div.innerHTML = `
-      <strong>${escapeHtml(s.nombre)}</strong> (#${s.id})${s.activa ? '' : ' · inactiva'}<br>
-      Dirección: ${s.direccion ? escapeHtml(s.direccion) : 'sin cargar (las facturas usan el domicilio por defecto)'}<br>
-      Punto de venta: ${s.pto_vta ? escapeHtml(s.pto_vta) : 'sin cargar (no puede facturar)'}<br>
-      Cobra transferencias en: ${escapeHtml(s.cuenta_transferencia)}<br>
-      WhatsApp para pedidos: ${s.whatsapp ? escapeHtml(s.whatsapp) : 'sin cargar (el menú online no puede enviar pedidos)'}<br>
-      Horario: ${s.horario ? escapeHtml(s.horario) : 'sin cargar (Visitanos no muestra horario)'}<br>
-      Link de Google Maps: ${s.link_mapa ? `<a href="${escapeHtml(s.link_mapa)}" target="_blank" rel="noopener">ver en Maps</a>` : 'sin cargar (Visitanos usa la búsqueda por dirección)'}<br>
-      Menú online: <a href="pedir.html?sucursal=${s.id}" target="_blank" rel="noopener">${escapeHtml(`${window.location.origin}/pedir.html?sucursal=${s.id}`)}</a><br>
-      <button type="button" class="btn-copiar-menu" data-id="${s.id}">Copiar link del menú</button>
-      <button type="button" class="btn-editar-sucursal" data-id="${s.id}">Editar</button>
-      <button type="button" class="btn-toggle-sucursal" data-id="${s.id}">${s.activa ? 'Desactivar' : 'Reactivar'}</button>
+    const linkMenu = `${window.location.origin}/pedir.html?sucursal=${s.id}`;
+    const linkMapa = s.link_mapa
+      ? `<span class="suc-dato"><b>Link de Google Maps:</b> <a href="${escapeHtml(s.link_mapa)}" target="_blank" rel="noopener">ver en Maps</a></span>`
+      : '<span class="suc-dato suc-falta"><b>Link de Google Maps:</b> sin cargar (Visitanos usa la búsqueda por dirección)</span>';
+
+    const fila = document.createElement('tr');
+    fila.dataset.id = s.id;
+    fila.innerHTML = `
+      <td class="suc-celda">
+        <strong>${escapeHtml(s.nombre)}</strong> <small style="display: inline">(#${s.id})</small>
+        <span class="estado ${s.activa ? 'estado-ok' : 'estado-fuera'} suc-estado">${s.activa ? 'Activa' : 'Inactiva'}</span>
+        ${datoCelda('Dirección', s.direccion, 'las facturas usan el domicilio por defecto')}
+        ${datoCelda('Horario', s.horario, 'Visitanos no muestra horario')}
+      </td>
+      <td class="suc-celda">
+        ${datoCelda('Punto de venta', s.pto_vta, 'no puede facturar')}
+        <span class="suc-dato"><b>Cobra transferencias en:</b> ${escapeHtml(s.cuenta_transferencia)}</span>
+      </td>
+      <td class="suc-celda suc-menu">
+        ${datoCelda('WhatsApp para pedidos', s.whatsapp, 'el menú online no puede enviar pedidos')}
+        ${linkMapa}
+        <span class="suc-dato"><b>Menú online:</b> <a href="pedir.html?sucursal=${s.id}" target="_blank" rel="noopener">${escapeHtml(linkMenu)}</a></span>
+        <button type="button" class="btn-tabla btn-copiar-menu" data-id="${s.id}">Copiar link del menú</button>
+      </td>
+      <td class="col-acciones suc-acciones-celda">
+        <div class="suc-acciones">
+          <button type="button" class="btn-tabla btn-editar-sucursal" data-id="${s.id}" aria-label="Editar ${escapeHtml(s.nombre)}">Editar</button>
+          <button type="button" class="btn-tabla btn-toggle-sucursal" data-id="${s.id}">${s.activa ? 'Desactivar' : 'Reactivar'}</button>
+        </div>
+      </td>
     `;
-    contenedor.appendChild(div);
+    contenedor.appendChild(fila);
   });
 
-  document.querySelectorAll('.btn-editar-sucursal').forEach(boton => {
-    boton.addEventListener('click', () => {
-      const s = sucursales.find(x => Number(x.id) === Number(boton.dataset.id));
-      if (!s) return;
-      editandoId = s.id;
-      document.getElementById('nombre').value = s.nombre;
-      document.getElementById('direccion').value = s.direccion || '';
-      document.getElementById('pto_vta').value = s.pto_vta || '';
-      document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
-      document.getElementById('whatsapp').value = s.whatsapp || '';
-      document.getElementById('link_mapa').value = s.link_mapa || '';
-      document.getElementById('horario').value = s.horario || '';
-      document.getElementById('activa').checked = s.activa;
-      document.getElementById('titulo-formulario').textContent = `Editar sucursal #${s.id}`;
-      document.getElementById('btn-guardar').textContent = 'Guardar cambios';
-      document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
-      document.getElementById('seccion-copiar').classList.add('oculto');
-      window.scrollTo(0, 0);
-    });
-  });
-
-  document.querySelectorAll('.btn-copiar-menu').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      const link = `${window.location.origin}/pedir.html?sucursal=${boton.dataset.id}`;
-      try {
-        await navigator.clipboard.writeText(link);
-        boton.textContent = 'Link copiado';
-      } catch (e) {
-        window.prompt('Copiá el link del menú:', link);
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-toggle-sucursal').forEach(boton => {
-    boton.addEventListener('click', async () => {
-      const s = sucursales.find(x => Number(x.id) === Number(boton.dataset.id));
-      if (!s) return;
-
-      if (s.activa && !confirm(`¿Desactivar "${s.nombre}"? Deja de poder usarse hasta que la reactives. No se borra ningún dato.`)) return;
-
-      const respuesta = await fetch(`${API_URL}/sucursales/${s.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, whatsapp: s.whatsapp, link_mapa: s.link_mapa, horario: s.horario, activa: !s.activa })
-      });
-
-      if (!respuesta.ok) {
-        const error = await respuesta.json().catch(() => ({}));
-        alert(error.error || 'No se pudo cambiar el estado de la sucursal');
-        return;
-      }
-
-      cargarSucursales();
-    });
-  });
-
+  document.getElementById('sin-sucursales').classList.toggle('oculto', sucursales.length > 0);
+  marcarFilaEditando();
   cargarOpcionesDeCopia();
+}
+
+// Resalta en la tabla la sucursal que se está editando.
+function marcarFilaEditando() {
+  document.querySelectorAll('#contenedor-sucursales tr').forEach(fila => {
+    fila.classList.toggle('fila-editando', editandoId !== null && String(fila.dataset.id) === String(editandoId));
+  });
 }
 
 // El selector de "copiar de" lista las sucursales que ya existen.
@@ -137,20 +112,115 @@ function cargarOpcionesDeCopia() {
   select.value = elegida || (sucursales.length > 0 ? String(sucursales[0].id) : '');
 }
 
+// ---- Panel de Agregar / Editar ----
+const panelSucursal = document.getElementById('panel-sucursal');
+
+function mostrarMensajePanel(texto) {
+  const mensaje = document.getElementById('mensaje-panel-sucursal');
+  mensaje.textContent = texto;
+  mensaje.classList.remove('oculto');
+}
+
+function ocultarMensajePanel() {
+  document.getElementById('mensaje-panel-sucursal').classList.add('oculto');
+}
+
+function abrirPanel() {
+  ocultarMensajePanel();
+  panelSucursal.classList.remove('oculto');
+  marcarFilaEditando();
+  panelSucursal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function volverAModoCrear() {
   editandoId = null;
   document.getElementById('formulario-sucursal').reset();
   document.getElementById('titulo-formulario').textContent = 'Agregar sucursal';
   document.getElementById('btn-guardar').textContent = 'Crear sucursal';
-  document.getElementById('btn-cancelar-edicion').classList.add('oculto');
   document.getElementById('seccion-copiar').classList.remove('oculto');
   cargarOpcionesDeCopia();
+  ocultarMensajePanel();
+  marcarFilaEditando();
 }
 
-document.getElementById('btn-cancelar-edicion').addEventListener('click', volverAModoCrear);
+function cerrarPanel() {
+  volverAModoCrear();
+  panelSucursal.classList.add('oculto');
+}
+
+document.getElementById('btn-agregar-sucursal').addEventListener('click', () => {
+  volverAModoCrear();
+  abrirPanel();
+  document.getElementById('nombre').focus();
+});
+
+// Cancelar y Cerrar hacen lo mismo: descartan lo escrito y cierran el panel.
+document.getElementById('btn-cancelar-edicion').addEventListener('click', cerrarPanel);
+document.getElementById('btn-cerrar-panel-sucursal').addEventListener('click', cerrarPanel);
+
+// Botones de cada fila: Editar, Copiar link del menú y Desactivar / Reactivar.
+document.getElementById('contenedor-sucursales').addEventListener('click', async (event) => {
+  const botonEditar = event.target.closest('button.btn-editar-sucursal');
+  if (botonEditar) {
+    const s = sucursales.find(x => Number(x.id) === Number(botonEditar.dataset.id));
+    if (!s) return;
+    editandoId = s.id;
+    document.getElementById('nombre').value = s.nombre;
+    document.getElementById('direccion').value = s.direccion || '';
+    document.getElementById('pto_vta').value = s.pto_vta || '';
+    document.getElementById('cuenta_transferencia').value = s.cuenta_transferencia || '';
+    document.getElementById('whatsapp').value = s.whatsapp || '';
+    document.getElementById('link_mapa').value = s.link_mapa || '';
+    document.getElementById('horario').value = s.horario || '';
+    document.getElementById('activa').checked = s.activa;
+    document.getElementById('titulo-formulario').textContent = `Editar sucursal #${s.id}`;
+    document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+    document.getElementById('seccion-copiar').classList.add('oculto');
+    abrirPanel();
+    return;
+  }
+
+  const botonCopiar = event.target.closest('button.btn-copiar-menu');
+  if (botonCopiar) {
+    const link = `${window.location.origin}/pedir.html?sucursal=${botonCopiar.dataset.id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      botonCopiar.textContent = 'Link copiado';
+    } catch (e) {
+      window.prompt('Copiá el link del menú:', link);
+    }
+    return;
+  }
+
+  const botonToggle = event.target.closest('button.btn-toggle-sucursal');
+  if (botonToggle) {
+    const s = sucursales.find(x => Number(x.id) === Number(botonToggle.dataset.id));
+    if (!s) return;
+
+    if (s.activa && !confirm(`¿Desactivar "${s.nombre}"? Deja de poder usarse hasta que la reactives. No se borra ningún dato.`)) return;
+
+    const respuesta = await fetch(`${API_URL}/sucursales/${s.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ nombre: s.nombre, direccion: s.direccion, pto_vta: s.pto_vta, cuenta_transferencia: s.cuenta_transferencia, whatsapp: s.whatsapp, link_mapa: s.link_mapa, horario: s.horario, activa: !s.activa })
+    });
+
+    if (manejarNoAutorizado(respuesta)) return;
+
+    if (!respuesta.ok) {
+      const error = await respuesta.json().catch(() => ({}));
+      alert(error.error || 'No se pudo cambiar el estado de la sucursal');
+      return;
+    }
+
+    cargarSucursales();
+  }
+});
 
 document.getElementById('formulario-sucursal').addEventListener('submit', async (event) => {
   event.preventDefault();
+  ocultarMensajePanel();
 
   const datos = {
     nombre: document.getElementById('nombre').value,
@@ -182,14 +252,16 @@ document.getElementById('formulario-sucursal').addEventListener('submit', async 
     });
   }
 
+  if (manejarNoAutorizado(respuesta)) return;
+
   if (!respuesta.ok) {
     const error = await respuesta.json().catch(() => ({}));
-    alert(error.error || 'No se pudo guardar la sucursal');
+    mostrarMensajePanel(error.error || 'No se pudo guardar la sucursal');
     return;
   }
 
   const eraNueva = !editandoId;
-  volverAModoCrear();
+  cerrarPanel();
   await cargarSucursales();
 
   if (eraNueva) {
@@ -228,6 +300,7 @@ document.getElementById('formulario-iva').addEventListener('submit', async (even
 
   const resultado = await respuesta.json().catch(() => ({}));
   mensaje.textContent = respuesta.ok ? 'Condición frente al IVA guardada.' : (resultado.error || 'No se pudo guardar');
+  mensaje.classList.toggle('pro-aviso-error', !respuesta.ok);
   mensaje.classList.remove('oculto');
 });
 
