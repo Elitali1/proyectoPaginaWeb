@@ -1,0 +1,183 @@
+/* Lo propio del Dashboard. La base (tarjetas, botones, chips, campos) está en productos-pro.css.
+   Los verdes de las barras usan el color de cada sucursal (--color-primary); los rojos y el amarillo son fijos. */
+
+.dash-contenido { display: flex; flex-direction: column; gap: 18px; }
+.dash-vista { display: flex; flex-direction: column; gap: 18px; }
+.productos-pro .dash-vista.oculto { display: none !important; }
+
+/* Período */
+.dash-periodo { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+.dash-rangos { margin-left: auto; }
+.chip-grande { padding: 8px 20px; font-size: 15px; }
+
+/* Métricas */
+.dash-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.dash-kpi {
+  background: var(--pro-crema);
+  border: 2px solid var(--pro-tinta);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--pro-tinta);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.dash-kpi .metrica-label { margin: 0; font-size: 13px; font-weight: 800; color: var(--pro-suave); }
+.dash-kpi .metrica-valor { margin: 0; font-family: 'Fraunces', serif; font-weight: 900; font-size: 28px; line-height: 1.1; overflow-wrap: anywhere; }
+.dash-kpi.kpi-positivo { background: #E3F0E4; }
+.dash-kpi.kpi-negativo { background: #FBEAE7; }
+.dash-kpi .balance-positivo { color: #1F4D29; }
+.dash-kpi .balance-negativo { color: #7A1F16; }
+
+/* Aviso de stock bajo */
+.alerta-stock {
+  background: #FBEAE7;
+  border: 2px solid #B03A2E;
+  border-radius: 16px;
+  box-shadow: 0 5px 0 #B03A2E;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.alerta-stock h2 { margin: 0; font-size: 20px; color: #7A1F16; }
+#contenedor-dash-stock-bajo { display: flex; flex-wrap: wrap; gap: 4px 28px; }
+#contenedor-dash-stock-bajo p { margin: 0; font-size: 14px; color: #7A1F16; }
+
+/* Filas de dos columnas */
+.dash-doble { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+.dash-principal { flex: 3 1 560px; }
+.dash-lateral { flex: 2 1 320px; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.dash-parejo > section { flex: 1 1 480px; }
+.dash-doble > section, .dash-lateral > section { min-width: 0; }
+
+/* Estado de resultados con barras */
+.dash-estado { display: flex; flex-direction: column; gap: 2px; }
+.dash-fila {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.dash-fila.destacada { background: #F7EFDD; font-weight: 800; }
+.dash-fila.sangria > span:first-child { padding-left: 18px; color: #4A3D30; }
+.dash-fila strong { text-align: right; min-width: 110px; }
+.dash-fila .balance-positivo { color: #1F4D29; }
+.dash-fila .balance-negativo { color: #7A1F16; }
+.dash-barra { height: 12px; background: #EDE3CF; border-radius: 999px; overflow: hidden; }
+.dash-barra > i { display: block; height: 100%; border-radius: 999px; background: var(--color-primary, #7A2E28); min-width: 2px; }
+.dash-barra > i.b-gris { background: #C9B58E; }
+.dash-barra > i.b-amarillo { background: #E8A33D; }
+.dash-barra > i.b-rojo { background: #B03A2E; }
+.dash-barra > i.b-oscuro { background: #6B5B49; }
+.dash-nota { margin: 0 8px 4px; font-size: 13px; color: var(--pro-suave); }
+.dash-aviso {
+  margin: 0;
+  background: #FBEAE7;
+  border: 2px solid #B03A2E;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7A1F16;
+}
+
+/* Punto de equilibrio */
+.dash-equilibrio {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dash-equilibrio-cabecera { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-weight: 800; }
+.dash-medidor { position: relative; height: 18px; background: #EDE3CF; border: 2px solid var(--pro-tinta); border-radius: 999px; }
+.dash-medidor > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--color-primary, #7A2E28); }
+.dash-medidor > b { position: absolute; top: -6px; bottom: -6px; width: 4px; background: #B03A2E; border-radius: 2px; }
+.dash-equilibrio-pie { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--pro-suave); font-weight: 700; }
+.dash-equilibrio p { margin: 0; font-size: 14px; font-weight: 700; }
+
+/* Cobros: dona */
+.dash-cobros { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 20px; }
+.dash-dona {
+  width: 150px; height: 150px; border-radius: 50%;
+  border: 2px solid var(--pro-tinta);
+  display: flex; align-items: center; justify-content: center;
+}
+.dash-dona > div {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: var(--pro-crema); border: 2px solid var(--pro-tinta);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif; font-weight: 900; font-size: 20px; line-height: 1;
+}
+.dash-dona > div span { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; color: var(--pro-suave); }
+.dash-leyenda { display: flex; flex-direction: column; gap: 12px; }
+.dash-leyenda-titulo { display: flex; align-items: center; gap: 8px; font-weight: 800; }
+.dash-leyenda-titulo i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--pro-tinta); display: inline-block; }
+.dash-leyenda-detalle { font-size: 14px; margin-left: 22px; }
+
+/* Productos por categoría */
+.dash-categorias { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+.categoria-top-productos {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.categoria-top-productos h3 { margin: 0; font-family: 'Fraunces', serif; font-size: 18px; color: var(--color-primary-dark, var(--pro-tinta)); }
+.dash-item { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: center; }
+.dash-puesto { font-weight: 900; color: var(--pro-suave); font-size: 13px; }
+.dash-puesto.redondo {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-primary, #7A2E28); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+}
+.dash-item-cuerpo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dash-item-linea { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.dash-item .dash-barra { height: 9px; }
+.dash-ranking { display: flex; flex-direction: column; gap: 10px; }
+.dash-ranking .dash-item .dash-barra > i { background: #E8A33D; }
+#contenedor-dash-margenes .dash-item .dash-barra > i { background: var(--color-primary, #7A2E28); }
+.dash-tenue { color: var(--pro-suave); }
+
+/* Todas las sucursales */
+.dash-comparativa { display: flex; flex-direction: column; gap: 12px; }
+.dash-comp-fila { display: grid; grid-template-columns: minmax(130px, 200px) 1fr; gap: 12px; align-items: center; }
+.dash-comp-barras { display: flex; flex-direction: column; gap: 6px; }
+.dash-comp-barra { display: flex; align-items: center; gap: 10px; }
+.dash-comp-barra .dash-barra { flex: 1; height: 14px; border: 1.5px solid var(--pro-tinta); }
+.dash-comp-barra span { min-width: 160px; font-size: 13px; font-weight: 700; }
+.cons-locales { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 22px; align-items: start; }
+.cons-local { background: var(--pro-crema); border: 2px solid var(--pro-tinta); border-radius: 16px; box-shadow: 0 5px 0 var(--pro-tinta); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cons-local h3 { margin: 0; font-family: 'Fraunces', serif; font-size: 22px; color: var(--color-primary-dark, var(--pro-tinta)); }
+.cons-participacion { margin: 0; font-size: 13px; color: var(--pro-suave); font-weight: 700; }
+.cons-lineas { display: flex; flex-direction: column; gap: 2px; }
+.cons-fila { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; border-radius: 8px; font-size: 14px; }
+.cons-fila.cons-destacada { background: #F7EFDD; font-weight: 800; }
+.cons-fila .balance-positivo { color: #1F4D29; }
+.cons-fila .balance-negativo { color: #7A1F16; }
+.cons-local .dash-barra { height: 14px; border: 1.5px solid var(--pro-tinta); }
+
+/* Estado de resultados viejo (por si el servidor no manda el nuevo) */
+.dash-simple { background: #F7EFDD; border: 2px solid var(--pro-tinta); border-radius: 12px; padding: 12px 14px; }
+.dash-simple p { margin: 4px 0; }
+
+@media (max-width: 640px) {
+  .dash-fila { grid-template-columns: 1fr auto; }
+  .dash-fila .dash-barra { grid-column: 1 / -1; order: 3; }
+  .dash-comp-fila { grid-template-columns: 1fr; }
+  .dash-rangos { margin-left: 0; }
+}
+
+/* Pestañas de vista (usan aria-selected en vez de aria-pressed) */
+.productos-pro .chip[aria-selected="true"] { background: var(--color-primary, #7A2E28); color: #fff; }
+#contenedor-dash-equilibrio { display: flex; flex-direction: column; gap: 12px; }
