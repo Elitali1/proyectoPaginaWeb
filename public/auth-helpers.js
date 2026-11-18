@@ -162,3 +162,54 @@ function manejarNoAutorizado(respuesta) {
     iniciar();
   }
 })();
+// ============================================================================
+// MENÚ HAMBURGUESA DEL PANEL (celular)
+// Agrega el botón de las 3 líneas a la cabecera. El CSS (estilos.css) lo muestra solo en celular y
+// esconde el menú hasta que se toca. En compu el botón no se ve y todo queda como siempre.
+// ============================================================================
+(function menuHamburguesa() {
+  function iniciar() {
+    const barra = document.querySelector('.barra-superior');
+    if (!barra) return;
+    const marca = barra.querySelector('.marca');
+    const nav = barra.querySelector('nav');
+    if (!marca || !nav || barra.querySelector('.menu-toggle')) return;
+
+    if (!nav.id) nav.id = 'menu-panel';
+
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'menu-toggle';
+    boton.setAttribute('aria-label', 'Abrir menú');
+    boton.setAttribute('aria-controls', nav.id);
+    boton.setAttribute('aria-expanded', 'false');
+    boton.innerHTML = '<span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>';
+    marca.insertAdjacentElement('afterend', boton);
+
+    function abrir(abierto) {
+      barra.classList.toggle('menu-abierto', abierto);
+      boton.setAttribute('aria-expanded', String(abierto));
+      boton.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+    }
+
+    boton.addEventListener('click', () => abrir(!barra.classList.contains('menu-abierto')));
+
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && barra.classList.contains('menu-abierto')) {
+        abrir(false);
+        boton.focus();
+      }
+    });
+
+    // si se agranda la pantalla (o se gira el celular) con el menú abierto, se resetea
+    window.matchMedia('(min-width: 641px)').addEventListener('change', (cambio) => {
+      if (cambio.matches) abrir(false);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciar);
+  } else {
+    iniciar();
+  }
+})();
