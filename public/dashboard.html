@@ -2,12 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Dashboard</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
-  <link rel="stylesheet" href="dashboard.css">
+  <!-- productos-pro.css: base compartida del panel nuevo (tarjetas, botones, chips, campos).
+       dashboard-pro.css: lo propio del Dashboard (métricas, barras y gráficos). -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="dashboard-pro.css">
 </head>
-<body>
+<body class="productos-pro dashboard-pro">
   <div class="barra-superior">
     <div class="marca">
       <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -30,49 +34,97 @@
     </div>
   </div>
 
-  <section>
-    <label>Desde: <input type="date" id="dashboard-desde"></label>
-    <label>Hasta: <input type="date" id="dashboard-hasta"></label>
-    <button type="button" id="btn-actualizar-dashboard">Actualizar</button>
-  </section>
+  <main class="pro-contenido dash-contenido">
 
-  <section id="seccion-consolidado" class="oculto">
-    <h2>Todas las sucursales</h2>
-    <div id="cons-totales" class="grid-resumen"></div>
-    <div id="cons-locales" class="cons-locales"></div>
-    <h3>Estado de resultados de todos los locales</h3>
-    <div id="cons-estado" class="cons-estado"></div>
-  </section>
+    <!-- Período -->
+    <section class="pro-tarjeta dash-periodo" aria-label="Período">
+      <label class="pro-campo">Desde
+        <input type="date" id="dashboard-desde">
+      </label>
+      <label class="pro-campo">Hasta
+        <input type="date" id="dashboard-hasta">
+      </label>
+      <button type="button" id="btn-actualizar-dashboard" class="btn-pro">Actualizar</button>
+      <div id="chips-rango" class="pro-chips dash-rangos" role="group" aria-label="Rangos rápidos">
+        <button type="button" class="chip" data-rango="30dias">Últimos 30 días</button>
+        <button type="button" class="chip" data-rango="mes">Este mes</button>
+        <button type="button" class="chip" data-rango="mespasado">Mes pasado</button>
+      </div>
+    </section>
 
-  <section id="seccion-resumen">
-    <h2>Resumen de esta sucursal</h2>
-    <div id="tarjetas-resumen" class="grid-resumen"></div>
-  </section>
+    <!-- Vista: esta sucursal o todas (la segunda solo existe si hay más de una con movimiento) -->
+    <div id="tabs-vista" class="pro-chips oculto" role="tablist" aria-label="Vista">
+      <button type="button" class="chip chip-grande" role="tab" data-vista="sucursal" aria-selected="true">Esta sucursal</button>
+      <button type="button" class="chip chip-grande" role="tab" data-vista="todas" aria-selected="false">Todas las sucursales</button>
+    </div>
 
-  <section id="seccion-stock-bajo" class="oculto">
-    <h2>⚠ Insumos con stock bajo</h2>
-    <div id="contenedor-dash-stock-bajo"></div>
-  </section>
+    <p id="mensaje-inicial" class="pro-tarjeta pro-vacio">Elegí un período y apretá "Actualizar" para ver las métricas.</p>
 
-  <section>
-    <h2>Productos más vendidos por categoría</h2>
-    <div id="contenedor-dash-top-productos"></div>
-  </section>
+    <!-- ================= ESTA SUCURSAL ================= -->
+    <div id="vista-sucursal" class="dash-vista oculto">
 
-  <section>
-    <h2>Clientes más recurrentes</h2>
-    <div id="contenedor-dash-clientes"></div>
-  </section>
+      <section id="seccion-resumen" aria-label="Resumen de esta sucursal">
+        <div id="tarjetas-resumen" class="dash-kpis"></div>
+      </section>
 
-  <section>
-    <h2>Productos con mejor margen</h2>
-    <div id="contenedor-dash-margenes"></div>
-  </section>
+      <section id="seccion-stock-bajo" class="alerta-stock oculto" aria-label="Insumos con stock bajo">
+        <h2>⚠ Insumos con stock bajo</h2>
+        <div id="contenedor-dash-stock-bajo"></div>
+      </section>
 
-  <section>
-    <h2>Estado de resultados de esta sucursal</h2>
-    <div id="contenedor-dash-balance"></div>
-  </section>
+      <div class="dash-doble">
+        <section class="pro-tarjeta dash-principal" aria-label="Estado de resultados de esta sucursal">
+          <h2 class="pro-titulo">Estado de resultados de esta sucursal</h2>
+          <div id="contenedor-dash-balance" class="dash-estado"></div>
+        </section>
+
+        <div class="dash-lateral">
+          <section class="pro-tarjeta" aria-label="Cómo cobraste">
+            <h2 class="pro-titulo">Cómo cobraste</h2>
+            <div id="contenedor-dash-cobros"></div>
+          </section>
+          <section class="pro-tarjeta" aria-label="Punto de equilibrio">
+            <h2 class="pro-titulo">Punto de equilibrio</h2>
+            <div id="contenedor-dash-equilibrio"></div>
+          </section>
+        </div>
+      </div>
+
+      <section class="pro-tarjeta" aria-label="Productos más vendidos por categoría">
+        <h2 class="pro-titulo">Productos más vendidos por categoría</h2>
+        <div id="contenedor-dash-top-productos" class="dash-categorias"></div>
+      </section>
+
+      <div class="dash-doble dash-parejo">
+        <section class="pro-tarjeta" aria-label="Clientes más recurrentes">
+          <h2 class="pro-titulo">Clientes más recurrentes</h2>
+          <div id="contenedor-dash-clientes" class="dash-ranking"></div>
+        </section>
+        <section class="pro-tarjeta" aria-label="Productos con mejor margen">
+          <h2 class="pro-titulo">Productos con mejor margen</h2>
+          <div id="contenedor-dash-margenes" class="dash-ranking"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ================= TODAS LAS SUCURSALES ================= -->
+    <section id="seccion-consolidado" class="dash-vista oculto" aria-label="Todas las sucursales">
+      <div id="cons-totales" class="dash-kpis"></div>
+
+      <section class="pro-tarjeta" aria-label="Comparativa entre sucursales">
+        <h2 class="pro-titulo">Comparativa entre sucursales</h2>
+        <div id="cons-comparativa" class="dash-comparativa"></div>
+      </section>
+
+      <div id="cons-locales" class="cons-locales"></div>
+
+      <section class="pro-tarjeta" aria-label="Estado de resultados de todos los locales">
+        <h2 class="pro-titulo">Estado de resultados de todos los locales</h2>
+        <div id="cons-estado" class="dash-estado"></div>
+      </section>
+    </section>
+
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="dashboard.js"></script>
