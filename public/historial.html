@@ -2,17 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Historial</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css: base compartida del panel nuevo. tablas-pro.css: piezas de Clientes, Historial y Compras. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="tablas-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
-  <div class="marca">
-  <img src="img/Logo.png" alt="Don Chicho" class="logo">
-  <h1>Historial de pedidos</h1>
-  </div>
-    
+    <div class="marca">
+      <img src="img/Logo.png" alt="Don Chicho" class="logo">
+      <h1>Historial de pedidos</h1>
+    </div>
+
     <nav>
       <a href="pedidos.html">Pedidos</a>
       <a href="historial.html">Historial</a>
@@ -30,15 +34,81 @@
     </div>
   </div>
 
-  <section>
-    <label>Fecha: <input type="date" id="filtro-fecha"></label>
-    <button type="button" id="btn-hoy">Hoy</button>
-    <button type="button" id="btn-ayer">Ayer</button>
-  </section>
+  <main class="pro-contenido">
+    <div class="pro-layout">
 
-  <section>
-    <div id="contenedor-historial"></div>
-  </section>
+      <!-- ================= TABLA DE PEDIDOS DEL DÍA ================= -->
+      <section class="pro-tarjeta pro-catalogo" aria-label="Pedidos de la fecha">
+        <h2 class="pro-titulo">Pedidos de la fecha</h2>
+
+        <div class="pro-barra">
+          <label class="pro-campo">Fecha
+            <input type="date" id="filtro-fecha">
+          </label>
+          <button type="button" id="btn-hoy" class="btn-sec">Hoy</button>
+          <button type="button" id="btn-ayer" class="btn-sec">Ayer</button>
+          <label class="pro-campo pro-campo-buscar">Buscar
+            <input type="search" id="buscar-pedido" placeholder="Cliente o número de pedido" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="pro-barra">
+          <label class="pro-campo">Estado
+            <select id="filtro-estado-pedido"><option value="todos">Todos</option></select>
+          </label>
+          <label class="pro-campo">Factura
+            <select id="filtro-factura-pedido">
+              <option value="todos">Todas</option>
+              <option value="emitida">Facturadas</option>
+              <option value="pendiente">Sin emitir</option>
+              <option value="no">No requieren</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="chips-canal" class="pro-chips" role="group" aria-label="Filtrar por canal"></div>
+
+        <p id="mensaje-historial" class="pro-aviso pro-aviso-error oculto" role="alert"></p>
+        <p id="resumen-historial" class="pro-resumen"></p>
+
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Pedido</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Canal y pago</th>
+                <th scope="col" class="col-precio">Total</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Factura</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-historial"></tbody>
+          </table>
+          <div id="sin-pedidos" class="pro-vacio oculto"><p>No hay pedidos para esta fecha.</p></div>
+          <div id="sin-resultados-pedidos" class="pro-vacio oculto">
+            <p>No hay pedidos que coincidan.</p>
+            <button type="button" id="btn-limpiar-filtros-pedidos" class="btn-pro btn-amarillo">Limpiar filtros</button>
+          </div>
+        </div>
+
+        <div class="pro-pie">
+          <div id="rango-pedidos" class="pro-rango"></div>
+          <nav id="paginacion-pedidos" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
+
+      <!-- ================= PANEL: DETALLE Y FACTURA DEL PEDIDO ================= -->
+      <section id="panel-pedido" class="pro-tarjeta pro-panel oculto" aria-label="Detalle del pedido">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-detalle-pedido" class="pro-titulo">Pedido</h2>
+          <button type="button" id="btn-cerrar-panel-pedido" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+        <div id="contenido-detalle-pedido" class="pestana activa"></div>
+      </section>
+    </div>
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="historial.js"></script>
