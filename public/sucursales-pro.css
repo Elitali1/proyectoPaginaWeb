@@ -1,7 +1,7 @@
-/* Lo propio de la pantalla de Sucursales. La base está en productos-pro.css y tablas-pro.css. */
+/* Lo propio de la pantalla de Sucursales. La base está en panel-base.css y tablas-pro.css. */
 
 .suc-columna { flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
-.productos-pro .suc-titulo { margin: 0; flex: 1; }
+.panel-base .suc-titulo { margin: 0; flex: 1; }
 
 /* Celdas con varios datos apilados: "Etiqueta: valor". Si falta el dato, se marca en tono de aviso. */
 .pro-tabla td.suc-celda { min-width: 170px; vertical-align: top; }
@@ -28,4 +28,4 @@
   flex-direction: column;
   gap: 12px;
 }
-.productos-pro .pro-campo .pro-ayuda { font-weight: 600; }
+.panel-base .pro-campo .pro-ayuda { font-weight: 600; }

@@ -1,5 +1,5 @@
 /* Lo propio de la pantalla de Cierre de caja. La base (tarjetas, tablas, pestañas, botones, campos)
-   está en productos-pro.css. Los colores salen de las mismas variables, así cada sucursal usa el suyo. */
+   está en panel-base.css. Los colores salen de las mismas variables, así cada sucursal usa el suyo. */
 
 .pro-columna { display: flex; flex-direction: column; gap: 22px; }
 .pro-lateral { flex: 1 1 320px; max-width: 420px; }
@@ -8,7 +8,7 @@
 .pro-barra-inicio { justify-content: flex-start; }
 
 /* Avisos (cierre guardado, errores) */
-.productos-pro .pro-aviso {
+.panel-base .pro-aviso {
   margin: 0;
   background: #F7EFDD;
   border: 2px solid var(--pro-tinta);
@@ -17,7 +17,7 @@
   font-size: 14px;
   font-weight: 700;
 }
-.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+.panel-base .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
 
 /* Botones chicos dentro de las tablas */
 .pro-tabla .btn-tabla {

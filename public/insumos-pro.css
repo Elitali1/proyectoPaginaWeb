@@ -1,5 +1,5 @@
 /* Lo propio de la pantalla de Insumos. La base (tarjetas, tablas, pestañas, botones, campos)
-   está en productos-pro.css. El rojo del stock bajo es un color de alerta fijo (igual en todas las sucursales). */
+   está en panel-base.css. El rojo del stock bajo es un color de alerta fijo (igual en todas las sucursales). */
 
 /* Aviso de stock bajo */
 .alerta-stock {
@@ -12,7 +12,7 @@
   flex-direction: column;
   gap: 8px;
 }
-.productos-pro .alerta-stock.oculto { display: none !important; }
+.panel-base .alerta-stock.oculto { display: none !important; }
 .alerta-stock-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .alerta-stock h2 { margin: 0; font-size: 20px; color: #7A1F16; }
 .btn-alerta {
@@ -53,7 +53,7 @@
 .pro-tabla .btn-amarillo-chico { background: #E8A33D; }
 
 /* Avisos dentro del panel */
-.productos-pro .pro-aviso {
+.panel-base .pro-aviso {
   margin: 0;
   background: #F7EFDD;
   border: 2px solid var(--pro-tinta);
@@ -62,7 +62,7 @@
   font-size: 14px;
   font-weight: 700;
 }
-.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+.panel-base .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
 
 /* Pestaña de ajuste de stock */
 .ajuste-resumen {
