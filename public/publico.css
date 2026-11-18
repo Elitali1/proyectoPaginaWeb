@@ -266,7 +266,7 @@ body.publico .cinta-grupo {
 }
 
 body.publico .cinta-grupo span { padding: 0 28px; }
-body.publico .cinta-grupo i { font-style: normal; }
+body.publico .cinta-grupo .cinta-adorno { padding: 0; }
 
 @keyframes landing-cinta {
   from { transform: translateX(0); }

@@ -846,3 +846,6 @@ body.login section {
     border-top: 1px solid rgba(255, 255, 255, 0.22);
   }
 }
+
+/* Pantallas de acceso: <main> sin efecto en el diseño */
+body.login > main { display: contents; }
