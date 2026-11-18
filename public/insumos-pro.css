@@ -1,0 +1,78 @@
+/* Lo propio de la pantalla de Insumos. La base (tarjetas, tablas, pestañas, botones, campos)
+   está en productos-pro.css. El rojo del stock bajo es un color de alerta fijo (igual en todas las sucursales). */
+
+/* Aviso de stock bajo */
+.alerta-stock {
+  background: #FBEAE7;
+  border: 2px solid #B03A2E;
+  border-radius: 16px;
+  box-shadow: 0 5px 0 #B03A2E;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.productos-pro .alerta-stock.oculto { display: none !important; }
+.alerta-stock-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.alerta-stock h2 { margin: 0; font-size: 20px; color: #7A1F16; }
+.btn-alerta {
+  background: var(--pro-crema);
+  color: #7A1F16;
+  border: 2px solid #7A1F16;
+  border-radius: 999px;
+  padding: 4px 16px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+#contenedor-alertas-stock { display: flex; flex-wrap: wrap; gap: 4px 28px; }
+#contenedor-alertas-stock p { margin: 0; font-size: 14px; color: #7A1F16; }
+
+/* Filas y estados */
+.pro-tabla tr.fila-stock-bajo { box-shadow: inset 4px 0 0 #B03A2E; }
+.pro-tabla tr.fila-editando { background: #F7EFDD; }
+.pro-tabla .col-stock-bajo { color: #7A1F16; }
+.pro-tabla td small { display: block; color: var(--pro-suave); font-size: 12px; }
+.estado-bajo { background: #F6D9D4; color: #7A1F16; border-color: #B03A2E; }
+
+/* Botones chicos dentro de la tabla */
+.pro-tabla .btn-tabla {
+  margin-left: 6px;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 13px;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 999px;
+  background: var(--pro-crema);
+  color: var(--pro-tinta);
+  cursor: pointer;
+}
+.pro-tabla .btn-tabla:first-child { margin-left: 0; }
+.pro-tabla .btn-amarillo-chico { background: #E8A33D; }
+
+/* Avisos dentro del panel */
+.productos-pro .pro-aviso {
+  margin: 0;
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.productos-pro .pro-aviso-error { background: #F6D9D4; color: #7A1F16; }
+
+/* Pestaña de ajuste de stock */
+.ajuste-resumen {
+  background: #F7EFDD;
+  border: 2px solid var(--pro-tinta);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+}

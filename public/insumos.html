@@ -2,11 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Insumos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <!-- productos-pro.css tiene los estilos compartidos del panel nuevo (tarjetas, tablas, pestañas, botones);
+       insumos-pro.css agrega solo lo propio de esta pantalla. -->
+  <link rel="stylesheet" href="productos-pro.css">
+  <link rel="stylesheet" href="insumos-pro.css">
 </head>
-<body>
+<body class="productos-pro">
   <div class="barra-superior">
     <div class="marca">
       <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -29,33 +34,124 @@
     </div>
   </div>
 
-  <section id="seccion-alertas-stock" class="oculto">
-    <h2>⚠ Insumos con stock bajo</h2>
-    <div id="contenedor-alertas-stock"></div>
-  </section>
+  <main class="pro-contenido">
 
-  <section>
-    <h2 id="titulo-formulario-insumo">Agregar insumo</h2>
-    <form id="formulario-insumo">
-      <label>Nombre: <input type="text" id="insumo-nombre" placeholder="Ej: Harina 000" required></label>
-      <label>Unidad de medida:
-        <select id="insumo-unidad">
-          <option value="kg">Kilogramos (kg)</option>
-          <option value="litro">Litros</option>
-          <option value="unidad">Unidad</option>
-          <option value="paquete">Paquete</option>
-        </select>
-      </label>
-      <label>Stock mínimo (para avisos): <input type="number" id="insumo-stock-minimo" step="0.01" min="0" value="0"></label>
-      <button type="submit" id="btn-guardar-insumo">Guardar insumo</button>
-      <button type="button" id="btn-cancelar-edicion-insumo" class="oculto">Cancelar edición</button>
-    </form>
-  </section>
+    <!-- Aviso de stock bajo: solo aparece si hay insumos activos por debajo de su mínimo -->
+    <section id="seccion-alertas-stock" class="alerta-stock oculto" aria-label="Insumos con stock bajo">
+      <div class="alerta-stock-cabecera">
+        <h2 id="titulo-alertas-stock">⚠ Insumos con stock bajo</h2>
+        <button type="button" id="btn-ver-bajos" class="btn-alerta">Ver solo estos en la tabla</button>
+      </div>
+      <div id="contenedor-alertas-stock"></div>
+    </section>
 
-  <section>
-    <h2>Insumos y stock actual</h2>
-    <div id="contenedor-insumos"></div>
-  </section>
+    <div class="pro-layout">
+
+      <!-- ================= TABLA DE INSUMOS ================= -->
+      <section class="pro-tarjeta pro-catalogo" aria-label="Insumos y stock actual">
+        <h2 class="pro-titulo">Insumos y stock actual</h2>
+
+        <div class="pro-barra">
+          <label class="pro-campo pro-campo-buscar">Buscar insumo
+            <input type="search" id="buscar-insumo" placeholder="Escribí un nombre" autocomplete="off">
+          </label>
+          <label class="pro-campo">Mostrar
+            <select id="filtro-estado-insumo">
+              <option value="todos">Todos</option>
+              <option value="bajo">Con stock bajo</option>
+              <option value="activos">Activos</option>
+              <option value="inactivos">Inactivos</option>
+            </select>
+          </label>
+          <button type="button" id="btn-agregar-insumo" class="btn-pro">Agregar insumo</button>
+        </div>
+
+        <div id="chips-unidad" class="pro-chips" role="group" aria-label="Filtrar por unidad"></div>
+
+        <div class="pro-tabla-wrap">
+          <table class="pro-tabla">
+            <thead>
+              <tr>
+                <th scope="col">Insumo</th>
+                <th scope="col" class="col-precio">Stock actual</th>
+                <th scope="col" class="col-precio">Stock mínimo</th>
+                <th scope="col" class="col-precio">Último costo</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-insumos"></tbody>
+          </table>
+          <div id="sin-insumos" class="pro-vacio oculto"><p>No hay insumos cargados todavía.</p></div>
+          <div id="sin-resultados-insumos" class="pro-vacio oculto">
+            <p>No hay insumos que coincidan.</p>
+            <button type="button" id="btn-limpiar-filtros-insumos" class="btn-pro btn-amarillo">Limpiar filtros</button>
+          </div>
+        </div>
+
+        <div class="pro-pie">
+          <div id="rango-insumos" class="pro-rango"></div>
+          <nav id="paginacion-insumos" class="pro-paginacion" aria-label="Páginas"></nav>
+        </div>
+      </section>
+
+      <!-- ================= PANEL: AGREGAR / EDITAR / AJUSTAR STOCK ================= -->
+      <section id="panel-insumo" class="pro-tarjeta pro-panel oculto" aria-label="Datos del insumo">
+        <div class="pro-cabecera-panel">
+          <h2 id="titulo-formulario-insumo" class="pro-titulo">Agregar insumo</h2>
+          <button type="button" id="btn-cerrar-panel-insumo" class="btn-sec btn-chico">Cerrar</button>
+        </div>
+
+        <div id="tabs-panel-insumo" class="pro-tabs-chicas oculto" role="tablist" aria-label="Secciones del insumo">
+          <button type="button" class="tab-panel" data-tab="datos" role="tab" aria-selected="true">Datos</button>
+          <button type="button" class="tab-panel" data-tab="ajuste" role="tab" aria-selected="false">Ajustar stock</button>
+        </div>
+
+        <p id="mensaje-panel-insumo" class="pro-aviso oculto" role="status"></p>
+
+        <form id="formulario-insumo" class="pestana activa" data-pestana="datos">
+          <label class="pro-campo">Nombre
+            <input type="text" id="insumo-nombre" placeholder="Ej: Harina 000" required>
+          </label>
+          <label class="pro-campo">Unidad de medida
+            <select id="insumo-unidad">
+              <option value="kg">Kilogramos (kg)</option>
+              <option value="litro">Litros</option>
+              <option value="unidad">Unidad</option>
+              <option value="paquete">Paquete</option>
+            </select>
+          </label>
+          <label class="pro-campo">Stock mínimo (para avisos)
+            <input type="number" id="insumo-stock-minimo" step="0.01" min="0" value="0">
+          </label>
+          <p class="pro-ayuda">Cuando el stock actual baja de este número, el insumo aparece en el aviso de arriba. Con 0 no avisa. El último costo se actualiza solo con las compras.</p>
+          <div class="pro-botones">
+            <button type="submit" id="btn-guardar-insumo" class="btn-pro">Guardar insumo</button>
+            <button type="button" id="btn-cancelar-edicion-insumo" class="btn-sec">Cancelar edición</button>
+          </div>
+        </form>
+
+        <div id="seccion-ajuste-stock" class="pestana oculto" data-pestana="ajuste">
+          <p id="descripcion-ajuste" class="pro-ayuda"></p>
+          <div class="ajuste-resumen">
+            <span id="ajuste-stock-actual"></span>
+            <span id="ajuste-resultante"></span>
+          </div>
+          <label class="pro-campo">Cantidad
+            <input type="number" id="ajuste-cantidad" step="any" placeholder="Ej: -5 o 10">
+          </label>
+          <label class="pro-campo">Motivo del ajuste (opcional)
+            <input type="text" id="ajuste-motivo" placeholder="Ej: conteo del sábado, se venció">
+          </label>
+          <div class="pro-botones">
+            <button type="button" id="btn-aplicar-ajuste" class="btn-pro btn-amarillo">Ajustar stock</button>
+            <button type="button" id="btn-cancelar-ajuste" class="btn-sec">Cancelar</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
 
   <script src="auth-helpers.js"></script>
   <script src="insumos.js"></script>
