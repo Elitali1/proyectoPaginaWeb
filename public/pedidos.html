@@ -2,12 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Donchichopizza - Gestión de Pedidos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="pedidos-pro.css">
 </head>
-<body>
-  
+<body class="pedidos-pro">
+
   <div class="barra-superior">
   <div class="marca">
   <img src="img/Logo.png" alt="Don Chicho" class="logo">
@@ -23,107 +25,160 @@
   <a href="historial.html">Historial</a>
   <a href="clientes.html" id="link-clientes">Clientes</a>
   <a href="dashboard.html" id="link-dashboard">Dashboard</a>
-  
+
 </nav>
   <div>
     <p id="info-usuario"></p>
     <button id="btn-logout">Cerrar sesión</button>
   </div>
 </div>
- 
-  <section id="lista-pedidos">
-    <h2>Pedidos</h2>
-    <div id="contenedor-pedidos"></div>
-  </section>
- 
-  <section id="nuevo-pedido">
-    <h2>Nuevo pedido</h2>
-    <form id="formulario-pedido">
-      <label>Teléfono (opcional):
-    <input type="tel" id="telefono-cliente" placeholder="Ej: 1122334455">
-  </label>
-  <span id="mensaje-cliente-encontrado"></span>
-      <label>Cliente: <input type="text" id="cliente" required></label>
-      <label>Canal:
-        <select id="canal">
-          <option value="WhatsApp">WhatsApp</option>
-          <option value="presencial">Presencial</option>
-        </select>
-      </label>
-      <label>Medio de pago:
-  <select id="medio_pago">
-    <option value="efectivo">Efectivo</option>
-    <option value="transferencia">Transferencia</option>
-    <option value="mixto">Mixto (parte efectivo, parte transferencia)</option>
-  </select>
-</label>
 
-<div id="seccion-pago-mixto" class="oculto">
-  <label>Monto en efectivo: <input type="number" id="monto-efectivo" min="0"></label>
-  <label>Monto en transferencia: <input type="number" id="monto-transferencia" min="0"></label>
-  <p id="mensaje-validacion-mixto"></p>
-</div>
- 
-      <label>Entrega:
-        <select id="tipo_entrega">
-          <option value="retiro">Retiro en el local</option>
-          <option value="envio">Envío a domicilio</option>
-        </select>
-      </label>
- 
-      <label id="label-direccion" class="oculto">
-        Dirección: <input type="text" id="direccion_entrega">
-      </label>
-      <label id="label-cuit" class="oculto">
-  CUIT (para factura ): <input type="text" id="cuit_receptor" placeholder="20123456789">
-</label>
- 
-<label>
-  <input type="checkbox" id="check-facturar-cuit">
-  Cliente pide factura con CUIT
-</label>
- 
-      <h3>Productos</h3>
- 
-      <label>
-        <input type="checkbox" id="check-combinar">
-        Combinar dos gustos (mitad y mitad, +$1000)
-      </label>
- 
-      <div class="buscador-contenedor">
-        <input type="text" id="buscador-producto" placeholder="Buscar producto..." autocomplete="off">
-        <ul id="resultados-busqueda" class="resultados-lista"></ul>
-        <input type="hidden" id="producto-seleccionado-id">
-        <input type="hidden" id="producto-seleccionado-precio">
-        <input type="hidden" id="producto-seleccionado-nombre">
-      </div>
- 
-      <select id="select-producto-2" class="oculto"></select>
- 
-      <label id="label-masa">Masa:
-        <select id="tipo-masa">
-          <option value="piedra">A la piedra</option>
-          <option value="molde">Al molde</option>
-        </select>
-      </label>
- 
-      <label>Aclaraciones (opcional):
-        <input type="text" id="aclaraciones-producto" placeholder="Ej: bien cocida, sin orégano...">
-      </label>
- 
-      <input type="number" id="cantidad-nueva" min="1" value="1" class="input-cantidad">
-      <button type="button" id="btn-agregar-producto">Agregar</button>
- 
-      <ul id="lista-productos-agregados"></ul>
-      <p id="total-pedido">Total: $0</p>
- 
-      <button type="submit" id="btn-guardar-pedido">Crear pedido</button>
-      <button type="button" id="btn-cancelar-edicion-pedido" class="oculto">Cancelar edición</button>
-    </form>
-  </section>
-  
+  <div class="pp-pagina">
+
+    <div id="pp-aviso" class="pp-aviso oculto" role="status">
+      <span id="pp-aviso-texto"></span>
+      <button type="button" id="pp-aviso-cerrar" class="pp-link">Cerrar</button>
+    </div>
+
+    <div class="pp-columnas">
+
+      <!-- ===== Nuevo pedido / Modificar ===== -->
+      <section id="nuevo-pedido" class="pp-panel pp-form-panel" aria-label="Pedido">
+        <div class="pp-cabecera-form">
+          <h2 id="titulo-formulario">Nuevo pedido</h2>
+          <button type="button" id="btn-cancelar-edicion-pedido" class="pp-btn pp-btn-sec pp-btn-chico oculto">Cancelar edición</button>
+        </div>
+
+        <form id="formulario-pedido" autocomplete="off">
+
+          <div class="pp-fila-2">
+            <label class="pp-campo">Teléfono (opcional)
+              <input type="tel" id="telefono-cliente" class="pp-input" placeholder="Ej: 1122334455">
+            </label>
+            <label class="pp-campo">Cliente
+              <input type="text" id="cliente" class="pp-input" placeholder="Nombre del cliente" required>
+            </label>
+          </div>
+          <span id="mensaje-cliente-encontrado" class="pp-msg-cliente"></span>
+
+          <div class="pp-grupos">
+            <div class="pp-campo" role="group" aria-label="Canal">
+              <span>Canal</span>
+              <div class="pp-chips" data-campo="canal">
+                <button type="button" class="pp-chip" data-valor="WhatsApp" aria-pressed="true">WhatsApp</button>
+                <button type="button" class="pp-chip" data-valor="presencial" aria-pressed="false">Presencial</button>
+              </div>
+              <input type="hidden" id="canal" value="WhatsApp">
+            </div>
+            <div class="pp-campo" role="group" aria-label="Medio de pago">
+              <span>Medio de pago</span>
+              <div class="pp-chips" data-campo="medio_pago">
+                <button type="button" class="pp-chip" data-valor="efectivo" aria-pressed="true">Efectivo</button>
+                <button type="button" class="pp-chip" data-valor="transferencia" aria-pressed="false">Transferencia</button>
+                <button type="button" class="pp-chip" data-valor="mixto" aria-pressed="false">Mixto</button>
+              </div>
+              <input type="hidden" id="medio_pago" value="efectivo">
+            </div>
+            <div class="pp-campo" role="group" aria-label="Entrega">
+              <span>Entrega</span>
+              <div class="pp-chips" data-campo="tipo_entrega">
+                <button type="button" class="pp-chip" data-valor="retiro" aria-pressed="true">Retiro en local</button>
+                <button type="button" class="pp-chip" data-valor="envio" aria-pressed="false">Envío</button>
+              </div>
+              <input type="hidden" id="tipo_entrega" value="retiro">
+            </div>
+          </div>
+
+          <div id="seccion-pago-mixto" class="pp-caja-mixto oculto">
+            <div class="pp-fila-2">
+              <label class="pp-campo">Monto en efectivo
+                <input type="number" id="monto-efectivo" class="pp-input" min="0">
+              </label>
+              <label class="pp-campo">Monto en transferencia
+                <input type="number" id="monto-transferencia" class="pp-input" min="0">
+              </label>
+            </div>
+            <p id="mensaje-validacion-mixto" class="pp-msg-mixto"></p>
+          </div>
+
+          <label id="label-direccion" class="pp-campo oculto">Dirección de entrega
+            <input type="text" id="direccion_entrega" class="pp-input" placeholder="Calle y número">
+          </label>
+
+          <div class="pp-fila-factura">
+            <label class="pp-check">
+              <input type="checkbox" id="check-facturar-cuit">
+              Cliente pide factura con CUIT
+            </label>
+            <label id="label-cuit" class="pp-campo pp-campo-cuit oculto">CUIT (para factura)
+              <input type="text" id="cuit_receptor" class="pp-input pp-input-chico" placeholder="20123456789">
+            </label>
+          </div>
+
+          <h3 class="pp-subtitulo">Productos</h3>
+
+          <div class="buscador-contenedor pp-buscador">
+            <input type="text" id="buscador-producto" class="pp-input" placeholder="Buscar producto..." autocomplete="off">
+            <ul id="resultados-busqueda" class="pp-resultados oculto"></ul>
+            <input type="hidden" id="producto-seleccionado-id">
+            <input type="hidden" id="producto-seleccionado-precio">
+            <input type="hidden" id="producto-seleccionado-nombre">
+          </div>
+
+          <label class="pp-check">
+            <input type="checkbox" id="check-combinar">
+            Combinar dos gustos (mitad y mitad, +$1000)
+          </label>
+          <div id="aviso-combinar" class="pp-aviso-combinar oculto">
+            <span id="texto-combinar"></span>
+            <button type="button" id="btn-cambiar-primer-gusto" class="pp-link">Cambiar</button>
+          </div>
+
+          <div id="atajos-productos" class="pp-atajos" role="group" aria-label="Atajos de productos"></div>
+
+          <div id="lista-productos-agregados" class="pp-carrito"></div>
+
+          <div class="pp-totales">
+            <p id="total-pedido">Total: $0</p>
+          </div>
+
+          <div id="error-pedido" class="pp-error oculto" role="alert"></div>
+
+          <button type="submit" id="btn-guardar-pedido" class="pp-btn pp-btn-grande">Crear pedido</button>
+        </form>
+      </section>
+
+      <!-- ===== Pedidos activos ===== -->
+      <section id="lista-pedidos" class="pp-panel pp-activos-panel" aria-label="Pedidos activos">
+        <div class="pp-cabecera-activos">
+          <h2>Pedidos activos</h2>
+          <span id="contador-pedidos" class="pp-contador"></span>
+        </div>
+
+        <div class="pp-tabs" role="tablist" aria-label="Estado de los pedidos">
+          <button type="button" role="tab" class="pp-tab" data-estado="todos" aria-selected="true">Todos</button>
+          <button type="button" role="tab" class="pp-tab" data-estado="pendiente" aria-selected="false">Pendientes</button>
+          <button type="button" role="tab" class="pp-tab" data-estado="en preparación" aria-selected="false">En preparación</button>
+        </div>
+
+        <div class="pp-filtros">
+          <label class="pp-campo pp-campo-buscar">Buscar
+            <input type="search" id="filtro-pedidos-texto" class="pp-input pp-input-chico" placeholder="Cliente o número de pedido">
+          </label>
+          <label class="pp-campo pp-campo-canal">Canal
+            <select id="filtro-pedidos-canal" class="pp-input pp-input-chico">
+              <option value="todos">Todos</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="contenedor-pedidos"></div>
+      </section>
+
+    </div>
+  </div>
+
   <script src="auth-helpers.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
- 

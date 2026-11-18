@@ -1,0 +1,398 @@
+/* Pedidos - diseño nuevo.
+   Todo va con prefijo pp- y bajo body.pedidos-pro para no pisar estilos.css.
+   El color sale de las variables de cada sucursal (--color-primary, etc.). */
+
+body.pedidos-pro {
+  --pp-primario: var(--color-primary, #7A2E28);
+  --pp-primario-osc: var(--color-primary-dark, #5A1F1B);
+  --pp-tinta: #2B211C;
+  --pp-suave: #6B5B49;
+  --pp-borde: #CDB88F;
+  --pp-borde-tarjeta: #D9C7A8;
+  --pp-crema: #FFFCF6;
+  --pp-durazno: #FBEBD4;
+  --pp-ambar: #C9851C;
+  --pp-verde: #2F6B3A;
+}
+
+body.pedidos-pro .oculto { display: none !important; }
+body.pedidos-pro .pp-pagina,
+body.pedidos-pro .pp-pagina * { box-sizing: border-box; }
+
+body.pedidos-pro .pp-pagina {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 22px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body.pedidos-pro .pp-columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 980px) {
+  body.pedidos-pro .pp-columnas { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- Paneles ---- */
+body.pedidos-pro .pp-panel,
+body.pedidos-pro #nuevo-pedido,
+body.pedidos-pro #lista-pedidos {
+  margin: 0;
+  width: auto;
+  max-width: none;
+  border: 1.5px solid var(--pp-borde-tarjeta);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--pp-crema);
+  color: var(--pp-tinta);
+}
+body.pedidos-pro #lista-pedidos { background: var(--pp-durazno); border-color: #E3CBA0; }
+
+body.pedidos-pro .pp-panel h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--pp-primario-osc);
+  text-align: center;
+}
+body.pedidos-pro .pp-cabecera-activos h2 { text-align: left; }
+body.pedidos-pro .pp-cabecera-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+body.pedidos-pro .pp-cabecera-activos {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+body.pedidos-pro .pp-contador { font-size: 14px; font-weight: 800; color: var(--pp-suave); }
+
+body.pedidos-pro #formulario-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  max-width: none;
+}
+
+body.pedidos-pro .pp-subtitulo {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--pp-primario-osc);
+}
+
+/* ---- Campos ---- */
+body.pedidos-pro .pp-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--pp-tinta);
+  min-width: 0;
+  margin: 0;
+}
+body.pedidos-pro .pp-fila-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { body.pedidos-pro .pp-fila-2 { grid-template-columns: 1fr; } }
+
+body.pedidos-pro .pp-input {
+  display: block;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1.5px solid var(--pp-borde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--pp-tinta);
+  font-family: inherit;
+  font-size: 15px;
+  box-shadow: none;
+}
+body.pedidos-pro .pp-input-chico { height: 36px; font-size: 14px; }
+body.pedidos-pro .pp-input:focus-visible,
+body.pedidos-pro .pp-cant:focus-visible,
+body.pedidos-pro .pp-chip:focus-visible,
+body.pedidos-pro .pp-btn:focus-visible,
+body.pedidos-pro .pp-tab:focus-visible,
+body.pedidos-pro .pp-paso:focus-visible,
+body.pedidos-pro .pp-link:focus-visible {
+  outline: 2px solid var(--pp-primario-osc);
+  outline-offset: 2px;
+}
+
+body.pedidos-pro .pp-msg-cliente { margin: -8px 0 0; font-size: 13px; font-weight: 700; color: var(--pp-verde); min-height: 0; }
+body.pedidos-pro .pp-msg-cliente:empty { display: none; }
+
+body.pedidos-pro .pp-grupos { display: flex; flex-wrap: wrap; gap: 14px 28px; }
+body.pedidos-pro .pp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+body.pedidos-pro .pp-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--pp-tinta);
+  cursor: pointer;
+}
+body.pedidos-pro .pp-check input { width: 18px; height: 18px; margin: 0; }
+body.pedidos-pro .pp-fila-factura { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; }
+body.pedidos-pro .pp-campo-cuit { flex: 1 1 200px; }
+
+/* ---- Chips ---- */
+body.pedidos-pro .pp-chip {
+  margin: 0;
+  border: 1.5px solid var(--pp-borde);
+  background: var(--pp-crema);
+  color: var(--pp-tinta);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: none;
+  width: auto;
+  height: auto;
+}
+body.pedidos-pro .pp-chip[aria-pressed="true"] {
+  background: var(--pp-primario);
+  border-color: var(--pp-primario);
+  color: #fff;
+}
+body.pedidos-pro .pp-chip-suave { background: #F1E4CC; border-color: #E3D2B1; font-weight: 600; font-size: 13px; }
+body.pedidos-pro .pp-chip-mini { padding: 3px 12px; font-size: 13px; }
+
+/* ---- Pago mixto ---- */
+body.pedidos-pro .pp-caja-mixto {
+  background: #F7EFDD;
+  border: 1.5px solid var(--pp-borde-tarjeta);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+body.pedidos-pro .pp-msg-mixto { margin: 0; font-size: 13px; font-weight: 800; color: var(--pp-suave); }
+body.pedidos-pro .pp-msg-mixto:empty { display: none; }
+body.pedidos-pro .pp-msg-mixto.pp-mal { color: #7A1F16; }
+body.pedidos-pro .pp-msg-mixto.pp-ok { color: #1F4D29; }
+
+/* ---- Buscador ---- */
+body.pedidos-pro .pp-buscador { position: relative; margin: 0; padding: 0; }
+body.pedidos-pro .pp-resultados {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid var(--pp-borde);
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(43, 15, 12, .15);
+}
+body.pedidos-pro .pp-resultados li {
+  list-style: none;
+  margin: 0;
+  padding: 9px 10px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+}
+body.pedidos-pro .pp-resultados li:hover { background: #F7EFDD; }
+
+body.pedidos-pro .pp-aviso-combinar {
+  background: #FFF3D6;
+  border: 1.5px solid #E8A33D;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+body.pedidos-pro .pp-atajos { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Carrito ---- */
+body.pedidos-pro .pp-carrito { display: flex; flex-direction: column; border-top: 1.5px solid #E3D3B4; }
+body.pedidos-pro .pp-carrito-vacio { margin: 14px 0 6px; color: var(--pp-suave); font-size: 14px; }
+body.pedidos-pro .pp-linea { padding: 11px 0; border-bottom: 1.5px solid #E3D3B4; display: flex; flex-direction: column; gap: 8px; }
+body.pedidos-pro .pp-linea-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+body.pedidos-pro .pp-linea-nombre { font-weight: 800; font-size: 15.5px; min-width: 0; flex: 1 1 180px; }
+body.pedidos-pro .pp-linea-cantidad { display: flex; align-items: center; gap: 6px; }
+body.pedidos-pro .pp-linea-subtotal { font-weight: 800; min-width: 72px; text-align: right; }
+body.pedidos-pro .pp-paso {
+  width: 32px; height: 32px; margin: 0; padding: 0;
+  border: 1.5px solid var(--pp-borde);
+  background: var(--pp-crema);
+  border-radius: 8px;
+  font-size: 18px; font-weight: 800; line-height: 1;
+  color: var(--pp-primario-osc);
+  cursor: pointer; font-family: inherit; box-shadow: none;
+}
+body.pedidos-pro .pp-cant {
+  width: 54px; height: 32px; margin: 0; padding: 0 4px;
+  text-align: center; font-family: inherit; font-size: 15px; font-weight: 800;
+  border: 1.5px solid var(--pp-borde); border-radius: 8px; background: #fff; color: var(--pp-tinta);
+}
+body.pedidos-pro .pp-linea-masa { display: flex; gap: 8px; align-items: center; }
+body.pedidos-pro .pp-linea-masa span { font-size: 13px; font-weight: 800; color: var(--pp-suave); }
+
+body.pedidos-pro .pp-totales { display: flex; justify-content: flex-end; }
+body.pedidos-pro #total-pedido {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--pp-primario-osc);
+}
+
+body.pedidos-pro .pp-error {
+  background: #FBEAE7;
+  border: 1.5px solid #B03A2E;
+  color: #7A1F16;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ---- Botones ---- */
+body.pedidos-pro .pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  height: 46px;
+  padding: 0 22px;
+  border: 1.5px solid var(--pp-primario);
+  border-radius: 8px;
+  background: var(--pp-primario);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: none;
+  width: auto;
+}
+body.pedidos-pro .pp-btn:hover:not(:disabled) { background: var(--pp-primario-osc); border-color: var(--pp-primario-osc); }
+body.pedidos-pro .pp-btn:disabled { opacity: .6; cursor: not-allowed; }
+body.pedidos-pro .pp-btn-sec { background: var(--pp-crema); color: var(--pp-primario-osc); }
+body.pedidos-pro .pp-btn-sec:hover:not(:disabled) { background: #F1E4CC; color: var(--pp-primario-osc); }
+body.pedidos-pro .pp-btn-amarillo { background: #E8A33D; border-color: #E8A33D; color: #2B0F0C; }
+body.pedidos-pro .pp-btn-amarillo:hover:not(:disabled) { background: #D4912B; border-color: #D4912B; }
+body.pedidos-pro .pp-btn-chico { height: 36px; font-size: 13.5px; padding: 0 14px; }
+body.pedidos-pro .pp-btn-grande { width: 100%; height: 50px; font-size: 17px; }
+
+body.pedidos-pro .pp-link {
+  margin: 0; padding: 4px 2px; border: 0; background: none; box-shadow: none; width: auto; height: auto;
+  font-family: inherit; font-weight: 800; font-size: 13.5px;
+  color: var(--pp-primario); cursor: pointer; text-decoration: underline;
+}
+body.pedidos-pro .pp-link:hover { background: none; color: var(--pp-primario-osc); }
+body.pedidos-pro .pp-link-rojo, body.pedidos-pro .pp-link-rojo:hover { color: #9B2C20; }
+
+/* ---- Aviso ---- */
+body.pedidos-pro .pp-aviso {
+  background: #E3F0E4;
+  border: 1.5px solid var(--pp-verde);
+  color: #1F4D29;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+
+/* ---- Pedidos activos ---- */
+body.pedidos-pro .pp-tabs { display: flex; flex-wrap: wrap; border-bottom: 1.5px solid #E3CBA0; }
+body.pedidos-pro .pp-tab {
+  margin: 0 0 -1.5px;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--pp-suave);
+  cursor: pointer;
+  box-shadow: none;
+  width: auto;
+  height: auto;
+}
+body.pedidos-pro .pp-tab:hover { background: none; color: var(--pp-primario-osc); }
+body.pedidos-pro .pp-tab[aria-selected="true"] { color: var(--pp-primario-osc); border-bottom-color: var(--pp-primario); }
+
+body.pedidos-pro .pp-filtros { display: flex; flex-wrap: wrap; gap: 10px; }
+body.pedidos-pro .pp-campo-buscar { flex: 1 1 200px; }
+body.pedidos-pro .pp-campo-canal { flex: 0 1 160px; }
+
+body.pedidos-pro #contenedor-pedidos { display: flex; flex-direction: column; gap: 12px; }
+body.pedidos-pro .pp-vacio {
+  background: var(--pp-crema);
+  border: 1.5px solid var(--pp-borde-tarjeta);
+  border-radius: 12px;
+  padding: 26px;
+  text-align: center;
+  font-weight: 800;
+}
+
+body.pedidos-pro .pp-pedido {
+  margin: 0;
+  background: var(--pp-crema);
+  border: 1.5px solid var(--pp-borde-tarjeta);
+  border-left: 6px solid var(--pp-ambar);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  box-shadow: none;
+  color: var(--pp-tinta);
+}
+body.pedidos-pro .pp-pedido-preparacion { border-left-color: var(--pp-verde); }
+body.pedidos-pro .pp-pedido-editando { box-shadow: 0 0 0 3px var(--pp-primario); }
+body.pedidos-pro .pp-pedido-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+body.pedidos-pro .pp-pedido-titulo { font-size: 17px; }
+body.pedidos-pro .pp-pedido-titulo span { font-weight: 600; color: var(--pp-suave); font-size: 14px; }
+body.pedidos-pro .pp-pedido-estado { font-weight: 800; font-size: 13px; color: var(--pp-ambar); }
+body.pedidos-pro .pp-pedido-estado::first-letter { text-transform: uppercase; }
+body.pedidos-pro .pp-pedido-preparacion .pp-pedido-estado { color: var(--pp-verde); }
+body.pedidos-pro .pp-pedido-datos { font-size: 14px; color: #4A3D30; }
+body.pedidos-pro .pp-pedido-items { border-top: 1.5px solid #EBDDC2; padding-top: 8px; display: flex; flex-direction: column; gap: 3px; font-size: 14.5px; }
+body.pedidos-pro .pp-pedido-total { border-top: 1.5px solid #EBDDC2; padding-top: 8px; font-weight: 900; font-size: 16px; }
+body.pedidos-pro .pp-pedido-acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+body.pedidos-pro .pp-select-estado { width: auto; font-weight: 700; background: #FFF3D6; padding-right: 8px; }
+body.pedidos-pro .pp-pedido-links { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+body.pedidos-pro .pp-impresa { font-size: 13.5px; font-weight: 700; color: var(--pp-suave); padding: 4px 2px; }
