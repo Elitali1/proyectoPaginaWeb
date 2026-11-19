@@ -849,3 +849,6 @@ body.login section {
 
 /* Pantallas de acceso: <main> sin efecto en el diseño */
 body.login > main { display: contents; }
+
+/* Espacio sobre los mensajes de las pantallas de contraseña (antes era un style="" en el HTML). */
+.mensaje-formulario { margin-top: 1rem; }

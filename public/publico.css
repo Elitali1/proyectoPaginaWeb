@@ -834,3 +834,11 @@ body.publico #mensaje-contacto-estado { font-weight: 600; color: var(--h-suave);
 @media (max-width: 520px) {
   body.publico .mapa-locales { aspect-ratio: 4 / 5; }
 }
+
+/* Botones de acción del menú, centrados (antes era un style="" dentro de menu.html). */
+.hero-cta.hero-cta-centrado { justify-content: center; margin-top: 32px; }
+
+/* Enlace "Saltar al contenido": invisible hasta que se llega con el teclado (Tab). */
+.saltar-contenido { position: absolute; left: 1rem; top: -4rem; z-index: 10000; padding: 0.6rem 1rem; background: #1a1a1a; color: #fff; border-radius: 6px; font-weight: 600; text-decoration: none; }
+.saltar-contenido:focus { top: 1rem; }
+#contenido-principal:focus { outline: none; }
